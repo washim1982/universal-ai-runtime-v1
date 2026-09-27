@@ -42,6 +42,10 @@ HTTP = {
     "ResolveRun": ("post", "/api/v1/runs/{run_id}/resolve", "ResolveRunRequest", "Run", False),
     "DryRun": ("post", "/api/v1/dry-run", "DryRunRequest", "DryRunReport", False),
     "DecideApproval": ("post", "/api/v1/approvals/{approval_id}/decision", "ApprovalDecision", "Approval", False),
+    "RegisterPlugin": ("post", "/api/v1/plugins", "RegisterPluginRequest", "PluginVersion", False),
+    "ListPlugins": ("get", "/api/v1/plugins", None, "ListPluginsResponse", False),
+    "ActivatePlugin": ("post", "/api/v1/plugins/{plugin_id}/activate", "ActivatePluginRequest", "PluginVersion", False),
+    "RollbackPlugin": ("post", "/api/v1/plugins/{plugin_id}/rollback", "RollbackPluginRequest", "PluginVersion", False),
 }
 
 SCALARS = {

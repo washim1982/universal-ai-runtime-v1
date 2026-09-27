@@ -1,6 +1,6 @@
 # Capability matrix
 
-Status of every UAR capability from `Mission_Comparison.md`, as of 2026-09-26 (M6).
+Status of every UAR capability from `Mission_Comparison.md`, as of 2026-09-27 (M7).
 Only **live-tested** and **fixture-tested** entries may be claimed as supported.
 
 | Legend | Meaning |
@@ -21,8 +21,9 @@ Only **live-tested** and **fixture-tested** entries may be claimed as supported.
 | OpenAI Responses | cloud | ✔ | ✔ | ✔ | ✔ | fixture-tested (documented wire format); not live-tested |
 | Groq (OpenAI-compatible) | cloud | ✔ | ✔ | ✔ | ✔ | fixture-tested (shared adapter, tool-call deltas); not live-tested |
 | vLLM / enterprise gateways (OpenAI-compatible) | enterprise | ✔ | ✔ | ✔ | ✔ | implemented |
-| Azure OpenAI, Google Vertex AI | cloud | | | | | planned (M7) |
-| Model plugins (gRPC) | any | | | | | planned (M7) |
+| Azure OpenAI (v1 and classic deployments API) | cloud | ✔ | ✔ | ✔ | ✔ | fixture-tested (documented wire format); not live-tested |
+| Google Vertex AI (Gemini generateContent) | cloud | ✔ | ✔ | ✔ | ✔ | fixture-tested (documented wire format); not live-tested |
+| Model plugins (gRPC, any language) | any | ✔ | ✔ | | | fixture-tested (Go reference plugin, Python test plugin) |
 
 ## Features
 
@@ -34,17 +35,17 @@ Only **live-tested** and **fixture-tested** entries may be claimed as supported.
 | MCP gateway, orchestration, per-call authorization, audit, intents | fixture-tested (real MCP servers) |
 | MCP server hosting: supervised stdio / container; Streamable HTTP | fixture-tested; Kubernetes Deployments written, not deployed |
 | Tool sandboxing: roots, links, ADS, exclusive writes, read-only SQL, container isolation | fixture-tested |
-| Native tool plugins | planned (M7) |
+| Native tool plugins | fixture-tested (TypeScript reference plugin, Python test plugin) |
 | Agent gateway (start / get / watch / cancel / resolve on HTTP, gRPC, WebSocket) | fixture-tested |
 | Durable engine: checkpoints, fencing, recovery, ambiguous writes, loops, parallel, sub-agents | fixture-tested + live-tested (report agent on granite4) |
 | Approval nodes | planned (M9); contract present, returns 501 |
 | Dry-run: static plan + fixture simulation, non-executing | fixture-tested |
-| Agent plugins | planned (M7) |
+| Agent plugins (executable and declarative) | fixture-tested (Python reference plugin, declarative package) |
 | SDKs: Python, TypeScript | fixture-tested (mock + live runtime) |
 | SDKs: Java, .NET, Go, Rust | planned (M8) |
 | Kubernetes-native / Helm / Docker Desktop Kubernetes | implemented, **not verified** (no cluster) |
 | Local-only mode (`profile: local-only` blocks cloud routes) | fixture-tested via egress policy; container stack ran with cloud credentials absent |
-| Plugin runtime | planned (M7) |
+| Plugin runtime (register, integrity, activate, pin, rollback, breaker) | fixture-tested |
 | RBAC, tenant isolation, audit (fail-closed, payload-free) | fixture-tested; tamper evidence planned (M9) |
 | Model and tool usage policies, token budgets | fixture-tested |
 | Agent sandboxing (declared permissions, narrowed sub-agent tools) | fixture-tested |

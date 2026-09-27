@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uar.dev/schemas/plugin.schema.json",
+  "title": "UAR plugin manifest (apiVersion uar/v1, kind Plugin)",
+  "description": "An immutable plugin version. The runtime starts it out of process and talks uar.plugin.v1 over gRPC. Capabilities declared here are the maximum the plugin may use; activation fails if the running plugin asks for more.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "uar/v1"
+    },
+    "kind": {
+      "const": "Plugin"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.-]{1,62}$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "type",
+        "runtime"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "model",
+            "tool",
+            "agent"
+          ]
+        },
+        "runtime": {
+          "type": "object",
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "api": {
+              "const": "uar.plugin.v1"
+            },
+            "mode": {
+              "enum": [
+                "process",
+                "container",
+                "external",
+                "none"
+              ],
+              "description": "process: run a local command; container: docker image, locked down; external: an already running endpoint; none: declarative agent package (graph only, no code)"
+            },
+            "command": {
+              "type": "string"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "workdir": {
+              "type": "string",
+              "description": "relative to the repository root (process mode)"
+            },
+            "artifact": {
+              "type": "string",
+              "description": "file whose sha256 must equal digest (process mode)"
+            },
+            "image": {
+              "type": "string"
+            },
+            "endpoint": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9.-]+:\\d+$"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "description": "integrity pin for the artifact (process) or image id (container)"
+            }
+          }
+        },
+        "provider": {
+          "type": "object",
+          "description": "Model plugins: the provider id and model class the router registers",
+          "required": [
+            "id",
+            "model_class"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,30}$"
+            },
+            "model_class": {
+              "enum": [
+                "local",
+                "cloud",
+                "enterprise"
+              ]
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "chat",
+                  "stream",
+                  "tools",
+                  "json",
+                  "vision"
+                ]
+              }
+            }
+          }
+        },
+        "tool_namespace": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,30}$",
+          "description": "Tool plugins: namespace of the exposed tools"
+        },
+        "tools": {
+          "type": "object",
+          "description": "Tool plugins: side-effect class per tool, set by the administrator (never taken from the plugin)",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "side_effect": {
+                "enum": [
+                  "read",
+                  "write",
+                  "external"
+                ]
+              },
+              "timeout_s": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "agent_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.-]{1,62}$",
+          "description": "Executable agent plugins: the agent id graphs call"
+        },
+        "graph": {
+          "type": "object",
+          "description": "Declarative agent plugins: an agent document (kind Agent) registered for every tenant"
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "network": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "hosts the plugin may reach; empty = none (enforced in container mode)"
+            },
+            "secrets": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9_]{1,63}$"
+              },
+              "description": "environment variable names resolved and passed to Init"
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "timeout_s": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 600
+            },
+            "concurrency": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 64
+            },
+            "memory": {
+              "type": "string",
+              "pattern": "^\\d+[kmg]$"
+            },
+            "cpus": {
+              "type": "string"
+            }
+          }
+        },
+        "config": {
+          "type": "object"
+        },
+        "config_schema": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "model"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "provider"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "tool"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "tool_namespace"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

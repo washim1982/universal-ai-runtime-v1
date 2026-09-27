@@ -9,6 +9,11 @@ syntax = "proto3";
 
 package uar.v1;
 
+option go_package = "github.com/washim1982/universal-ai-runtime-v1/sdks/go/uarv1;uarv1";
+option java_package = "dev.uar.v1";
+option java_multiple_files = true;
+option csharp_namespace = "Uar.V1";
+
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -37,6 +42,13 @@ service Runtime {
 
   // Contract reserved for M9; the MVP returns UNIMPLEMENTED / HTTP 501.
   rpc DecideApproval(ApprovalDecision) returns (Approval);
+
+  // Plugins (administrators only). Versions are immutable; activation validates and health-checks
+  // the version and affects new runs only (running runs keep the versions they started with).
+  rpc RegisterPlugin(RegisterPluginRequest) returns (PluginVersion);
+  rpc ListPlugins(ListPluginsRequest) returns (ListPluginsResponse);
+  rpc ActivatePlugin(ActivatePluginRequest) returns (PluginVersion);
+  rpc RollbackPlugin(RollbackPluginRequest) returns (PluginVersion);
 }
 
 // ---------- shared ----------
@@ -311,3 +323,29 @@ message DryRunReport {
 
 message ApprovalDecision { string approval_id = 1; bool approve = 2; string comment = 3; }
 message Approval { string approval_id = 1; string status = 2; string run_id = 3; }
+
+// ---------- plugins ----------
+
+message RegisterPluginRequest {
+  // Plugin manifest (apiVersion uar/v1, kind Plugin), validated against
+  // contracts/schemas/plugin.schema.json.
+  google.protobuf.Struct manifest = 1;
+}
+
+message PluginVersion {
+  string plugin_id = 1;
+  string version = 2;
+  string type = 3;     // model | tool | agent
+  string status = 4;   // registered | active | inactive | failed
+  string digest = 5;   // sha256 of the canonical manifest
+  bool active = 6;
+  google.protobuf.Timestamp created_at = 7;
+  repeated string capabilities = 8;
+  string message = 9;  // validation or health-check detail
+  string previous_version = 10;
+}
+
+message ListPluginsRequest {}
+message ListPluginsResponse { repeated PluginVersion plugins = 1; }
+message ActivatePluginRequest { string plugin_id = 1; string version = 2; }
+message RollbackPluginRequest { string plugin_id = 1; }

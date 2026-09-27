@@ -157,3 +157,17 @@ async def iter_sse(resp: httpx.Response) -> AsyncIterator[tuple[str, str]]:
             data.append(line[5:].lstrip())
     if data:
         yield event or "message", "\n".join(data)
+
+
+class UnavailableAdapter(Adapter):
+    """Placeholder for a provider whose backend is not running (e.g. a plugin before activation)."""
+
+    def __init__(self, cfg, reason: str):
+        self.id, self.capabilities, self.reason = cfg.id, set(cfg.capabilities), reason
+
+    async def chat(self, req: ChatRequest) -> ChatResult:
+        raise UARError("unavailable", f"{self.id}: {self.reason}", retryable=False)
+
+    async def stream(self, req: ChatRequest):
+        raise UARError("unavailable", f"{self.id}: {self.reason}", retryable=False)
+        yield  # pragma: no cover

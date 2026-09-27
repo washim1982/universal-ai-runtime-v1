@@ -1,0 +1,10 @@
+{
+  "name": "acme-textutil-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "main": "index.mjs",
+  "dependencies": {
+    "@uar/plugin-sdk": "file:../../../plugin-sdks/typescript"
+  }
+}

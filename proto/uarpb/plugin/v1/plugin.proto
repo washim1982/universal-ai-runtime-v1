@@ -5,6 +5,11 @@ syntax = "proto3";
 
 package uar.plugin.v1;
 
+option go_package = "github.com/washim1982/universal-ai-runtime-v1/plugin-sdks/go/pluginv1;pluginv1";
+option java_package = "dev.uar.plugin.v1";
+option java_multiple_files = true;
+option csharp_namespace = "Uar.Plugin.V1";
+
 import "google/protobuf/struct.proto";
 
 service Plugin {

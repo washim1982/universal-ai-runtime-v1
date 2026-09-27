@@ -202,6 +202,26 @@ def create_app(svc: RuntimeService) -> FastAPI:
         req = await body(request, pb.DryRunRequest)
         return await call(request, lambda p, r: svc.dry_run(p, req, r), pb.DryRunReport)
 
+    @app.post("/api/v1/plugins")
+    async def register_plugin(request: Request):
+        req = await body(request, pb.RegisterPluginRequest)
+        return await call(request, lambda p, r: svc.register_plugin(p, req, r), pb.PluginVersion)
+
+    @app.get("/api/v1/plugins")
+    async def list_plugins(request: Request):
+        return await call(request, lambda p, r: svc.list_plugins(p), pb.ListPluginsResponse)
+
+    @app.post("/api/v1/plugins/{plugin_id}/activate")
+    async def activate_plugin(request: Request, plugin_id: str):
+        req = await body(request, pb.ActivatePluginRequest)
+        return await call(request, lambda p, r: svc.activate_plugin(p, plugin_id, req.get("version", ""), r),
+                          pb.PluginVersion)
+
+    @app.post("/api/v1/plugins/{plugin_id}/rollback")
+    async def rollback_plugin(request: Request, plugin_id: str):
+        await body(request, pb.RollbackPluginRequest)
+        return await call(request, lambda p, r: svc.rollback_plugin(p, plugin_id, r), pb.PluginVersion)
+
     @app.post("/api/v1/approvals/{approval_id}/decision")
     async def approval(request: Request, approval_id: str):
         req = await body(request, pb.ApprovalDecision)

@@ -1,0 +1,21 @@
+# Register:  POST /api/v1/plugins  {"manifest": <this document>}   then POST /api/v1/plugins/acme.summarizer/activate {"version":"1.0.0"}
+apiVersion: uar/v1
+kind: Plugin
+metadata:
+  id: acme.summarizer
+  version: 1.0.0
+  description: Executable agent plugin (Python) - extractive summary of a text.
+spec:
+  type: agent
+  agent_id: summarize_text
+  runtime:
+    api: uar.plugin.v1
+    mode: process
+    command: python
+    args: ["plugins/reference/py-agent/summarizer.py"]
+  capabilities: {network: [], secrets: []}
+  limits: {timeout_s: 10, concurrency: 4}
+  config: {max_sentences: 2}
+  config_schema:
+    type: object
+    properties: {max_sentences: {type: integer, minimum: 1, maximum: 10}}

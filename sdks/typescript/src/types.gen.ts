@@ -355,3 +355,42 @@ export interface Approval {
   status?: string;
   run_id?: string;
 }
+
+export interface RegisterPluginRequest {
+  /** Plugin manifest (apiVersion uar/v1, kind Plugin), validated against
+ contracts/schemas/plugin.schema.json. */
+  manifest?: Record<string, unknown>;
+}
+
+export interface PluginVersion {
+  plugin_id?: string;
+  version?: string;
+  /** model | tool | agent */
+  type?: string;
+  /** registered | active | inactive | failed */
+  status?: string;
+  /** sha256 of the canonical manifest */
+  digest?: string;
+  active?: boolean;
+  created_at?: string;
+  capabilities?: string[];
+  /** validation or health-check detail */
+  message?: string;
+  previous_version?: string;
+}
+
+export interface ListPluginsRequest {
+}
+
+export interface ListPluginsResponse {
+  plugins?: PluginVersion[];
+}
+
+export interface ActivatePluginRequest {
+  plugin_id?: string;
+  version?: string;
+}
+
+export interface RollbackPluginRequest {
+  plugin_id?: string;
+}

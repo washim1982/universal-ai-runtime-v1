@@ -286,3 +286,92 @@ async def test_ollama_stream_tool_calls_and_options(fake):
     assert body["options"] == {"temperature": 0, "num_predict": 20} and body["format"] == {"type": "object"}
     assert body["keep_alive"] == "5m" and body["tools"][0]["function"]["name"] == "fs__read_text"
     await a.aclose()
+
+
+# ------------------------------------------------------------------ Azure OpenAI
+
+async def test_azure_openai_v1_and_classic_paths(fake, monkeypatch):
+    from uar_runtime.router.adapters.azure_openai import AzureOpenAIAdapter
+    monkeypatch.setenv("UAR_TEST_AZURE_KEY", "azure-test-key")
+    ok = {"model": "gpt-dep", "choices": [{"message": {"content": "hi"}, "finish_reason": "stop"}],
+          "usage": {"prompt_tokens": 3, "completion_tokens": 1}}
+    v1 = AzureOpenAIAdapter(cfg("azure", "azure_openai", fake.url + "/openai/v1", key_env="UAR_TEST_AZURE_KEY"))
+    fake.next.append(JSONResponse(ok))
+    res = await v1.chat(ChatRequest(model="my-deployment", messages=[{"role": "user", "content": "x"}]))
+    sent = fake.requests[-1]
+    assert res.content == "hi" and sent["path"] == "/openai/v1/chat/completions"
+    assert sent["headers"]["api-key"] == "azure-test-key" and "authorization" not in sent["headers"]
+    classic_cfg = cfg("azure", "azure_openai", fake.url + "/openai/deployments", key_env="UAR_TEST_AZURE_KEY")
+    classic_cfg.api_version = "2024-10-21"
+    classic = AzureOpenAIAdapter(classic_cfg)
+    fake.next.append(JSONResponse(ok))
+    await classic.chat(ChatRequest(model="my-deployment", messages=[{"role": "user", "content": "x"}]))
+    sent = fake.requests[-1]
+    assert sent["path"] == "/openai/deployments/my-deployment/chat/completions" and sent["query"] == "api-version=2024-10-21"
+    monkeypatch.delenv("UAR_TEST_AZURE_KEY")
+    with pytest.raises(UARError) as ei:
+        await AzureOpenAIAdapter(cfg("azure", "azure_openai", fake.url, key_env="UAR_TEST_AZURE_KEY")).chat(
+            ChatRequest(model="d", messages=[{"role": "user", "content": "x"}]))
+    assert ei.value.code == "unavailable"
+    for a in (v1, classic):
+        await a.aclose()
+
+
+# ------------------------------------------------------------------ Google Vertex AI (Gemini)
+
+async def test_vertex_generate_content_tools_and_schema(fake, monkeypatch):
+    from uar_runtime.router.adapters.vertex import VertexAdapter
+    monkeypatch.setenv("UAR_TEST_VERTEX_TOKEN", "ya29.test")
+    a = VertexAdapter(cfg("vertex", "vertex", fake.url + "/v1/projects/p/locations/us-central1/publishers/google/models",
+                          key_env="UAR_TEST_VERTEX_TOKEN"))
+    fake.next.append(JSONResponse({
+        "candidates": [{"content": {"role": "model", "parts": [
+            {"text": "Looking."}, {"functionCall": {"name": "fs__read_text", "args": {"path": "a.md"}}}]},
+            "finishReason": "STOP"}],
+        "usageMetadata": {"promptTokenCount": 17, "candidatesTokenCount": 6}, "modelVersion": "gemini-x"}))
+    msgs = [{"role": "system", "content": "sys"}, {"role": "user", "content": "q"},
+            {"role": "assistant", "content": "", "tool_calls": [{"id": "c1", "name": "fs.list_dir", "args": {}}]},
+            {"role": "tool", "tool_call_id": "c1", "content": "[]"}]
+    res = await a.chat(ChatRequest(model="gemini-x", messages=msgs, tools=[TOOL], max_tokens=64,
+                                   response_schema={"type": "object"}))
+    assert res.tool_calls == [{"id": "call_1", "name": "fs.read_text", "args": {"path": "a.md"}}]
+    assert res.finish_reason == "tool_calls" and (res.input_tokens, res.output_tokens) == (17, 6)
+    sent = fake.requests[-1]
+    assert sent["path"].endswith("/models/gemini-x:generateContent")
+    assert sent["headers"]["authorization"] == "Bearer ya29.test"
+    body = sent["json"]
+    assert body["systemInstruction"] == {"parts": [{"text": "sys"}]}
+    assert [c["role"] for c in body["contents"]] == ["user", "model", "user"]
+    assert body["contents"][1]["parts"][0]["functionCall"]["name"] == "fs__list_dir"
+    assert body["contents"][2]["parts"][0]["functionResponse"] == {"name": "fs__list_dir", "response": {"content": "[]"}}
+    assert body["generationConfig"] == {"maxOutputTokens": 64, "responseMimeType": "application/json",
+                                        "responseSchema": {"type": "object"}}
+    assert body["tools"][0]["functionDeclarations"][0]["name"] == "fs__read_text"
+    await a.aclose()
+
+
+async def test_vertex_stream_safety_and_missing_credentials(fake, monkeypatch):
+    from uar_runtime.router.adapters.vertex import VertexAdapter
+    monkeypatch.setenv("UAR_TEST_VERTEX_TOKEN", "ya29.test")
+    a = VertexAdapter(cfg("vertex", "vertex", fake.url + "/m", key_env="UAR_TEST_VERTEX_TOKEN"))
+    chunks = [{"candidates": [{"content": {"role": "model", "parts": [{"text": "Hel"}]}}]},
+              {"candidates": [{"content": {"role": "model", "parts": [{"text": "lo"}]}, "finishReason": "MAX_TOKENS"}],
+               "usageMetadata": {"promptTokenCount": 2, "candidatesTokenCount": 2}}]
+    fake.next.append(Response(b"".join(f"data: {json.dumps(c)}\r\n\r\n".encode() for c in chunks),
+                              media_type="text/event-stream"))
+    texts, res = await collect(a.stream(ChatRequest(model="g", messages=[{"role": "user", "content": "x"}])))
+    assert texts == ["Hel", "lo"] and res.finish_reason == "length" and res.output_tokens == 2
+    assert fake.requests[-1]["query"] == "alt=sse"
+    fake.next.append(JSONResponse({"candidates": [{"finishReason": "SAFETY", "content": {"parts": []}}]}))
+    res = await a.chat(ChatRequest(model="g", messages=[{"role": "user", "content": "x"}]))
+    assert res.finish_reason == "refusal"
+    monkeypatch.delenv("UAR_TEST_VERTEX_TOKEN")
+    import builtins
+    real_import = builtins.__import__
+    monkeypatch.setattr(builtins, "__import__",
+                        lambda n, *x, **k: (_ for _ in ()).throw(ImportError()) if n.startswith("google.auth")
+                        or n == "google.auth" else real_import(n, *x, **k))
+    with pytest.raises(UARError) as ei:
+        await a.chat(ChatRequest(model="g", messages=[{"role": "user", "content": "x"}]))
+    assert ei.value.code == "unavailable"
+    await a.aclose()

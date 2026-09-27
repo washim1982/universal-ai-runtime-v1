@@ -1,0 +1,20 @@
+# Build first:  cd plugins/reference/go-model && go build -o sentiment.exe .
+# Then set runtime.digest to the sha256 of the built binary (python scripts/plugin_digest.py <file>),
+# register this manifest and activate it. Model: enterprise:acme/sentiment
+apiVersion: uar/v1
+kind: Plugin
+metadata:
+  id: acme.sentiment
+  version: 1.0.0
+  description: Reference model plugin (Go) - lexicon sentiment classifier.
+spec:
+  type: model
+  provider: {id: acme, model_class: enterprise, capabilities: [chat, stream]}
+  runtime:
+    api: uar.plugin.v1
+    mode: process
+    command: plugins/reference/go-model/sentiment.exe
+    artifact: plugins/reference/go-model/sentiment.exe
+    digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  capabilities: {network: [], secrets: []}
+  limits: {timeout_s: 5, concurrency: 8}

@@ -153,6 +153,10 @@ async def test_container_sandbox(tmp_path):
     ws = tmp_path / "ws"
     (ws / "reports").mkdir(parents=True)
     (ws / "a.txt").write_text("inside", encoding="utf-8")
+    # The container runs as uid 10001; on Linux the bind-mounted temp dir belongs to the CI user,
+    # so let the sandbox user write into this throwaway workspace (Docker Desktop ignores this).
+    for d in (ws, ws / "reports"):
+        os.chmod(d, 0o777)
     cfg = McpServerCfg(id="cfs", sandbox="container", image="uar-runtime:0.6.0",
                        command="python", args=["-m", "uar_mcp_servers.fs_server"],
                        env={"UAR_FS_ROOT": "/workspace", "UAR_FS_WRITE_DIRS": "reports"},

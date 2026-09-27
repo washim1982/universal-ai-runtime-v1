@@ -40,6 +40,9 @@ class OpenAICompatAdapter(Adapter):
             raise UARError("unavailable", f"{self.id}: credential {self.cfg.api_key_env} is not configured",
                            retryable=False)
 
+    def _path(self, req: ChatRequest) -> str:
+        return "/chat/completions"
+
     def _body(self, req: ChatRequest, stream: bool) -> dict:
         msgs = []
         for m in req.messages:
@@ -72,7 +75,7 @@ class OpenAICompatAdapter(Adapter):
     async def chat(self, req: ChatRequest) -> ChatResult:
         self._check_key()
         try:
-            r = await self.http.post("/chat/completions", json=self._body(req, False))
+            r = await self.http.post(self._path(req), json=self._body(req, False))
         except httpx.HTTPError as e:
             raise connect_error(self.id, e) from e
         if r.status_code != 200:
@@ -94,7 +97,7 @@ class OpenAICompatAdapter(Adapter):
         calls: dict[int, dict] = {}
         finish, usage, model = "stop", {}, req.model
         try:
-            async with self.http.stream("POST", "/chat/completions", json=self._body(req, True)) as r:
+            async with self.http.stream("POST", self._path(req), json=self._body(req, True)) as r:
                 if r.status_code != 200:
                     await r.aread()
                     raise http_error(self.id, r)

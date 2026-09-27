@@ -9,3 +9,5 @@ sdks/python/build/
 *.egg-info/
 examples/workspace/reports/*
 !examples/workspace/reports/.gitkeep
+plugins/reference/go-model/sentiment
+plugins/reference/go-model/sentiment.exe

@@ -34,6 +34,7 @@ class RunService:
         self.audit = audit
         self._graphs: dict[str, Graph] = {}
         self.on_enqueue: Callable[[], None] = lambda: None
+        self.plugin_pins: Callable[[], dict] = dict  # active plugin versions, recorded on each new run
 
     # ------------------------------------------------------------ agents
 
@@ -98,10 +99,10 @@ class RunService:
         deadline = datetime.now(timezone.utc) + timedelta(seconds=float(g.limits["timeout_s"]))
         row = await self.store.fetchone(
             "INSERT INTO runs (run_id, tenant, agent_id, version, status, input, principal, idempotency_key, "
-            "request_hash, deadline_at, traceparent, request_id) VALUES (%s,%s,%s,%s,'queued',%s,%s,%s,%s,%s,%s,%s) "
+            "request_hash, deadline_at, traceparent, request_id, plugins) VALUES (%s,%s,%s,%s,'queued',%s,%s,%s,%s,%s,%s,%s,%s) "
             "ON CONFLICT (tenant, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING RETURNING *",
             run_id, p.tenant, agent_id, g.version, jsonb(input_), jsonb(p.snapshot()), idempotency_key or None,
-            rhash, deadline, current_traceparent(), request_id or None)
+            rhash, deadline, current_traceparent(), request_id or None, jsonb(self.plugin_pins()))
         if row is None:  # lost an idempotency race
             existing = await self.store.fetchone("SELECT * FROM runs WHERE tenant=%s AND idempotency_key=%s",
                                                  p.tenant, idempotency_key)

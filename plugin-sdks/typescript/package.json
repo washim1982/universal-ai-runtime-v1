@@ -1,0 +1,14 @@
+{
+  "name": "@uar/plugin-sdk",
+  "version": "0.7.0",
+  "description": "Write Universal AI Runtime plugins in JavaScript/TypeScript (placeholder name: check availability before publishing)",
+  "type": "module",
+  "main": "index.mjs",
+  "types": "index.d.ts",
+  "engines": {"node": ">=18"},
+  "dependencies": {
+    "@grpc/grpc-js": "1.14.5",
+    "@grpc/proto-loader": "0.8.1"
+  },
+  "private": true
+}

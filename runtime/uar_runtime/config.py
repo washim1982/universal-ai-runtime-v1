@@ -20,7 +20,7 @@ PERMISSIONS = {
     "models:list", "tools:list", "tools:execute",
     "inference:local", "inference:cloud", "inference:enterprise",
     "agents:register", "agents:read", "runs:start", "runs:read", "runs:cancel", "runs:resolve",
-    "dryrun", "approvals:decide", "admin",
+    "dryrun", "approvals:decide", "plugins:manage", "admin",
 }
 DEFAULT_ROLES: dict[str, list[str]] = {
     "viewer": ["models:list", "tools:list", "agents:read", "runs:read"],
@@ -128,7 +128,7 @@ class AuthCfg(Strict):
 
 class ProviderCfg(Strict):
     id: str
-    type: Literal["ollama", "openai_compat", "openai", "anthropic", "fake"]
+    type: Literal["ollama", "openai_compat", "openai", "anthropic", "azure_openai", "vertex", "fake", "plugin"]
     model_class: ModelClass
     base_url: str = ""
     api_key_env: str | None = None
@@ -139,6 +139,7 @@ class ProviderCfg(Strict):
     capabilities: list[str] = ["chat", "stream", "tools", "json"]
     models: list[str] = []          # static catalog; empty = discover from the provider
     extra_headers: dict[str, str] = {}
+    api_version: str | None = None  # azure_openai classic API (deployments + api-version)
 
 
 class RuleCfg(Strict):
@@ -210,6 +211,9 @@ class McpServerCfg(Strict):
     default_side_effect: SideEffect = "read"
     timeout_s: float = 30.0
     max_output_bytes: int = 262_144
+    # MCP protocol negotiation: auto probes the 2026-07-28 revision and falls back to the initialize
+    # handshake; legacy always uses the handshake (2025-11-25 and earlier).
+    protocol: Literal["auto", "legacy"] = "auto"
 
     @model_validator(mode="after")
     def _check(self) -> "McpServerCfg":

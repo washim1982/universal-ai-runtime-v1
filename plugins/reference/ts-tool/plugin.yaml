@@ -1,0 +1,22 @@
+# Install first:  cd plugins/reference/ts-tool && npm install
+# Register this manifest, activate it, and add a tool policy for "text.*".
+apiVersion: uar/v1
+kind: Plugin
+metadata:
+  id: acme.textutil
+  version: 1.0.0
+  description: Reference tool plugin (TypeScript) - read-only text utilities.
+spec:
+  type: tool
+  tool_namespace: text
+  tools:
+    word_count: {side_effect: read}
+    slugify: {side_effect: read}
+  runtime:
+    api: uar.plugin.v1
+    mode: process
+    command: node
+    args: ["index.mjs"]
+    workdir: plugins/reference/ts-tool
+  capabilities: {network: [], secrets: []}
+  limits: {timeout_s: 5, concurrency: 8}

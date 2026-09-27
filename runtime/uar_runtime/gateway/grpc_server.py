@@ -131,6 +131,24 @@ class RuntimeServicer(pbg.RuntimeServicer):
                                  pb.Approval)
 
 
+    async def RegisterPlugin(self, request, context):
+        req = from_proto(request)
+        return await self._unary(context, "RegisterPlugin", lambda p, r: self.svc.register_plugin(p, req, r),
+                                 pb.PluginVersion)
+
+    async def ListPlugins(self, request, context):
+        return await self._unary(context, "ListPlugins", lambda p, r: self.svc.list_plugins(p), pb.ListPluginsResponse)
+
+    async def ActivatePlugin(self, request, context):
+        return await self._unary(context, "ActivatePlugin",
+                                 lambda p, r: self.svc.activate_plugin(p, request.plugin_id, request.version, r),
+                                 pb.PluginVersion)
+
+    async def RollbackPlugin(self, request, context):
+        return await self._unary(context, "RollbackPlugin",
+                                 lambda p, r: self.svc.rollback_plugin(p, request.plugin_id, r), pb.PluginVersion)
+
+
 async def start_grpc(svc: RuntimeService, host: str, port: int) -> grpc.aio.Server:
     server = grpc.aio.server(options=[("grpc.max_receive_message_length", svc.s.server.max_body_bytes)])
     pbg.add_RuntimeServicer_to_server(RuntimeServicer(svc), server)

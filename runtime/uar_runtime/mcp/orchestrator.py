@@ -145,6 +145,7 @@ class ServerSession:
         self._stop: asyncio.Event | None = None
         self._lock = asyncio.Lock()
         self.last_error: str | None = None
+        self._mode = cfg.protocol
 
     def _target(self) -> Any:
         c = self.cfg
@@ -162,7 +163,7 @@ class ServerSession:
     async def _owner(self) -> None:
         assert self._ready is not None and self._stop is not None
         try:
-            async with mcp.Client(self._target(), mode="auto", read_timeout_seconds=self.cfg.timeout_s) as client:
+            async with mcp.Client(self._target(), mode=self._mode, read_timeout_seconds=self.cfg.timeout_s) as client:
                 listed = await client.list_tools()
                 self.tools = {}
                 for t in listed.tools:
@@ -195,7 +196,20 @@ class ServerSession:
             loop = asyncio.get_running_loop()
             self._ready, self._stop = loop.create_future(), asyncio.Event()
             self._task = asyncio.create_task(self._owner(), name=f"mcp-{self.cfg.id}")
-            await asyncio.wait_for(asyncio.shield(self._ready), timeout=max(30.0, self.cfg.timeout_s))
+            try:
+                await asyncio.wait_for(asyncio.shield(self._ready), timeout=max(30.0, self.cfg.timeout_s))
+            except UARError as e:
+                # Some Streamable HTTP servers drop the connection on the 2026-07-28 discovery probe instead
+                # of rejecting it; retry once with the initialize handshake.
+                if e.code != "unavailable" or self._mode != "auto" or self.cfg.transport != "http":
+                    raise
+                log.info("mcp %s: protocol probe failed (%s); retrying with the initialize handshake",
+                         self.cfg.id, self.last_error)
+                await self._shutdown_task()
+                self._mode = "legacy"
+                self._ready, self._stop = loop.create_future(), asyncio.Event()
+                self._task = asyncio.create_task(self._owner(), name=f"mcp-{self.cfg.id}")
+                await asyncio.wait_for(asyncio.shield(self._ready), timeout=max(30.0, self.cfg.timeout_s))
 
     async def reset(self) -> None:
         async with self._lock:
@@ -224,6 +238,8 @@ class Orchestrator:
         self.store = store
         self.audit = audit
         self.sessions = {c.id: ServerSession(c, settings) for c in settings.mcp_servers}
+        self.plugin_tools: dict[str, dict[str, ToolInfo]] = {}   # plugin id -> tools (set by plugins.integrate)
+        self.plugin_call = None                                   # async (plugin_id, name, args, timeout) -> response
 
     async def start(self, timeout: float = 60) -> dict[str, str]:
         status: dict[str, str] = {}
@@ -245,6 +261,8 @@ class Orchestrator:
         out: dict[str, ToolInfo] = {}
         for s in self.sessions.values():
             out.update(s.tools)
+        for tools in self.plugin_tools.values():
+            out.update(tools)
         return out
 
     def tool(self, name: str) -> ToolInfo:
@@ -339,6 +357,9 @@ class Orchestrator:
                                 run_id=ctx.run_id, details=details, required=False)
 
     async def _call(self, t: ToolInfo, args: dict):
+        if t.server.startswith("plugin:"):
+            assert self.plugin_call is not None
+            return await self.plugin_call(t.server[len("plugin:"):], t.remote_name, args, t.timeout_s)
         sess = self.sessions[t.server]
         try:
             return await sess.call(t.remote_name, args, t.timeout_s)
@@ -365,6 +386,13 @@ class Orchestrator:
                            "the outcome is unknown", retryable=False, details={"error": type(e).__name__}) from e
 
     def _normalise(self, t: ToolInfo, result: Any, ms: int) -> ToolOutcome:
+        if t.server.startswith("plugin:"):
+            from ..plugins.host import from_struct
+            structured = from_struct(result.output) if result.output.fields else None
+            text = result.error_message if result.is_error else result.text
+            truncated = len(text) > 262_144
+            return ToolOutcome(t.name, bool(result.is_error), [{"type": "text", "text": text[:262_144]}] if text else [],
+                               structured, truncated, ms, side_effect=t.side_effect)
         cap = self.s.mcp_servers[[c.id for c in self.s.mcp_servers].index(t.server)].max_output_bytes
         blocks, used, truncated = [], 0, False
         for c in result.content or []:

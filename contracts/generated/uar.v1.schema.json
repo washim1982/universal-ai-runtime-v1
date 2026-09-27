@@ -1345,6 +1345,98 @@
         }
       },
       "additionalProperties": false
+    },
+    "RegisterPluginRequest": {
+      "type": "object",
+      "properties": {
+        "manifest": {
+          "type": "object",
+          "description": "Plugin manifest (apiVersion uar/v1, kind Plugin), validated against\n contracts/schemas/plugin.schema.json."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PluginVersion": {
+      "type": "object",
+      "properties": {
+        "plugin_id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "description": "model | tool | agent"
+        },
+        "status": {
+          "type": "string",
+          "description": "registered | active | inactive | failed"
+        },
+        "digest": {
+          "type": "string",
+          "description": "sha256 of the canonical manifest"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string",
+          "description": "validation or health-check detail"
+        },
+        "previous_version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListPluginsRequest": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "ListPluginsResponse": {
+      "type": "object",
+      "properties": {
+        "plugins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PluginVersion"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ActivatePluginRequest": {
+      "type": "object",
+      "properties": {
+        "plugin_id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RollbackPluginRequest": {
+      "type": "object",
+      "properties": {
+        "plugin_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

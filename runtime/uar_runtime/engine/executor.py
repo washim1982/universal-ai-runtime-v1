@@ -28,6 +28,7 @@ from ..errors import UARError
 from ..governance import Authenticator, Principal, matches_any
 from ..mcp.orchestrator import CallContext, Orchestrator, args_hash
 from ..observability import (NODE_SECONDS, RUN_QUEUE_SECONDS, RUNS, context_from_traceparent, get_tracer)
+from ..plugins.host import current_pins
 from ..router.adapters.base import ChatRequest, extract_json
 from ..router.service import ModelRouter
 from ..store import Store, jsonb
@@ -81,6 +82,8 @@ class Engine:
         runs.on_enqueue = self.wake
         # Test hook: raise at named points to simulate crashes ("after_intent", "after_tool", "between_nodes").
         self.crash_at: set[str] = set()
+        self.plugin_agents: dict[str, str] = {}   # agent id -> executable agent plugin id
+        self.call_plugin_agent = None             # set by plugins.integrate
 
     def wake(self) -> None:
         self._wake.set()
@@ -169,6 +172,7 @@ class Engine:
     async def execute(self, run: dict, fence: int) -> dict:
         """Execute (or resume) a run to a terminal or attention state. Returns the final state."""
         rid = run["run_id"]
+        pin_token = current_pins.set(run.get("plugins") or {})
         try:
             if run["attempts"] > MAX_CRASH_ATTEMPTS:
                 raise UARError("internal", f"run abandoned after {MAX_CRASH_ATTEMPTS} worker attempts")
@@ -194,6 +198,8 @@ class Engine:
             return await self._finalize(run, fence, "failed", None, e.err, None, node=e.node_id)
         except UARError as e:
             return await self._finalize(run, fence, "failed", None, e, None)
+        finally:
+            current_pins.reset(pin_token)
 
     async def _loop(self, run: dict, fence: int, p: Principal, g: Graph, st: dict) -> dict:
         rid = run["run_id"]
@@ -443,6 +449,10 @@ class Engine:
 
     async def _agent(self, run, fence, p, g, st, nid, node, ctx) -> Any:
         child_id = node["agent"]
+        if child_id in self.plugin_agents and self.call_plugin_agent is not None:
+            # Executable agent plugin: runs out of process; input/output are plain JSON.
+            return await self.call_plugin_agent(self.plugin_agents[child_id], child_id,
+                                                cel.render_mapping(node.get("input") or {}, ctx), run)
         depth = run.get("depth", 0) + 1
         if depth > g.limits["max_depth"]:
             raise UARError("limit_exceeded", f"max_depth {g.limits['max_depth']} reached")

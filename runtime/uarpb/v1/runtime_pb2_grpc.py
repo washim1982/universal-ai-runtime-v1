@@ -99,6 +99,26 @@ class RuntimeStub:
                 request_serializer=uarpb_dot_v1_dot_runtime__pb2.ApprovalDecision.SerializeToString,
                 response_deserializer=uarpb_dot_v1_dot_runtime__pb2.Approval.FromString,
                 _registered_method=True)
+        self.RegisterPlugin = channel.unary_unary(
+                '/uar.v1.Runtime/RegisterPlugin',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.RegisterPluginRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.PluginVersion.FromString,
+                _registered_method=True)
+        self.ListPlugins = channel.unary_unary(
+                '/uar.v1.Runtime/ListPlugins',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.ListPluginsRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListPluginsResponse.FromString,
+                _registered_method=True)
+        self.ActivatePlugin = channel.unary_unary(
+                '/uar.v1.Runtime/ActivatePlugin',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.ActivatePluginRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.PluginVersion.FromString,
+                _registered_method=True)
+        self.RollbackPlugin = channel.unary_unary(
+                '/uar.v1.Runtime/RollbackPlugin',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.RollbackPluginRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.PluginVersion.FromString,
+                _registered_method=True)
 
 
 class RuntimeServicer:
@@ -189,6 +209,32 @@ class RuntimeServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def RegisterPlugin(self, request, context):
+        """Plugins (administrators only). Versions are immutable; activation validates and health-checks
+        the version and affects new runs only (running runs keep the versions they started with).
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListPlugins(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ActivatePlugin(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RollbackPlugin(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RuntimeServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -256,6 +302,26 @@ def add_RuntimeServicer_to_server(servicer, server):
                     servicer.DecideApproval,
                     request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ApprovalDecision.FromString,
                     response_serializer=uarpb_dot_v1_dot_runtime__pb2.Approval.SerializeToString,
+            ),
+            'RegisterPlugin': grpc.unary_unary_rpc_method_handler(
+                    servicer.RegisterPlugin,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.RegisterPluginRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.PluginVersion.SerializeToString,
+            ),
+            'ListPlugins': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListPlugins,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListPluginsRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.ListPluginsResponse.SerializeToString,
+            ),
+            'ActivatePlugin': grpc.unary_unary_rpc_method_handler(
+                    servicer.ActivatePlugin,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ActivatePluginRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.PluginVersion.SerializeToString,
+            ),
+            'RollbackPlugin': grpc.unary_unary_rpc_method_handler(
+                    servicer.RollbackPlugin,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.RollbackPluginRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.PluginVersion.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -609,6 +675,114 @@ class Runtime:
             '/uar.v1.Runtime/DecideApproval',
             uarpb_dot_v1_dot_runtime__pb2.ApprovalDecision.SerializeToString,
             uarpb_dot_v1_dot_runtime__pb2.Approval.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RegisterPlugin(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/RegisterPlugin',
+            uarpb_dot_v1_dot_runtime__pb2.RegisterPluginRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.PluginVersion.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListPlugins(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/ListPlugins',
+            uarpb_dot_v1_dot_runtime__pb2.ListPluginsRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.ListPluginsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ActivatePlugin(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/ActivatePlugin',
+            uarpb_dot_v1_dot_runtime__pb2.ActivatePluginRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.PluginVersion.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RollbackPlugin(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/RollbackPlugin',
+            uarpb_dot_v1_dot_runtime__pb2.RollbackPluginRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.PluginVersion.FromString,
             options,
             channel_credentials,
             insecure,

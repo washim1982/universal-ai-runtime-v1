@@ -25,6 +25,8 @@ from .errors import UARError, invalid
 from .governance import Audit, Authenticator, Budget, Principal, RateLimiter
 from .mcp.orchestrator import CallContext, Orchestrator, args_hash
 from .observability import current_trace_id, get_tracer
+from .plugins.host import PluginManager
+from .plugins.integrate import install as install_plugin_integrations
 from .router.adapters.base import ChatRequest, ChatResult, ToolSpec
 from .router.service import ModelRouter
 from .simulation.planner import SimInputs, preview_inference, simulate, static_plan
@@ -50,6 +52,10 @@ class RuntimeService:
         self.orch = Orchestrator(settings, store, self.audit)
         self.runs = RunService(settings, store, self.audit)
         self.engine = Engine(settings, store, self.runs, self.router, self.orch, self.auth)
+        self.plugins = PluginManager(store, self.audit)
+        self.plugin_agents = self.engine.plugin_agents
+        self.runs.plugin_pins = self.plugins.pins
+        install_plugin_integrations(self)
         self._worker: asyncio.Task | None = None
         self.started = False
         self.startup_status: dict[str, Any] = {}
@@ -63,6 +69,7 @@ class RuntimeService:
             self.startup_status["providers"] = await self.router.refresh_catalog()
         if mcp:
             self.startup_status["mcp"] = await self.orch.start()
+        self.startup_status["plugins"] = await self.plugins.start()
         if self.s.agents_dir:
             self.startup_status["agents"] = await self._register_bundled_agents(Path(self.s.agents_dir))
         if worker if worker is not None else self.s.worker.embedded:
@@ -76,6 +83,7 @@ class RuntimeService:
             self._worker.cancel()
             await asyncio.gather(self._worker, return_exceptions=True)
         await self.orch.stop()
+        await self.plugins.stop()
         await self.router.aclose()
         await self.store.close()
 
@@ -427,6 +435,24 @@ class RuntimeService:
         await self.audit.record(p, "dryrun", target, "succeeded", request_id=request_id, required=False,
                                 details={"mode": mode})
         return {"request_id": request_id, **report.to_dict(self.s.pricing.currency)}
+
+    # ------------------------------------------------------------ plugins
+
+    async def register_plugin(self, p: Principal, req: dict, request_id: str) -> dict:
+        if not isinstance(req.get("manifest"), dict):
+            raise invalid("manifest is required")
+        return await self.plugins.register(p, req["manifest"], request_id)
+
+    async def list_plugins(self, p: Principal) -> dict:
+        return {"plugins": await self.plugins.list(p)}
+
+    async def activate_plugin(self, p: Principal, plugin_id: str, version: str, request_id: str) -> dict:
+        if not version:
+            raise invalid("version is required")
+        return await self.plugins.activate(p, plugin_id, version, request_id)
+
+    async def rollback_plugin(self, p: Principal, plugin_id: str, request_id: str) -> dict:
+        return await self.plugins.rollback(p, plugin_id, request_id)
 
     async def decide_approval(self, p: Principal, req: dict, request_id: str) -> dict:
         raise UARError("unimplemented", "approvals are planned for M9")

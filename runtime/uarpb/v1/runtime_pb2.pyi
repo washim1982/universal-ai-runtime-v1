@@ -539,3 +539,57 @@ class Approval(_message.Message):
     status: str
     run_id: str
     def __init__(self, approval_id: _Optional[str] = ..., status: _Optional[str] = ..., run_id: _Optional[str] = ...) -> None: ...
+
+class RegisterPluginRequest(_message.Message):
+    __slots__ = ("manifest",)
+    MANIFEST_FIELD_NUMBER: _ClassVar[int]
+    manifest: _struct_pb2.Struct
+    def __init__(self, manifest: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
+
+class PluginVersion(_message.Message):
+    __slots__ = ("plugin_id", "version", "type", "status", "digest", "active", "created_at", "capabilities", "message", "previous_version")
+    PLUGIN_ID_FIELD_NUMBER: _ClassVar[int]
+    VERSION_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    DIGEST_FIELD_NUMBER: _ClassVar[int]
+    ACTIVE_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    CAPABILITIES_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    PREVIOUS_VERSION_FIELD_NUMBER: _ClassVar[int]
+    plugin_id: str
+    version: str
+    type: str
+    status: str
+    digest: str
+    active: bool
+    created_at: _timestamp_pb2.Timestamp
+    capabilities: _containers.RepeatedScalarFieldContainer[str]
+    message: str
+    previous_version: str
+    def __init__(self, plugin_id: _Optional[str] = ..., version: _Optional[str] = ..., type: _Optional[str] = ..., status: _Optional[str] = ..., digest: _Optional[str] = ..., active: _Optional[bool] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., capabilities: _Optional[_Iterable[str]] = ..., message: _Optional[str] = ..., previous_version: _Optional[str] = ...) -> None: ...
+
+class ListPluginsRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class ListPluginsResponse(_message.Message):
+    __slots__ = ("plugins",)
+    PLUGINS_FIELD_NUMBER: _ClassVar[int]
+    plugins: _containers.RepeatedCompositeFieldContainer[PluginVersion]
+    def __init__(self, plugins: _Optional[_Iterable[_Union[PluginVersion, _Mapping]]] = ...) -> None: ...
+
+class ActivatePluginRequest(_message.Message):
+    __slots__ = ("plugin_id", "version")
+    PLUGIN_ID_FIELD_NUMBER: _ClassVar[int]
+    VERSION_FIELD_NUMBER: _ClassVar[int]
+    plugin_id: str
+    version: str
+    def __init__(self, plugin_id: _Optional[str] = ..., version: _Optional[str] = ...) -> None: ...
+
+class RollbackPluginRequest(_message.Message):
+    __slots__ = ("plugin_id",)
+    PLUGIN_ID_FIELD_NUMBER: _ClassVar[int]
+    plugin_id: str
+    def __init__(self, plugin_id: _Optional[str] = ...) -> None: ...
