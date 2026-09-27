@@ -1,0 +1,19 @@
+# Build first:  mvn -f plugin-sdks/java install  &&  mvn -f plugins/reference/java-agent package
+# Graphs call it as a sub-agent:  {type: agent, agent: word_frequency, input: {text: "..."}}
+apiVersion: uar/v1
+kind: Plugin
+metadata:
+  id: acme.wordfreq
+  version: 1.0.0
+  description: Reference executable agent plugin (Java) - most frequent words of a text.
+spec:
+  type: agent
+  agent_id: word_frequency
+  runtime:
+    api: uar.plugin.v1
+    mode: process
+    command: java
+    args: ["-jar", "plugins/reference/java-agent/target/java-agent.jar"]
+  capabilities: {network: [], secrets: []}
+  limits: {timeout_s: 15, concurrency: 8}
+  config: {top: 3}

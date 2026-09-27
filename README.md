@@ -1,7 +1,7 @@
 # Universal AI Runtime (UAR)
 
 One protocol for model inference, governed MCP tools and durable agent graphs, with SDKs for
-application developers. This repository implements milestones **M0–M6** (the MVP) of
+application developers. This repository implements milestones **M0–M8** of
 [docs/UAR-MASTER-IMPLEMENTATION-PLAN.md](docs/UAR-MASTER-IMPLEMENTATION-PLAN.md).
 
 **New PC? Double-click `setup.cmd`** for a setup dashboard with Run buttons and live service status; the friendly walkthrough is [docs/user-guide.html](docs/user-guide.html). Feature-by-feature testing: [docs/user-guide.md](docs/user-guide.md).
@@ -30,7 +30,8 @@ print(resp.text)
 | Durable agent engine: YAML/JSON graphs, CEL expressions, checkpoints, fencing, recovery, sub-agents, loops, parallel | `runtime/uar_runtime/engine/` |
 | Dry-run: static plan + fixture simulation, provably non-executing | `runtime/uar_runtime/simulation/` |
 | Observability: OpenTelemetry traces, Prometheus metrics, JSON logs, usage ledger | `observability.py` |
-| SDKs: Python (`uar`), TypeScript (`@uar/client`), shared conformance fixtures, `uar-mock` | `sdks/`, `contracts/fixtures/`, `mock/` |
+| SDKs: Python, TypeScript, Go, Rust, .NET, Java — one set of conformance fixtures, `uar-mock` | `sdks/`, `contracts/fixtures/`, `mock/` |
+| Plugins: gRPC plugin runtime; plugin SDKs for Python, Go, TypeScript, .NET, Java; reference plugins | `runtime/uar_runtime/plugins/`, `plugin-sdks/`, `plugins/` |
 | Packaging: Docker image, Compose, Helm chart (local profile), CI | `deploy/`, `.github/` |
 
 ## Quick start (Windows, PowerShell or Git Bash)

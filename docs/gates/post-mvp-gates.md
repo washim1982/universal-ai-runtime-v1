@@ -32,9 +32,25 @@ Limits of the M7 implementation, stated plainly:
 - Plugin gRPC traffic is unauthenticated plaintext on loopback; mTLS between services is M10.
 - Capabilities are declarative (network hosts, secret names). Secrets are only the ones declared.
 
-## M8 — SDK wave 2
+## M8 — SDK wave 2 ✅
 
-Pending.
+Recorded 2026-09-27. Toolchains: Go 1.27, Rust 1.98 (cargo), .NET SDK 10 (targets net8.0), JDK 21 + Maven 3.9.16.
+
+| Gate item | Evidence |
+|---|---|
+| All six SDKs pass 100% of the shared conformance fixtures against `uar-mock` | Python 10, TypeScript 9, Go (`go test`: 8 fixtures + retry), Rust (`cargo test`: 8 fixtures + retry + doc example), .NET (console runner: 8 fixtures + retry), Java (JUnit: 10 tests) |
+| …and against a live runtime | `runtime/tests/test_sdk_live.py`: **6 passed** (each SDK's own suite pointed at the live test runtime) |
+| Idiomatic API, typed errors, cancellation, no automatic retry of non-idempotent calls | Go: context-first, `*Error` with status helpers; Rust: async `futures::Stream`, `Error::Api`; .NET: `IAsyncEnumerable<UarEvent>`, `UarException`; Java: `Stream<UarEvent>` (closeable), `UARException`. Each has a no-retry test |
+| The original snippets run essentially unchanged | Java: `new UARClient(url)` / `client.inference(model, prompt, agent)` / `resp.getText()` — `examples/java/Quickstart.java` compiles against the SDK; Python and TypeScript examples ran in M6 |
+| Java and .NET plugin SDK helpers | `plugin-sdks/java` (grpc-java, stubs generated from the proto at build time) with `plugins/reference/java-agent` → `test_java_agent_plugin`; `plugin-sdks/dotnet` (Grpc.AspNetCore) with `plugins/reference/dotnet-tool` → `test_dotnet_tool_plugin` |
+
+Decision recorded in [ADR 0015](../adr/0015-sdk-transport.md): every SDK uses the HTTP/JSON + SSE surface
+so one set of fixtures and one mock serve all six; gRPC stays available through the generated stubs.
+
+Found and fixed: the JDK's `HttpClient` attempts a cleartext HTTP/2 upgrade (h2c) that drops request
+bodies on the runtime's HTTP server, so the Java SDK pins HTTP/1.1. On this machine Java needs the
+Windows trust store (`-Djavax.net.ssl.trustStoreType=Windows-ROOT`) because a TLS-inspecting
+component's root certificate is trusted by Windows but not by the JDK.
 
 ## M9 — Enterprise governance
 

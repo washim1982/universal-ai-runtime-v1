@@ -1,6 +1,6 @@
 # Capability matrix
 
-Status of every UAR capability from `Mission_Comparison.md`, as of 2026-09-27 (M7).
+Status of every UAR capability from `Mission_Comparison.md`, as of 2026-09-27 (M8).
 Only **live-tested** and **fixture-tested** entries may be claimed as supported.
 
 | Legend | Meaning |
@@ -42,7 +42,8 @@ Only **live-tested** and **fixture-tested** entries may be claimed as supported.
 | Dry-run: static plan + fixture simulation, non-executing | fixture-tested |
 | Agent plugins (executable and declarative) | fixture-tested (Python reference plugin, declarative package) |
 | SDKs: Python, TypeScript | fixture-tested (mock + live runtime) |
-| SDKs: Java, .NET, Go, Rust | planned (M8) |
+| SDKs: Go, Rust, .NET, Java | fixture-tested (mock + live runtime) |
+| Plugin SDK helpers: Python, Go, TypeScript, .NET, Java | fixture-tested (a reference plugin per language) |
 | Kubernetes-native / Helm / Docker Desktop Kubernetes | implemented, **not verified** (no cluster) |
 | Local-only mode (`profile: local-only` blocks cloud routes) | fixture-tested via egress policy; container stack ran with cloud credentials absent |
 | Plugin runtime (register, integrity, activate, pin, rollback, breaker) | fixture-tested |

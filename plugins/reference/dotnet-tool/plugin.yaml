@@ -1,0 +1,20 @@
+# Build first:  dotnet build -c Release plugins/reference/dotnet-tool
+# Register this manifest, activate it, and add a tool policy for "math.*".
+apiVersion: uar/v1
+kind: Plugin
+metadata:
+  id: acme.mathutil
+  version: 1.0.0
+  description: Reference tool plugin (.NET) - statistics over a list of numbers.
+spec:
+  type: tool
+  tool_namespace: math
+  tools:
+    stats: {side_effect: read}
+  runtime:
+    api: uar.plugin.v1
+    mode: process
+    command: dotnet
+    args: ["plugins/reference/dotnet-tool/bin/Release/net8.0/MathUtil.dll"]
+  capabilities: {network: [], secrets: []}
+  limits: {timeout_s: 10, concurrency: 8}

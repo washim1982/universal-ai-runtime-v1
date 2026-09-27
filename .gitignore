@@ -11,3 +11,9 @@ examples/workspace/reports/*
 !examples/workspace/reports/.gitkeep
 plugins/reference/go-model/sentiment
 plugins/reference/go-model/sentiment.exe
+sdks/rust/target/
+sdks/java/target/
+plugin-sdks/java/target/
+plugins/reference/java-agent/target/
+bin/
+obj/

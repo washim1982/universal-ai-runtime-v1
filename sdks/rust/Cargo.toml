@@ -1,0 +1,23 @@
+[package]
+# Placeholder crate name: check availability and publication rights before publishing.
+name = "uar-client"
+version = "0.8.0"
+edition = "2021"
+description = "Rust client for the Universal AI Runtime (HTTP/JSON + SSE)"
+license = "Apache-2.0"
+
+[lib]
+name = "uar"
+
+[dependencies]
+reqwest = { version = "0.12", features = ["json", "stream"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+futures-util = "0.3"
+bytes = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["time"] }
+rand = "0.9"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }

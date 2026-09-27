@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- Placeholder package id: check availability and publication rights before publishing. -->
+    <PackageId>Uar.Plugin</PackageId>
+    <Version>0.8.0</Version>
+    <Description>Write Universal AI Runtime plugins in .NET</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.84.0" />
+    <!-- Stubs are generated from the canonical proto at build time. -->
+    <Protobuf Include="..\..\..\proto\uarpb\plugin\v1\plugin.proto" ProtoRoot="..\..\..\proto" GrpcServices="Server" />
+  </ItemGroup>
+</Project>

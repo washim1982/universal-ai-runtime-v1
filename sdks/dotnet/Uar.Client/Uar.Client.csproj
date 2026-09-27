@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- Placeholder package id: check availability and publication rights before publishing. -->
+    <PackageId>Uar.Client</PackageId>
+    <Version>0.8.0</Version>
+    <Description>.NET client for the Universal AI Runtime (HTTP/JSON + SSE)</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+  </PropertyGroup>
+</Project>

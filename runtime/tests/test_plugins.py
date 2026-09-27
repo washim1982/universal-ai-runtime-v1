@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import copy
 import hashlib
 import shutil
@@ -252,3 +253,63 @@ async def test_typescript_tool_plugin(env):
         assert r.status_code == 200 and r.json()["structured"] == {"words": 3, "characters": 13}, r.text
         r = await c.post("/api/v1/tool/execute", json={"tool": "text.slugify", "args": {"text": "Hello, World!"}})
         assert r.json()["structured"] == {"slug": "hello-world"}
+
+
+DOTNET_PLUGIN = ROOT / "plugins/reference/dotnet-tool"
+JAVA_PLUGIN = ROOT / "plugins/reference/java-agent"
+
+
+def _java() -> str | None:
+    found = shutil.which("java")
+    if found:
+        return found
+    for base in (Path(os.environ.get("JAVA_HOME", "")), *sorted(Path(r"C:\Program Files\Microsoft").glob("jdk-*"))):
+        exe = base / "bin" / ("java.exe" if sys.platform == "win32" else "java")
+        if str(base) and exe.exists():
+            return str(exe)
+    return None
+
+
+@pytest.mark.skipif(not shutil.which("dotnet"), reason=".NET SDK not installed")
+async def test_dotnet_tool_plugin(env):
+    dll = DOTNET_PLUGIN / "bin/Release/net8.0/MathUtil.dll"
+    if not dll.exists():
+        r = await asyncio.to_thread(subprocess.run, ["dotnet", "build", "-c", "Release", str(DOTNET_PLUGIN)],
+                                    capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout[-2000:]
+    env.svc.s.tool_policies.append(ToolPolicyCfg(tool="math.*", roles=["developer", "admin"]))
+    manifest = yaml.safe_load((DOTNET_PLUGIN / "plugin.yaml").read_text(encoding="utf-8"))
+    r = await register_and_activate(env, manifest)
+    assert r.status_code == 200, r.text
+    async with httpx.AsyncClient(base_url=env.http, headers=headers(env.keys.dev), timeout=60) as c:
+        r = await c.post("/api/v1/tool/execute", json={"tool": "math.stats", "args": {"numbers": [3, 1, 2, 10]}})
+        assert r.status_code == 200, r.text
+        assert r.json()["structured"] == {"count": 4, "sum": 16, "mean": 4, "median": 2.5, "min": 1, "max": 10}
+
+
+@pytest.mark.skipif(not _java(), reason="Java not installed")
+async def test_java_agent_plugin(env):
+    jar = JAVA_PLUGIN / "target/java-agent.jar"
+    if not jar.exists():
+        pytest.skip("build it: mvn -f plugin-sdks/java install && mvn -f plugins/reference/java-agent package")
+    manifest = yaml.safe_load((JAVA_PLUGIN / "plugin.yaml").read_text(encoding="utf-8"))
+    manifest["spec"]["runtime"]["command"] = _java()
+    r = await register_and_activate(env, manifest)
+    assert r.status_code == 200, r.text
+    graph = {"apiVersion": "uar/v1", "kind": "Agent", "metadata": {"id": "uses_java_agent", "version": "1.0.0"},
+             "spec": {"start": "wf", "permissions": {"agents": ["word_frequency"]},
+                      "nodes": [{"id": "wf", "type": "agent", "agent": "word_frequency", "input": {"text": "${ input.text }"}},
+                                {"id": "done", "type": "return", "value": "${ nodes.wf.output }"}],
+                      "edges": [{"from": "wf", "to": "done"}]}}
+    async with httpx.AsyncClient(base_url=env.http, headers=headers(env.keys.dev), timeout=60) as c:
+        assert (await c.post("/api/v1/agents", json={"definition": graph})).status_code == 200
+        run = (await c.post("/api/v1/agent/run", json={"agent_id": "uses_java_agent",
+                                                       "input": {"text": "UAR runs agents and UAR runs tools; agents plan"}})).json()
+        for _ in range(100):
+            run = (await c.get(f"/api/v1/runs/{run['run_id']}")).json()
+            if run["status"] not in ("queued", "running"):
+                break
+            await asyncio.sleep(0.1)
+    assert run["status"] == "succeeded", run
+    assert run["output"]["top"] == [{"word": "agents", "count": 2}, {"word": "runs", "count": 2},
+                                    {"word": "uar", "count": 2}]
