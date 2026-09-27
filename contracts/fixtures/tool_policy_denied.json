@@ -1,0 +1,35 @@
+{
+  "name": "tool_policy_denied",
+  "description": "Writes outside the allowed prefix are denied by tool policy.",
+  "operation": "ExecuteTool",
+  "request_type": "ToolRequest",
+  "response_type": null,
+  "auth": "dev",
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/tool/execute",
+    "body": {
+      "tool": "fs.write_text",
+      "args": {
+        "path": "docs/x.md",
+        "content": "x"
+      }
+    }
+  },
+  "response": {
+    "status": 403,
+    "ignore": [
+      "error.request_id",
+      "error.details"
+    ],
+    "body": {
+      "error": {
+        "code": "policy_denied",
+        "message": "argument path outside allowed prefixes",
+        "request_id": "req_x",
+        "retryable": false,
+        "details": {}
+      }
+    }
+  }
+}

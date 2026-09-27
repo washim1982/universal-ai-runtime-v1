@@ -1,0 +1,31 @@
+{{- if and .Values.networkPolicy.enabled .Values.mcp.enabled }}
+# MCP servers accept traffic only from the runtime and have no egress at all.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: uar-mcp-isolation
+  namespace: {{ .Values.mcp.namespace }}
+  labels: {{- include "uar.labels" . | nindent 4 }}
+spec:
+  podSelector: {matchLabels: {uar.dev/role: mcp-server}}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: {{ .Release.Namespace }}}}
+          podSelector: {matchLabels: {app.kubernetes.io/name: uar-runtime}}
+      ports: [{port: {{ .Values.mcp.port }}}]
+  egress: []
+---
+# Postgres accepts traffic only from the runtime.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-postgres
+  labels: {{- include "uar.labels" . | nindent 4 }}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: postgres}}
+  policyTypes: [Ingress]
+  ingress:
+    - from: [{podSelector: {matchLabels: {app.kubernetes.io/name: uar-runtime}}}]
+      ports: [{port: 5432}]
+{{- end }}

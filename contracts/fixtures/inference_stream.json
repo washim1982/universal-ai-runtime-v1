@@ -1,0 +1,98 @@
+{
+  "name": "inference_stream",
+  "description": "Streaming inference: started, token deltas, usage, exactly one terminal event.",
+  "operation": "InferStream",
+  "request_type": "InferenceRequest",
+  "response_type": "Event",
+  "auth": "dev",
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/inference",
+    "body": {
+      "model": "local:default",
+      "input": "stream",
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "ignore": [
+      "ts",
+      "trace_id",
+      "request_id",
+      "usage"
+    ],
+    "events": [
+      {
+        "run_id": "",
+        "seq": 1,
+        "ts": "2026-09-26T00:00:00Z",
+        "trace_id": "",
+        "request_id": "req_2",
+        "started": {
+          "model": "echo",
+          "provider": "fake"
+        }
+      },
+      {
+        "run_id": "",
+        "seq": 2,
+        "ts": "2026-09-26T00:00:00Z",
+        "trace_id": "",
+        "request_id": "req_2",
+        "token": {
+          "text": "echo"
+        }
+      },
+      {
+        "run_id": "",
+        "seq": 3,
+        "ts": "2026-09-26T00:00:00Z",
+        "trace_id": "",
+        "request_id": "req_2",
+        "token": {
+          "text": ": st"
+        }
+      },
+      {
+        "run_id": "",
+        "seq": 4,
+        "ts": "2026-09-26T00:00:00Z",
+        "trace_id": "",
+        "request_id": "req_2",
+        "token": {
+          "text": "ream"
+        }
+      },
+      {
+        "run_id": "",
+        "seq": 5,
+        "ts": "2026-09-26T00:00:00Z",
+        "trace_id": "",
+        "request_id": "req_2",
+        "usage": {
+          "input_tokens": 6,
+          "output_tokens": 3,
+          "estimated": false,
+          "price_version": "test-1",
+          "cost": {
+            "amount": "0",
+            "currency": "USD"
+          }
+        }
+      },
+      {
+        "run_id": "",
+        "seq": 6,
+        "ts": "2026-09-26T00:00:00Z",
+        "trace_id": "",
+        "request_id": "req_2",
+        "completed": {
+          "status": "succeeded",
+          "content": "echo: stream",
+          "finish_reason": "stop"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+# Local profile for Docker Desktop Kubernetes. See docs/runbooks/docker-desktop.md.
+
+image:
+  repository: uar-runtime        # built locally; Docker Desktop's cluster shares the image store
+  tag: "0.6.0"
+  pullPolicy: IfNotPresent
+
+# Required: the runtime configuration (uar.yaml). Generate it with
+#   python scripts/bootstrap_local.py --k8s
+# and pass it with: --set-file config=.local/uar-k8s.yaml
+config: ""
+
+# Optional provider credentials, exposed to the runtime as environment variables
+# (e.g. ANTHROPIC_API_KEY). Prefer --set-file or an external secret manager; never commit them.
+providerSecrets: {}
+
+runtime:
+  replicas: 1
+  httpPort: 9000
+  grpcPort: 50051
+  resources:
+    requests: {cpu: 250m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+  # Model servers running on the Windows host are reachable through host.docker.internal.
+  env:
+    UAR_OLLAMA_URL: http://host.docker.internal:11434
+    UAR_LMSTUDIO_URL: http://host.docker.internal:1234/v1
+    UAR_LLAMACPP_URL: http://host.docker.internal:8080/v1
+
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  storage: 2Gi
+  storageClass: ""              # "" = cluster default (hostpath on Docker Desktop)
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 512Mi}
+  # When disabled, provide externalUrl (postgresql://user:pass@host:5432/db).
+  externalUrl: ""
+
+mcp:
+  enabled: true
+  namespace: uar-plugins
+  createNamespace: true
+  port: 8765
+  workspaceStorage: 1Gi
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {cpu: 500m, memory: 256Mi}
+
+networkPolicy:
+  # Requires a CNI that enforces NetworkPolicy. Docker Desktop's default does NOT enforce it;
+  # the policies are still rendered so the same chart is correct on an enforcing cluster.
+  enabled: true
+
+ingress:
+  enabled: false                # needs an ingress controller; the runbook uses port-forward instead
+  className: ""
+  host: uar.localhost

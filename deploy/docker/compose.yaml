@@ -1,0 +1,45 @@
+# Local development dependencies (and an optional containerised runtime).
+#   docker compose -f deploy/docker/compose.yaml up -d postgres          # database only
+#   docker compose -f deploy/docker/compose.yaml --profile full up -d    # + runtime image + Jaeger
+name: uar
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: uar
+      POSTGRES_PASSWORD: uar-dev          # local development only
+      POSTGRES_DB: uar
+    ports: ["127.0.0.1:55440:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uar"]
+      interval: 3s
+      retries: 20
+
+  jaeger:
+    profiles: [full, tracing]
+    image: jaegertracing/all-in-one:1.62.0
+    ports: ["127.0.0.1:16686:16686", "127.0.0.1:4318:4318"]
+
+  uar:
+    profiles: [full]
+    image: uar-runtime:0.6.0
+    build: {context: ../.., dockerfile: deploy/docker/Dockerfile}
+    depends_on: {postgres: {condition: service_healthy}}
+    environment:
+      UAR_CONFIG: /config/uar.yaml
+      UAR_DATABASE_URL: postgresql://uar:uar-dev@postgres:5432/uar
+      UAR_OLLAMA_URL: http://host.docker.internal:11434
+      UAR_LMSTUDIO_URL: http://host.docker.internal:1234/v1
+      UAR_LLAMACPP_URL: http://host.docker.internal:8080/v1
+      UAR_OTLP_ENDPOINT: http://jaeger:4318
+      UAR_BIND_HOST: 0.0.0.0
+      UAR_WORKSPACE: /workspace
+    env_file: [../../.local/credentials.env]
+    volumes:
+      - ../../.local/uar.yaml:/config/uar.yaml:ro
+      - ../../examples/workspace:/workspace
+    ports: ["127.0.0.1:9000:9000", "127.0.0.1:50051:50051"]
+
+volumes:
+  pgdata:

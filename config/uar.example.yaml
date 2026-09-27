@@ -1,0 +1,97 @@
+# Universal AI Runtime - example configuration.
+# `python scripts/bootstrap_local.py` copies this to .local/uar.yaml with freshly generated
+# API keys (hashes only are stored here; the keys go to .local/credentials.env).
+# ${VAR} / ${VAR:-default} are expanded from the environment.
+
+profile: standard            # local-only | standard | distributed
+database_url: ${UAR_DATABASE_URL:-postgresql://uar:uar-dev@127.0.0.1:55440/uar}
+
+server:
+  host: "${UAR_BIND_HOST:-127.0.0.1}"   # loopback unless containerised; production identity/TLS is M9/M10
+  http_port: 9000
+  grpc_port: 50051
+
+worker:
+  embedded: true
+  concurrency: 4
+
+observability:
+  otlp_endpoint: ${UAR_OTLP_ENDPOINT:-}
+  log_json: true
+
+auth:
+  tenants:
+    - id: acme
+      allow_cloud: false          # set true to allow cloud: routes for this tenant
+      allow_cloud_fallback: false
+      quotas: {requests_per_minute: 600, concurrent_requests: 16, tokens_per_day: 2000000}
+      api_keys:
+        - {id: "__DEV_ID__", sha256: "__DEV_SHA__", subject: "dev@acme", roles: [developer]}
+        - {id: "__ADMIN_ID__", sha256: "__ADMIN_SHA__", subject: "admin@acme", roles: [admin]}
+        - {id: "__OPS_ID__", sha256: "__OPS_SHA__", subject: "ops@acme", roles: [operator]}
+  jwt:
+    hs256_secret_env: UAR_JWT_SECRET   # dev/test only; OIDC arrives in M9
+
+providers:
+  - {id: ollama, type: ollama, model_class: local, base_url: "${UAR_OLLAMA_URL:-http://127.0.0.1:11434}",
+     max_concurrency: 2}
+  - {id: lmstudio, type: openai_compat, model_class: local, base_url: "${UAR_LMSTUDIO_URL:-http://127.0.0.1:1234/v1}",
+     max_concurrency: 1, timeout_s: 300}
+  - {id: llamacpp, type: openai_compat, model_class: local, base_url: "${UAR_LLAMACPP_URL:-http://127.0.0.1:8080/v1}",
+     max_concurrency: 1, timeout_s: 300,
+     api_key_env: UAR_LLAMACPP_KEY}   # used only if set (llama-server started with --api-key)
+  - {id: anthropic, type: anthropic, model_class: cloud, api_key_env: ANTHROPIC_API_KEY,
+     models: [claude-opus-5, claude-sonnet-5, claude-haiku-4-5]}
+  - {id: openai, type: openai, model_class: cloud, api_key_env: OPENAI_API_KEY}
+  - {id: groq, type: openai_compat, model_class: cloud, base_url: "https://api.groq.com/openai/v1",
+     api_key_env: GROQ_API_KEY}
+  # Example enterprise endpoint (any OpenAI-compatible gateway such as vLLM):
+  # - {id: corp_vllm, type: openai_compat, model_class: enterprise, base_url: "https://llm.corp.example/v1",
+  #    api_key_env: CORP_LLM_KEY}
+
+router:
+  default_class: local
+  classes:
+    local: [ollama, lmstudio, llamacpp]
+    cloud: [anthropic, openai, groq]
+  aliases:
+    local:default: ollama/granite4:latest
+    cloud:default: anthropic/claude-opus-5
+  rules:
+    - {when: {data_class: confidential}, deny: [cloud]}
+  fallback:
+    - {from: "local:default", to: "cloud:default"}   # used only when the tenant allows cloud fallback
+  circuit_breaker: {failure_threshold: 3, window_s: 30, cooldown_s: 30}
+
+pricing:
+  version: "2026-09-26"
+  currency: USD
+  models:
+    # Local inference has no provider charge.
+    "ollama/*": {input_per_mtok: "0", output_per_mtok: "0"}
+    "lmstudio/*": {input_per_mtok: "0", output_per_mtok: "0"}
+    "llamacpp/*": {input_per_mtok: "0", output_per_mtok: "0"}
+    # Anthropic list prices (per million tokens) as of the catalog version; verify before relying on them.
+    "anthropic/claude-opus-5": {input_per_mtok: "5.00", output_per_mtok: "25.00"}
+    "anthropic/claude-sonnet-5": {input_per_mtok: "2.00", output_per_mtok: "10.00"}
+    "anthropic/claude-haiku-4-5": {input_per_mtok: "1.00", output_per_mtok: "5.00"}
+    # No entries for openai/groq: their costs are reported as unknown, never zero.
+
+mcp_servers:
+  - id: fs
+    command: python
+    args: ["-m", "uar_mcp_servers.fs_server"]
+    env: {UAR_FS_ROOT: "${UAR_WORKSPACE:-repo:examples/workspace}", UAR_FS_WRITE_DIRS: "reports"}
+    tools:
+      write_text: {side_effect: write}
+  - id: db
+    command: python
+    args: ["-m", "uar_mcp_servers.db_server"]
+    env: {UAR_DB_PATH: "repo:examples/fixtures/sales.db"}
+
+tool_policies:
+  - {tool: "fs.write_text", roles: [developer, admin], args: {path: {prefix: ["reports/"], max_length: 120}}}
+  - {tool: "fs.*", roles: [developer, admin, operator]}
+  - {tool: "db.*", roles: [developer, admin]}
+
+agents_dir: examples/agents

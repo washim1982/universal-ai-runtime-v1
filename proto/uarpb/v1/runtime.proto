@@ -1,0 +1,313 @@
+// Universal AI Runtime — public contract, version 1. Wire package: uar.v1.
+// (Stored under proto/uarpb/ so generated Python stubs import as `uarpb`, leaving `uar` to the SDK.)
+// This file is the source of truth. OpenAPI and JSON Schemas under contracts/generated
+// are produced from it by scripts/gen_contracts.py; never edit them by hand.
+//
+// JSON mapping: proto3 canonical JSON with original (snake_case) field names.
+// Streamed Event messages additionally carry "type": <name of the populated `body` field>.
+syntax = "proto3";
+
+package uar.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+service Runtime {
+  // Synchronous inference. With `agent` set, starts that agent and waits for its result.
+  rpc Infer(InferenceRequest) returns (InferenceResponse);
+  // Streaming inference: start, token deltas, usage, exactly one terminal event.
+  rpc InferStream(InferenceRequest) returns (stream Event);
+
+  rpc ExecuteTool(ToolRequest) returns (ToolResult);
+  rpc ListTools(ListToolsRequest) returns (ListToolsResponse);
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+
+  rpc RegisterAgent(RegisterAgentRequest) returns (AgentVersion);
+  rpc StartRun(RunRequest) returns (Run);
+  rpc GetRun(GetRunRequest) returns (Run);
+  // Ordered, durable run events. Resumable: pass the last seen seq as after_seq.
+  rpc WatchRun(WatchRunRequest) returns (stream Event);
+  // Idempotent.
+  rpc CancelRun(CancelRunRequest) returns (Run);
+  // Resolve a run in needs_attention after an ambiguous external write.
+  rpc ResolveRun(ResolveRunRequest) returns (Run);
+
+  // Offline: never calls a model, tool, plugin or network endpoint.
+  rpc DryRun(DryRunRequest) returns (DryRunReport);
+
+  // Contract reserved for M9; the MVP returns UNIMPLEMENTED / HTTP 501.
+  rpc DecideApproval(ApprovalDecision) returns (Approval);
+}
+
+// ---------- shared ----------
+
+message Money {
+  string amount = 1;    // decimal string, e.g. "0.0012"
+  string currency = 2;  // ISO 4217
+}
+
+message Usage {
+  int32 input_tokens = 1;
+  int32 output_tokens = 2;
+  // Absent when no price is known for the model. Unknown is never reported as zero.
+  Money cost = 3;
+  // True when counts or cost are estimates rather than provider-reported values.
+  bool estimated = 4;
+  string price_version = 5;
+}
+
+message Error {
+  string code = 1;        // stable machine code, see contracts/errors.md
+  string message = 2;     // safe for display
+  string request_id = 3;
+  bool retryable = 4;
+  google.protobuf.Struct details = 5;  // redacted
+}
+
+// ---------- inference ----------
+
+message ToolCallRequest {
+  string id = 1;
+  string name = 2;
+  google.protobuf.Struct args = 3;
+}
+
+message ChatMessage {
+  string role = 1;  // system | user | assistant | tool
+  string content = 2;
+  repeated ToolCallRequest tool_calls = 3;  // assistant messages
+  string tool_call_id = 4;                  // tool messages
+}
+
+message GenerationParams {
+  optional double temperature = 1;
+  optional int32 max_tokens = 2;
+  optional double top_p = 3;
+  repeated string stop = 4;
+  // Request structured output matching this JSON Schema.
+  google.protobuf.Struct response_schema = 5;
+}
+
+message InferenceRequest {
+  // [class ":"] [provider "/"] name   e.g. local:llama3:8b, cloud:default, enterprise:corp/finance-7b
+  string model = 1;
+  repeated ChatMessage messages = 2;
+  // Shorthand for a single user message; ignored when messages is non-empty.
+  string input = 3;
+  // Registered tool names exposed to the model for function calling.
+  repeated string tools = 4;
+  string tool_mode = 5;  // "suggest" (default) | "auto"
+  // When set, runs this agent with {"prompt": <input>} and returns its result.
+  string agent = 6;
+  bool stream = 7;
+  GenerationParams params = 8;
+  string data_class = 9;  // public | internal | confidential (policy input)
+  // Provider-specific extensions, namespaced by provider id, e.g. {"ollama": {"keep_alive": "5m"}}.
+  google.protobuf.Struct extensions = 10;
+}
+
+message InferenceResponse {
+  string request_id = 1;
+  string provider = 2;
+  string model = 3;  // resolved provider model id
+  string content = 4;
+  string finish_reason = 5;  // stop | length | tool_calls | cancelled | error
+  repeated ToolCallRequest tool_calls = 6;
+  Usage usage = 7;
+  string run_id = 8;  // set when the call ran an agent or the auto tool loop
+  google.protobuf.Struct output = 9;  // agent structured output, if any
+  RouteDecision route = 10;
+}
+
+message RouteDecision {
+  string requested = 1;
+  string model_class = 2;
+  string provider = 3;
+  string model = 4;
+  repeated string reasons = 5;
+  bool fallback_used = 6;
+}
+
+// ---------- tools ----------
+
+message ToolRequest {
+  string tool = 1;  // namespaced, e.g. fs.read_text
+  google.protobuf.Struct args = 2;
+  string idempotency_key = 3;
+}
+
+message ContentBlock {
+  string type = 1;  // text | json
+  string text = 2;
+  google.protobuf.Struct json = 3;
+}
+
+message ToolResult {
+  string request_id = 1;
+  string tool = 2;
+  bool is_error = 3;
+  repeated ContentBlock content = 4;
+  google.protobuf.Struct structured = 5;
+  bool truncated = 6;
+  // Tool output is untrusted data and must never be treated as instructions.
+  bool untrusted = 7;
+  int32 duration_ms = 8;
+}
+
+message ToolInfo {
+  string name = 1;
+  string server = 2;
+  string description = 3;
+  google.protobuf.Struct input_schema = 4;
+  string side_effect = 5;  // read | write | external
+}
+
+message ListToolsRequest {}
+message ListToolsResponse { repeated ToolInfo tools = 1; }
+
+// ---------- models ----------
+
+message ModelInfo {
+  string name = 1;         // alias or class-qualified name
+  string model_class = 2;  // local | cloud | enterprise
+  string provider = 3;
+  string model = 4;
+  repeated string capabilities = 5;  // chat, stream, tools, json, vision
+  bool available = 6;
+}
+
+message ListModelsRequest {}
+message ListModelsResponse { repeated ModelInfo models = 1; }
+
+// ---------- agents & runs ----------
+
+message RegisterAgentRequest {
+  // Agent document (apiVersion uar/v1, kind Agent), validated against
+  // contracts/schemas/agent.schema.json.
+  google.protobuf.Struct definition = 1;
+}
+
+message AgentVersion {
+  string agent_id = 1;
+  string version = 2;
+  string digest = 3;  // sha256 of canonical JSON
+  google.protobuf.Timestamp created_at = 4;
+  repeated string warnings = 5;
+}
+
+message RunRequest {
+  string agent_id = 1;
+  string version = 2;  // empty = latest registered
+  google.protobuf.Struct input = 3;
+  string idempotency_key = 4;
+}
+
+message Run {
+  string run_id = 1;
+  string agent_id = 2;
+  string version = 3;
+  // queued | running | waiting_approval | succeeded | failed | cancelled | needs_attention
+  string status = 4;
+  google.protobuf.Struct output = 5;
+  Error error = 6;
+  Usage usage = 7;
+  int32 steps = 8;
+  string current_node = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  string parent_run_id = 12;
+  bool cancel_requested = 13;
+}
+
+message GetRunRequest { string run_id = 1; }
+message WatchRunRequest { string run_id = 1; uint32 after_seq = 2; }
+message CancelRunRequest { string run_id = 1; string reason = 2; }
+message ResolveRunRequest {
+  string run_id = 1;
+  string action = 2;  // mark_completed | retry_node | fail
+  string note = 3;
+}
+
+// ---------- events (the typed envelope) ----------
+
+message Started { string model = 1; string provider = 2; string agent_id = 3; }
+message TokenDelta { string text = 1; }
+message ToolCallEvent { string id = 1; string tool = 2; google.protobuf.Struct args = 3; string node_id = 4; }
+message ToolResultEvent { string id = 1; string tool = 2; bool is_error = 3; string summary = 4; string node_id = 5; }
+message NodeStarted { string node_id = 1; string node_type = 2; int32 attempt = 3; }
+message NodeCompleted { string node_id = 1; string outcome = 2; int32 duration_ms = 3; string next = 4; }
+message ApprovalRequired { string approval_id = 1; string action = 2; string args_hash = 3; }
+message Completed {
+  string status = 1;
+  string content = 2;
+  google.protobuf.Struct output = 3;
+  string finish_reason = 4;
+}
+
+message Event {
+  string run_id = 1;
+  uint32 seq = 2;
+  google.protobuf.Timestamp ts = 3;
+  string trace_id = 4;
+  string request_id = 5;
+  oneof body {
+    Started started = 10;
+    TokenDelta token = 11;
+    ToolCallEvent tool_call = 12;
+    ToolResultEvent tool_result = 13;
+    NodeStarted node_started = 14;
+    NodeCompleted node_completed = 15;
+    Usage usage = 16;
+    ApprovalRequired approval_required = 17;
+    Error error = 18;      // terminal
+    Completed completed = 19;  // terminal
+  }
+}
+
+// ---------- dry-run ----------
+
+message DryRunRequest {
+  oneof target {
+    string agent_id = 1;                    // a registered agent (latest or `version`)
+    google.protobuf.Struct definition = 2;  // an unregistered agent document
+    InferenceRequest inference = 3;         // routing preview only
+  }
+  string version = 4;
+  google.protobuf.Struct input = 5;
+  string mode = 6;  // "static" (default) | "simulate"
+  // simulate: node_id -> fixture output (or list of outputs for repeated visits)
+  google.protobuf.Struct fixtures = 7;
+  int64 seed = 8;
+}
+
+message PlannedStep {
+  string node_id = 1;
+  string node_type = 2;
+  string detail = 3;  // model route, tool name, sub-agent
+  repeated string permissions = 4;
+  string status = 5;  // planned | simulated | unresolved | denied
+  google.protobuf.Struct output = 6;  // simulate mode, from fixtures only
+}
+
+message DryRunReport {
+  string request_id = 1;
+  string mode = 2;
+  bool valid = 3;
+  repeated string errors = 4;
+  repeated string warnings = 5;
+  repeated PlannedStep steps = 6;
+  repeated RouteDecision routes = 7;
+  repeated string permissions_required = 8;
+  repeated string permissions_missing = 9;
+  repeated string unresolved = 10;
+  repeated string branches = 11;  // enumerated paths, static mode
+  int32 estimated_input_tokens_max = 12;
+  int32 estimated_output_tokens_max = 13;
+  Money estimated_cost_max = 14;  // absent when any price is unknown
+  bool executed_nothing = 15;     // always true; asserted by tests
+}
+
+// ---------- approvals (M9) ----------
+
+message ApprovalDecision { string approval_id = 1; bool approve = 2; string comment = 3; }
+message Approval { string approval_id = 1; string status = 2; string run_id = 3; }

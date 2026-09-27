@@ -1,0 +1,27 @@
+{
+  "name": "run_not_found",
+  "description": "Unknown (or other-tenant) runs are indistinguishable: 404.",
+  "operation": "GetRun",
+  "request_type": null,
+  "response_type": null,
+  "auth": "dev",
+  "request": {
+    "method": "GET",
+    "path": "/api/v1/runs/run_does_not_exist"
+  },
+  "response": {
+    "status": 404,
+    "ignore": [
+      "error.request_id"
+    ],
+    "body": {
+      "error": {
+        "code": "not_found",
+        "message": "run run_does_not_exist not found",
+        "request_id": "req_x",
+        "retryable": false,
+        "details": {}
+      }
+    }
+  }
+}

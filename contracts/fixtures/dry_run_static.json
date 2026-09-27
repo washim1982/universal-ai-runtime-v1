@@ -1,0 +1,88 @@
+{
+  "name": "dry_run_static",
+  "description": "Static plan of a registered agent; nothing is executed.",
+  "operation": "DryRun",
+  "request_type": "DryRunRequest",
+  "response_type": "DryRunReport",
+  "auth": "dev",
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/dry-run",
+    "body": {
+      "agent_id": "in_app_assistant",
+      "mode": "static"
+    }
+  },
+  "response": {
+    "status": 200,
+    "ignore": [
+      "request_id",
+      "warnings",
+      "estimated_input_tokens_max"
+    ],
+    "body": {
+      "request_id": "req_4",
+      "mode": "static",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "steps": [
+        {
+          "node_id": "faq",
+          "node_type": "tool",
+          "detail": "fs.read_text (read)",
+          "permissions": [
+            "tools:execute"
+          ],
+          "status": "planned"
+        },
+        {
+          "node_id": "answer",
+          "node_type": "llm",
+          "detail": "local:fake/echo",
+          "permissions": [
+            "inference:local"
+          ],
+          "status": "planned"
+        },
+        {
+          "node_id": "done",
+          "node_type": "return",
+          "detail": "",
+          "permissions": [],
+          "status": "planned"
+        }
+      ],
+      "routes": [
+        {
+          "requested": "local:default",
+          "model_class": "local",
+          "provider": "fake",
+          "model": "echo",
+          "reasons": [
+            "alias local:default -> fake/echo",
+            "policy allowed"
+          ],
+          "fallback_used": false
+        }
+      ],
+      "permissions_required": [
+        "inference:local",
+        "runs:start",
+        "tools:execute"
+      ],
+      "permissions_missing": [],
+      "unresolved": [],
+      "branches": [
+        "faq -> answer -> done"
+      ],
+      "estimated_input_tokens_max": 60,
+      "estimated_output_tokens_max": 400,
+      "estimated_cost_max": {
+        "amount": "0",
+        "currency": "USD"
+      },
+      "executed_nothing": true
+    }
+  }
+}

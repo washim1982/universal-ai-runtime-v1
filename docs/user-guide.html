@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UAR Setup Guide</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#F5F7F6; --surface:#FFFFFF; --sunk:#EAF0EE; --ink:#14201B; --muted:#56655F; --line:#D6DFDB;
+  --accent:#0E6B60; --accent-soft:#DCEFEB; --accent-ink:#FFFFFF;
+  --ok:#1B7A48; --ok-soft:#DDF2E5; --warn:#8F5200; --warn-soft:#FBEBD2; --info-soft:#E4EEF9; --info:#1F4F86;
+  --code-bg:#0F1614; --code-ink:#D8E6E1;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --display:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  --mono:"Cascadia Mono","Cascadia Code",Consolas,ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#0E1412; --surface:#151D1A; --sunk:#1B2521; --ink:#E2EBE7; --muted:#9AA9A3; --line:#27332F;
+    --accent:#4CC2AF; --accent-soft:#163A34; --accent-ink:#06231E;
+    --ok:#62D196; --ok-soft:#143322; --warn:#F0B35A; --warn-soft:#3A2A10; --info-soft:#15263A; --info:#8DB8F0;
+    --code-bg:#090E0C; --code-ink:#D2E2DC;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 var(--sans);padding-inline:16px;padding-block:0 80px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}nav.toc{display:none}}
+
+header.hero{max-width:1120px;margin:0 auto;padding-block:48px 32px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:750 clamp(30px,4.6vw,44px)/1.1 var(--display);letter-spacing:-.02em;margin:12px 0 12px;text-wrap:balance}
+.lede{font-size:18px;color:var(--muted);max-width:62ch;margin:0 0 24px}
+.path{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:900px}
+@media (max-width:700px){.path{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.path div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.path b{display:block;font:700 15px/1.3 var(--display)}
+.path span{font-size:13.5px;color:var(--muted)}
+.path i{font:600 12px/1 var(--mono);color:var(--accent);font-style:normal}
+
+nav.toc{position:sticky;top:20px;align-self:start;font-size:14px}
+nav.toc p{font:600 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+nav.toc ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--line)}
+nav.toc a{display:block;padding:4px 0 4px 14px;margin-left:-1px;border-left:2px solid transparent;color:var(--muted);text-decoration:none}
+nav.toc a:hover{color:var(--accent);border-left-color:var(--accent)}
+nav.toc .group{margin-top:12px;padding-left:14px;font-weight:650;color:var(--ink)}
+
+main{min-width:0}
+h2{font:720 26px/1.2 var(--display);margin:48px 0 8px;letter-spacing:-.01em;text-wrap:balance}
+h2:first-child{margin-top:0}
+h3{font:680 18px/1.3 var(--display);margin:24px 0 8px}
+p,li{max-width:70ch}
+.sub{color:var(--muted);margin-top:0}
+
+.step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 22px 18px;margin:18px 0}
+.step .n{width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:750 17px/1 var(--display)}
+.step h3{margin:6px 0 6px}
+.step > div > p:first-of-type{margin-top:0}
+@media (max-width:560px){.step{grid-template-columns:minmax(0,1fr)}}
+
+.see,.help,.note{border-radius:10px;padding:12px 14px;margin:14px 0 4px;font-size:15px}
+.see{background:var(--ok-soft)}
+.see b{color:var(--ok)}
+.help{background:var(--warn-soft)}
+.help b{color:var(--warn)}
+.note{background:var(--info-soft)}
+.note b{color:var(--info)}
+.see p,.help p,.note p{margin:4px 0}
+
+.cmd{position:relative;margin:10px 0}
+.cmd pre{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:12px 84px 12px 14px;font:13.5px/1.55 var(--mono);overflow-x:auto;white-space:pre}
+.cmd button{position:absolute;top:8px;right:8px;font:600 12px var(--sans);background:#ffffff14;color:var(--code-ink);border:1px solid #ffffff30;border-radius:6px;padding:4px 10px;cursor:pointer}
+.cmd button:hover{background:#ffffff26}
+code,pre,kbd{font-variant-ligatures:none}
+code{font:0.9em var(--mono);background:var(--sunk);padding:1px 5px;border-radius:4px}
+kbd{font:600 0.85em var(--sans);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;background:var(--surface)}
+
+figure{margin:18px 0}
+figure img{display:block;max-width:100%;height:auto;border-radius:12px;border:1px solid var(--line)}
+figcaption{font-size:13.5px;color:var(--muted);margin-top:8px}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th{font:600 12px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--sunk)}
+td:first-child{font-weight:600}
+
+details.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 18px;margin:12px 0}
+details.box summary{cursor:pointer;font-weight:650;padding:10px 0}
+details.box[open] summary{border-bottom:1px solid var(--line);margin-bottom:8px}
+
+.check{list-style:none;padding:0}
+.check li{padding-left:28px;position:relative;margin:6px 0}
+.check li::before{content:"";position:absolute;left:4px;top:.55em;width:12px;height:12px;border-radius:3px;border:2px solid var(--accent)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:0}
+.dot.g{background:#2FA86A}.dot.r{background:#D0463B}.dot.x{background:#8A9893}
+footer{max-width:1120px;margin:56px auto 0;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:13.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">Universal AI Runtime · setup guide</div>
+  <h1>Set up UAR on a new PC, step by step</h1>
+  <p class="lede">You need no programming experience. You install one program by hand. After that, a setup dashboard in your browser does the rest with <b>Run</b> buttons and shows which services are running.</p>
+  <div class="path">
+    <div><i>Steps 1–2</i><b>Get ready</b><span>Install Python, copy the project folder</span></div>
+    <div><i>Steps 3–4</i><b>Open the dashboard</b><span>Install the missing programs with one click each</span></div>
+    <div><i>Steps 5–6</i><b>Set up and start</b><span>One button for setup, one to start the runtime</span></div>
+    <div><i>Steps 7–8</i><b>Test and use</b><span>Automatic checks, then your first request</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#before">Before you start</a></li>
+    <li class="group">Setup</li>
+    <li><a href="#s1">1 · Install Python</a></li>
+    <li><a href="#s2">2 · Get the project</a></li>
+    <li><a href="#s3">3 · Open the dashboard</a></li>
+    <li><a href="#s4">4 · Install prerequisites</a></li>
+    <li><a href="#s5">5 · Set up everything</a></li>
+    <li><a href="#s6">6 · Start the runtime</a></li>
+    <li><a href="#s7">7 · Test it</a></li>
+    <li><a href="#s8">8 · Use it</a></li>
+    <li class="group">Reference</li>
+    <li><a href="#daily">Every day after setup</a></li>
+    <li><a href="#services">What the services mean</a></li>
+    <li><a href="#trouble">If something goes wrong</a></li>
+    <li><a href="#manual">Setup without the dashboard</a></li>
+    <li><a href="#stop">Stop or remove UAR</a></li>
+    <li><a href="#safety">Is the dashboard safe?</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="before">
+  <h2>Before you start</h2>
+  <p class="sub">Check that your PC meets these requirements. Setup takes about 30–45 minutes, mostly spent waiting for downloads.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>You need</th><th>Details</th></tr></thead>
+    <tbody>
+      <tr><td>Windows 10 or 11, 64-bit</td><td>macOS and Linux also work; use <code>setup.sh</code> instead of <code>setup.cmd</code>.</td></tr>
+      <tr><td>Memory</td><td>16 GB recommended (8 GB minimum). The AI model and Docker both use memory.</td></tr>
+      <tr><td>Disk space</td><td>About 15 GB free: Docker Desktop, the AI model (~2 GB), and libraries.</td></tr>
+      <tr><td>Internet</td><td>For downloading programs and the AI model. UAR itself runs entirely on your PC.</td></tr>
+      <tr><td>Administrator rights</td><td>Windows will ask you to approve the installers.</td></tr>
+      <tr><td>Virtualisation enabled</td><td>Docker Desktop needs it. It is on by default on most PCs. If Docker says it is off, turn it on in your PC's BIOS settings (search your PC model plus "enable virtualization").</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<h2 id="setup-steps">Setup</h2>
+
+<div class="step" id="s1">
+  <div class="n">1</div>
+  <div>
+    <h3>Install Python</h3>
+    <p>Python runs the setup dashboard. Open <b>PowerShell</b> (press <kbd>Start</kbd>, type <i>PowerShell</i>, press <kbd>Enter</kbd>) and paste:</p>
+    <div class="cmd"><pre>winget install -e --id Python.Python.3.13</pre><button type="button">Copy</button></div>
+    <p>Or download it from <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org/downloads</a>. In the installer, tick <b>"Add python.exe to PATH"</b> before clicking Install.</p>
+    <div class="see"><b>You should see</b><p>"Successfully installed". Close PowerShell and open a new one, then run <code>py --version</code>. It should print <code>Python 3.13.x</code> (3.12 or newer is fine).</p></div>
+  </div>
+</div>
+
+<div class="step" id="s2">
+  <div class="n">2</div>
+  <div>
+    <h3>Get the project folder</h3>
+    <p>Copy the <b>Universal-AI-Runtime</b> folder onto the new PC. A short path works best, for example <code>C:\UAR</code>.</p>
+    <ul>
+      <li><b>From a ZIP file:</b> right-click it, choose <i>Extract All…</i>, and pick <code>C:\UAR</code>.</li>
+      <li><b>From a USB drive or network share:</b> copy the whole folder.</li>
+      <li><b>From a Git repository</b> (once it has been published): <code>git clone &lt;repository-url&gt; C:\UAR</code>.</li>
+    </ul>
+    <div class="note"><b>Tip</b><p>Avoid folders that OneDrive syncs, such as Desktop or Documents. Syncing interferes with the files the setup creates.</p></div>
+    <div class="see"><b>You should see</b><p>Inside the folder: <code>setup.cmd</code>, <code>README.md</code>, and folders such as <code>runtime</code>, <code>docs</code> and <code>setup-dashboard</code>.</p></div>
+  </div>
+</div>
+
+<div class="step" id="s3">
+  <div class="n">3</div>
+  <div>
+    <h3>Open the setup dashboard</h3>
+    <p>In the project folder, <b>double-click <code>setup.cmd</code></b>. A black window opens and your browser shows the dashboard.</p>
+    <figure>
+      <img src="img/setup-dashboard.png" alt="The setup dashboard: numbered prerequisites and setup steps with Run buttons on the left, a live Services panel on the right, and an output panel at the bottom." width="1400" height="1180" loading="lazy">
+      <figcaption>The setup dashboard once setup is complete. Every row has a button. The Services panel on the right updates every few seconds, and the output of whatever you run appears at the bottom.</figcaption>
+    </figure>
+    <div class="help"><b>Keep the black window open</b><p>It runs the dashboard. Closing it stops the dashboard, and also stops the runtime if you started it from the dashboard.</p></div>
+    <div class="help"><b>If the browser does not open</b><p>Open <a href="http://127.0.0.1:7070/">http://127.0.0.1:7070/</a> yourself. The same address is printed in the black window.</p></div>
+    <div class="help"><b>If Windows says "Windows protected your PC"</b><p>Click <i>More info</i> and then <i>Run anyway</i>. This appears for scripts copied from another computer.</p></div>
+  </div>
+</div>
+
+<div class="step" id="s4">
+  <div class="n">4</div>
+  <div>
+    <h3>Install the missing programs (dashboard section 1)</h3>
+    <p>Section <b>1 · Prerequisites</b> lists what UAR needs. Each row shows <b>✓ OK</b> or <b>Needed</b>. For each row marked <b>Needed</b>, click its button:</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Row</th><th>Click</th><th>What happens</th></tr></thead>
+      <tbody>
+        <tr><td>Docker Desktop installed</td><td>Install</td><td>Installs Docker Desktop, which runs the database. Approve the Windows prompt. It may ask you to <b>restart your PC</b>; do so, then double-click <code>setup.cmd</code> again.</td></tr>
+        <tr><td>Docker Desktop running</td><td>Start Docker</td><td>Opens Docker Desktop. On first start, accept its terms. You can skip signing in. Wait until it says <i>Engine running</i> (1–2 minutes).</td></tr>
+        <tr><td>Ollama installed</td><td>Install</td><td>Installs Ollama, which runs AI models on your PC.</td></tr>
+        <tr><td>Ollama running</td><td>Start Ollama</td><td>Starts it in the background (a llama icon appears in the taskbar tray).</td></tr>
+        <tr><td>Local AI model</td><td>Download</td><td>Downloads the small default model (about 2 GB). "Set up everything" also does this.</td></tr>
+        <tr><td>Node.js <i>(optional)</i></td><td>Install</td><td>Only needed for the JavaScript/TypeScript SDK and its tests.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="see"><b>You should see</b><p>Every row in section 1 turns green (<b>✓ OK</b>). Node.js may stay "Optional". The page updates itself; you don't need to refresh.</p></div>
+    <div class="help"><b>Docker Desktop asks to update WSL</b><p>Accept. Docker uses the Windows Subsystem for Linux. If it asks you to run <code>wsl --update</code>, open PowerShell as administrator, run it, then start Docker Desktop again.</p></div>
+  </div>
+</div>
+
+<div class="step" id="s5">
+  <div class="n">5</div>
+  <div>
+    <h3>Click “Set up everything”</h3>
+    <p>This is the green button at the top right. It runs the setup steps in order and skips any already done. The <b>Output</b> panel at the bottom shows progress as it goes. You can also run the steps one by one with their own <b>Run</b> buttons.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Step</th><th>What it does</th><th>Time</th></tr></thead>
+      <tbody>
+        <tr><td>Create the Python environment</td><td>A private folder (<code>.venv</code>) for UAR's libraries, so nothing else on the PC changes.</td><td>~20 s</td></tr>
+        <tr><td>Install the runtime and Python SDK</td><td>Downloads and installs the libraries.</td><td>2–5 min</td></tr>
+        <tr><td>Create the demo data</td><td>A sample sales database and a product FAQ used by the example agents.</td><td>~2 s</td></tr>
+        <tr><td>Create your configuration and API keys</td><td>Your settings file and private keys, stored in the <code>.local</code> folder.</td><td>~2 s</td></tr>
+        <tr><td>Download the local AI model</td><td>Skipped if you already downloaded it in step 4.</td><td>1–10 min</td></tr>
+        <tr><td>Start the database</td><td>PostgreSQL in Docker. Its data is kept between restarts.</td><td>~30 s</td></tr>
+        <tr><td>Check the configuration</td><td>Confirms the settings are valid.</td><td>~2 s</td></tr>
+      </tbody>
+    </table></div>
+    <p>Two optional steps below that list are only needed for specific uses: <b>Build the TypeScript SDK</b> and <b>Build the container image</b>.</p>
+    <div class="see"><b>You should see</b><p>The Output panel ends with <code>== OK: Check the configuration</code>, and every step in section 2 shows <b>✓ Done</b>. The progress bar at the top says <i>Setup complete — start the runtime</i>.</p></div>
+    <div class="help"><b>A step says “Failed”</b><p>Click its <b>Output</b> button and read the last lines. Most failures are a download interrupted by the network (click <b>Run again</b>) or Docker not running yet (start it in section 1, then run again). See <a href="#trouble">If something goes wrong</a>.</p></div>
+  </div>
+</div>
+
+<div class="step" id="s6">
+  <div class="n">6</div>
+  <div>
+    <h3>Start the runtime (dashboard section 3)</h3>
+    <p>Click <b>Start</b> on <b>“A · Start the runtime on this PC”</b>. You can also use <b>Start</b> next to <i>UAR runtime</i> in the Services panel. The runtime is ready in about 10 seconds.</p>
+    <div class="see"><b>You should see</b><p>In the Services panel, <b>6 of 6 required services up</b>, and the top bar says <b>All set — everything is running</b>. The Output panel shows the runtime's log, ending with <code>Uvicorn running on http://127.0.0.1:9000</code>.</p></div>
+    <div class="note"><b>Option B: run it in Docker</b><p>If you ran <i>Build the container image</i>, you can use <b>Start the runtime in Docker</b> instead. That mode also starts Jaeger, which shows a timeline of every request at <a href="http://127.0.0.1:16686" target="_blank" rel="noopener">127.0.0.1:16686</a>. Run only one of the two at a time: both use port 9000.</p></div>
+  </div>
+</div>
+
+<div class="step" id="s7">
+  <div class="n">7</div>
+  <div>
+    <h3>Test that everything works (dashboard section 4)</h3>
+    <p>Click <b>Run test</b> on <b>End-to-end check</b>. It sends real requests to your running runtime and checks 27 things: answers from the AI model, streaming, all connection types, security rules, file and database tools, a complete agent run, the dry-run preview and metrics.</p>
+    <div class="see"><b>You should see</b><p>After 1–2 minutes the Output panel ends with <code>27/27 checks passed</code>, and the row shows <b>✓ Passed</b>.</p></div>
+    <p>Other tests you can run from the same section:</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Test</th><th>Checks</th><th>Expected</th></tr></thead>
+      <tbody>
+        <tr><td>Main automated test suite</td><td>About 100 tests of security, recovery after crashes, routing, tools and agents. Needs only the database; it uses built-in fake models.</td><td><code>103 passed</code></td></tr>
+        <tr><td>Python SDK tests</td><td>The Python library, against a built-in mock server.</td><td><code>10 passed</code></td></tr>
+        <tr><td>TypeScript SDK tests</td><td>The JavaScript/TypeScript library (build it in section 2 first).</td><td><code>pass 9</code></td></tr>
+        <tr><td>Container sandbox test</td><td>That tools run locked down inside a container (build the image first).</td><td><code>1 passed</code></td></tr>
+        <tr><td>Tests with real AI models</td><td>Ollama, and LM Studio or llama.cpp if they are running.</td><td>passes; tests for servers that aren't running are skipped</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="step" id="s8">
+  <div class="n">8</div>
+  <div>
+    <h3>Use it</h3>
+    <p>Your <b>developer API key</b> is in the dashboard's right-hand panel: click <b>Copy</b>. Programs send it with every request. Then try one of these in PowerShell, from the project folder:</p>
+    <p><b>Your first request:</b></p>
+    <div class="cmd"><pre>$h = @{ 'X-API-Key' = '&lt;paste your key&gt;' }
+Invoke-RestMethod -Method Post http://localhost:9000/api/v1/inference -Headers $h `
+  -ContentType 'application/json' -Body '{"model":"local:default","input":"Say hello"}'</pre><button type="button">Copy</button></div>
+    <p><b>The Python example</b> (asks a question, uses an agent, streams an answer, previews a plan):</p>
+    <div class="cmd"><pre>$env:UAR_API_KEY = '&lt;paste your key&gt;'
+.\.venv\Scripts\python.exe examples\python\quickstart.py</pre><button type="button">Copy</button></div>
+    <div class="see"><b>You should see</b><p>An answer from the model with <code>provider</code> <code>ollama</code>. The example also prints the in-app assistant answering <i>"30 days"</i> from the product FAQ.</p></div>
+    <p>More: the API reference is at <a href="http://127.0.0.1:9000/api/v1/openapi.json" target="_blank" rel="noopener">127.0.0.1:9000/api/v1/openapi.json</a> while the runtime is running. <code>docs/user-guide.md</code> walks through every feature with commands.</p>
+  </div>
+</div>
+
+<h2 id="daily">Every day after setup</h2>
+<p class="sub">Setup happens once. After a restart, getting UAR running again takes about a minute:</p>
+<ol class="check">
+  <li>Double-click <code>setup.cmd</code>.</li>
+  <li>If <i>Docker Desktop running</i> or <i>Ollama running</i> is red, click its <b>Start</b> button and wait for it to turn green.</li>
+  <li>If the <i>Database</i> service is red, click <b>Start</b> next to it.</li>
+  <li>Click <b>Start</b> next to <i>UAR runtime</i>.</li>
+</ol>
+<p>After updating the project files, click <b>Run again</b> on <i>Install the runtime and the Python SDK</i>, restart the runtime, and run the <b>End-to-end check</b>.</p>
+
+<h2 id="services">What the services mean</h2>
+<p class="sub">In the Services panel, <span class="dot g"></span> is running, <span class="dot r"></span> is a required service that is stopped, and <span class="dot x"></span> is an optional service that is stopped.</p>
+<div class="tbl"><table>
+  <thead><tr><th>Service</th><th>What it is</th><th>When it is red</th></tr></thead>
+  <tbody>
+    <tr><td>Database (PostgreSQL)</td><td>Stores agent runs, their history, the audit log and usage. Runs in Docker.</td><td>Click <b>Start</b>. If that fails, check that Docker Desktop is running.</td></tr>
+    <tr><td>Ollama (local models)</td><td>Runs AI models on your PC.</td><td>Click <b>Start</b>, or open Ollama from the Start menu.</td></tr>
+    <tr><td>UAR runtime (HTTP, SSE, WebSocket)</td><td>The main service that programs talk to, on port 9000.</td><td>Click <b>Start</b>. If it stays red, open the Output panel for the reason.</td></tr>
+    <tr><td>UAR runtime (gRPC)</td><td>The same service for gRPC clients, on port 50051. Starts with the runtime.</td><td>Starts and stops together with the runtime.</td></tr>
+    <tr><td>Tool server: files</td><td>Lets agents read files and write reports, only inside <code>examples\workspace</code>.</td><td>Starts with the runtime. If only this is red, run <i>Create the demo data</i> and restart the runtime.</td></tr>
+    <tr><td>Tool server: sales database</td><td>Read-only access to the demo sales database.</td><td>Same as above.</td></tr>
+    <tr><td>Jaeger (traces) <i>(optional)</i></td><td>A timeline view of requests; runs only in Docker mode.</td><td>Normal in "on this PC" mode.</td></tr>
+    <tr><td>LM Studio, llama.cpp <i>(optional)</i></td><td>Other local model apps that UAR can also use.</td><td>Normal if you don't use them.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="trouble">If something goes wrong</h2>
+<div class="tbl"><table>
+  <thead><tr><th>What you see</th><th>What to do</th></tr></thead>
+  <tbody>
+    <tr><td>Double-clicking <code>setup.cmd</code> says Python is required</td><td>Do step 1, close the window, and double-click again. If Python is installed but not found, reinstall it with "Add python.exe to PATH" ticked.</td></tr>
+    <tr><td>The dashboard says it can't reach the setup dashboard</td><td>Its black window was closed. Double-click <code>setup.cmd</code> again; the open page reconnects by itself.</td></tr>
+    <tr><td>“Docker Desktop running” stays red</td><td>Open Docker Desktop from the Start menu and wait for <i>Engine running</i>. If it reports that virtualisation or WSL is missing, see <a href="#before">Before you start</a>, then restart the PC.</td></tr>
+    <tr><td>“Install the runtime” fails</td><td>Usually a network hiccup: click <b>Run again</b>. Behind a company proxy, ask IT for the proxy settings for Python's <code>pip</code>.</td></tr>
+    <tr><td>“Download the local AI model” is slow</td><td>It is about 2 GB. Leave it running; the Output panel shows progress.</td></tr>
+    <tr><td>The runtime stops right after starting: “port 9000 is in use”</td><td>Another runtime is already running, often the Docker one. Stop it in the Services panel, then start again.</td></tr>
+    <tr><td>The end-to-end check fails on an inference step</td><td>Check that Ollama is green and the model row in section 1 is ✓. The first answer after starting Ollama can take 10–20 seconds while the model loads.</td></tr>
+    <tr><td>Anything else</td><td>Open the <b>Output</b> of the failed step; the last lines explain the error. <code>docs/runbooks/local-development.md</code> lists more fixes.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="manual">Setup without the dashboard</h2>
+<p class="sub">The dashboard runs these commands for you. If you prefer typing them, run them in PowerShell from the project folder.</p>
+<details class="box">
+  <summary>Show the commands</summary>
+  <p>Programs (skip any you already have), then restart the PC if Docker asks:</p>
+  <div class="cmd"><pre>winget install -e --id Docker.DockerDesktop
+winget install -e --id Ollama.Ollama
+winget install -e --id OpenJS.NodeJS.LTS</pre><button type="button">Copy</button></div>
+  <p>Setup (same as “Set up everything”):</p>
+  <div class="cmd"><pre>py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]" -e sdks\python
+.\.venv\Scripts\python.exe scripts\make_fixtures.py
+.\.venv\Scripts\python.exe scripts\bootstrap_local.py
+ollama pull granite4:latest
+docker compose -f deploy/docker/compose.yaml up -d postgres
+.\.venv\Scripts\uar.exe check-config --config .local\uar.yaml</pre><button type="button">Copy</button></div>
+  <p>Start the runtime (leave this window open), then test from a second window:</p>
+  <div class="cmd"><pre>.\.venv\Scripts\uar.exe serve --config .local\uar.yaml</pre><button type="button">Copy</button></div>
+  <div class="cmd"><pre>.\.venv\Scripts\python.exe scripts\smoke_test.py
+.\.venv\Scripts\python.exe -m pytest</pre><button type="button">Copy</button></div>
+</details>
+
+<h2 id="stop">Stop or remove UAR</h2>
+<div class="tbl"><table>
+  <thead><tr><th>To</th><th>Do this</th></tr></thead>
+  <tbody>
+    <tr><td>Stop the runtime</td><td><b>Stop</b> next to <i>UAR runtime</i> in the dashboard, or close the black window.</td></tr>
+    <tr><td>Stop the database</td><td><b>Stop</b> next to <i>Database</i>. Your data is kept.</td></tr>
+    <tr><td>Delete all data and start fresh</td><td>In PowerShell: <code>docker compose -f deploy/docker/compose.yaml --profile full down -v</code>. This permanently deletes the database, including runs and audit history.</td></tr>
+    <tr><td>Get new API keys</td><td>In PowerShell: <code>.\.venv\Scripts\python.exe scripts\bootstrap_local.py --force</code>. Old keys stop working.</td></tr>
+    <tr><td>Remove UAR completely</td><td>Stop everything, delete the data as above, then delete the project folder. Uninstall Docker Desktop, Ollama, Node.js and Python from Windows Settings → Apps if nothing else uses them.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="safety">Is the dashboard safe?</h2>
+<ul>
+  <li>It is only reachable from this PC (<code>127.0.0.1</code>), not from your network.</li>
+  <li>Other websites open in your browser cannot use it. Each run of the dashboard has a secret session code that only its own page can read, and requests from other websites are refused.</li>
+  <li>It can only run the fixed steps you see on the page. It never runs commands typed into a web page. Click <i>What this runs</i> on any step to see its exact commands.</li>
+  <li>Installers show the normal Windows permission prompt, so you approve each one.</li>
+  <li>Your API keys stay in <code>.local\credentials.env</code> on this PC. Treat them like passwords.</li>
+</ul>
+
+</main>
+</div>
+
+<footer>Universal AI Runtime 0.6 · Detailed feature testing: <code>docs/user-guide.md</code> · Status of each capability: <code>docs/capability-matrix.md</code></footer>
+
+<script>
+document.querySelectorAll(".cmd button").forEach((b) => {
+  b.addEventListener("click", async () => {
+    const text = b.previousElementSibling.textContent;
+    try { await navigator.clipboard.writeText(text); b.textContent = "Copied"; }
+    catch { const r = document.createRange(); r.selectNodeContents(b.previousElementSibling);
+            const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Press Ctrl+C"; }
+    setTimeout(() => (b.textContent = "Copy"), 1800);
+  });
+});
+</script>
+</body>
+</html>

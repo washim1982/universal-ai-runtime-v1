@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UAR Setup</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#F2F5F4; --surface:#FFFFFF; --sunk:#E8EEEC; --ink:#15201C; --muted:#56655F; --line:#D6DFDB;
+  --accent:#0E6B60; --accent-ink:#FFFFFF; --accent-soft:#DCEFEB;
+  --ok:#1B7A48; --ok-soft:#DDF2E5; --warn:#9A5800; --warn-soft:#FBEBD2; --bad:#B0261D; --bad-soft:#FBE1DE;
+  --idle:#8A9893; --console:#0E1513; --console-ink:#D4E2DD;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --display:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  --mono:"Cascadia Mono","Cascadia Code",Consolas,ui-monospace,"SFMono-Regular",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme: dark;
+    --bg:#0E1412; --surface:#151D1A; --sunk:#1B2521; --ink:#E2EBE7; --muted:#97A7A0; --line:#27332F;
+    --accent:#4CC2AF; --accent-ink:#06231E; --accent-soft:#163A34;
+    --ok:#62D196; --ok-soft:#143322; --warn:#F0B35A; --warn-soft:#3A2A10; --bad:#FF8A80; --bad-soft:#3E1714;
+    --idle:#6E7D77; --console:#090E0C; --console-ink:#CFE0DA;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);padding-inline:16px;padding-block:0 360px}
+button{font:inherit;cursor:pointer}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{max-width:1240px;margin:0 auto;padding-block:28px 20px;display:flex;flex-wrap:wrap;gap:16px 32px;align-items:end;justify-content:space-between;border-bottom:1px solid var(--line)}
+.brand{display:grid;gap:4px}
+.brand small{font:600 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 28px/1.15 var(--display);margin:0;letter-spacing:-.01em}
+.brand p{margin:0;color:var(--muted);max-width:60ch}
+.overall{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.meter{display:grid;gap:6px;min-width:220px}
+.meter .label{font-size:13px;color:var(--muted)}
+.meter .label b{color:var(--ink)}
+.bar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 14px;font-weight:600;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.btn.big{padding:11px 20px;font-size:15px}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+
+.notice{max-width:1240px;margin:16px auto 0;padding:12px 16px;border-radius:10px;background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent)}
+.notice[hidden]{display:none}
+
+.layout{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:28px;padding-top:24px}
+@media (max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+section{margin-bottom:28px}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.sec-head h2{font:700 18px/1.2 var(--display);margin:0}
+.sec-head span{color:var(--muted);font-size:13px}
+
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 13px/1 var(--mono);background:var(--sunk);color:var(--muted)}
+.row.is-done .num{background:var(--ok-soft);color:var(--ok)}
+.row.is-running .num{background:var(--accent-soft);color:var(--accent)}
+.row.is-failed .num{background:var(--bad-soft);color:var(--bad)}
+.row .body{min-width:0}
+.row .title{font-weight:650;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.row .desc{color:var(--muted);font-size:13.5px;margin-top:2px}
+.row details{margin-top:4px;font-size:12.5px;color:var(--muted)}
+.row summary{cursor:pointer;width:max-content}
+.row code,.console pre,.key input{font-variant-ligatures:none}
+.row code{font:12px/1.5 var(--mono);display:block;background:var(--sunk);border-radius:6px;padding:6px 8px;margin-top:4px;overflow-x:auto;white-space:pre}
+.row .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:end}
+@media (max-width:560px){.row{grid-template-columns:30px minmax(0,1fr)}.row .actions{grid-column:2;justify-content:start}}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--sans);padding:4px 8px;border-radius:99px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.run{background:var(--accent-soft);color:var(--accent)}
+.tag{font:600 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:3px 5px}
+.time{font-size:12px;color:var(--muted)}
+
+.spin{width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}.bar i{transition:none}}
+
+aside{position:sticky;top:16px;align-self:start;display:grid;gap:20px}
+@media (max-width:980px){aside{position:static}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h3{font:700 16px/1.2 var(--display);margin:0 0 4px}
+.card .hint{color:var(--muted);font-size:13px;margin:0 0 12px}
+.svc{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.svc:first-of-type{border-top:0}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--idle)}
+.dot.up{background:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.dot.down.req{background:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+.svc .n{font-weight:600;font-size:14px}
+.svc .w{font:12px/1.3 var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.svc .a{display:flex;gap:6px;flex-wrap:wrap;justify-content:end}
+.summary-line{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+
+.key{display:flex;gap:8px;align-items:center}
+.key input{flex:1;min-width:0;font:13px var(--mono);padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--sunk);color:var(--ink)}
+.links{display:grid;gap:6px;font-size:14px}
+
+.console{position:fixed;left:0;right:0;bottom:0;background:var(--console);color:var(--console-ink);border-top:1px solid var(--line);z-index:5;padding-bottom:env(safe-area-inset-bottom,0px);display:flex;flex-direction:column;height:320px;transition:height .2s}
+.console.min{height:44px}
+.console .bar2{display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid #ffffff14;font-size:14px}
+.console .bar2 b{font-weight:650}
+.console .bar2 .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.console .bar2 .btn{background:transparent;color:var(--console-ink);border-color:#ffffff33}
+.console .bar2 .btn:hover{border-color:var(--console-ink);color:#fff}
+.console pre{margin:0;flex:1;overflow:auto;padding:10px 16px 16px;font:12.5px/1.55 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.console .cmd{color:#8FD3C6}
+.console .ok{color:#7EE0A6}
+.console .err{color:#FF9C92}
+.console .sect{color:#F2C879}
+.jobs{display:flex;gap:6px;overflow-x:auto;max-width:40%}
+.jobs button{font:12px var(--sans);background:transparent;border:1px solid #ffffff26;color:var(--console-ink);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.jobs button.on{border-color:#8FD3C6;color:#fff}
+.toast{position:fixed;right:16px;top:16px;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:14px;z-index:10;max-width:360px}
+.toast[hidden]{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <small>Universal AI Runtime</small>
+    <h1>Setup dashboard</h1>
+    <p>Work through the steps from top to bottom, or press <b>Set up everything</b>. Every button runs a fixed, pre-defined command on this PC and shows its output below.</p>
+  </div>
+  <div class="overall">
+    <div class="meter">
+      <div class="label" id="progressLabel">Checking…</div>
+      <div class="bar"><i id="progressBar" style="width:0%"></i></div>
+    </div>
+    <button class="btn primary big" id="setupAll">Set up everything</button>
+  </div>
+</header>
+
+<div class="notice" id="tokenNotice" hidden>Can't reach the setup dashboard. It stops when its black window is closed. Double-click <b>setup.cmd</b> in the project folder, then reload this page.</div>
+
+<div class="layout">
+  <main>
+    <section>
+      <div class="sec-head"><h2>1 · Prerequisites</h2><span>Programs this project needs on your PC</span></div>
+      <div class="list" id="prereqs"></div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>2 · Setup</h2><span>Run once, in this order</span></div>
+      <div class="list" id="setupSteps"></div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>3 · Start the runtime</h2><span>Choose one way to run it</span></div>
+      <div class="list" id="runSteps"></div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>4 · Test</h2><span>Check that everything works</span></div>
+      <div class="list" id="testSteps"></div>
+    </section>
+  </main>
+
+  <aside>
+    <div class="card">
+      <h3>Services</h3>
+      <p class="hint">Live status, refreshed every few seconds.</p>
+      <div class="summary-line" id="svcSummary"></div>
+      <div id="services"></div>
+    </div>
+    <div class="card">
+      <h3>Your developer API key</h3>
+      <p class="hint">Use it as the <code>X-API-Key</code> header or <code>UAR_API_KEY</code> for the SDKs. Keep it private.</p>
+      <div class="key">
+        <input id="devKey" type="password" readonly aria-label="Developer API key" value="">
+        <button class="btn small" id="showKey">Show</button>
+        <button class="btn small" id="copyKey">Copy</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Links</h3>
+      <div class="links">
+        <a href="/guide" target="_blank" rel="noopener">User guide (step by step)</a>
+        <a href="http://127.0.0.1:9000/readyz" target="_blank" rel="noopener">Runtime readiness</a>
+        <a href="http://127.0.0.1:9000/api/v1/openapi.json" target="_blank" rel="noopener">API reference (OpenAPI)</a>
+        <a href="http://127.0.0.1:16686" target="_blank" rel="noopener">Jaeger traces (Docker mode)</a>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="console min" id="console">
+  <div class="bar2">
+    <span class="grow" id="conTitle"><b>Output</b> · run a step to see its output here</span>
+    <div class="jobs" id="jobTabs"></div>
+    <button class="btn small" id="conStop" hidden>Stop</button>
+    <button class="btn small" id="conToggle">Expand</button>
+  </div>
+  <pre id="conLog" aria-live="polite"></pre>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  // The session code comes from the dashboard itself; after a dashboard restart it is fetched again.
+  let token = "";
+  const NOT_RUNNING = "Can't reach the setup dashboard. It stops when its black window is closed. Double-click <b>setup.cmd</b> in the project folder; this page reconnects by itself.";
+  const OUTDATED = "An older copy of the setup dashboard is still running and answering on this port. Close every black setup window, then double-click <b>setup.cmd</b> once; this page reconnects by itself.";
+  function notice(html) { const n = $("tokenNotice"); if (html) { n.innerHTML = html; n.hidden = false; } else n.hidden = true; }
+  async function session() {
+    try {
+      const r = await fetch("/api/session", { cache: "no-store" });
+      token = r.ok ? ((await r.json()).token || "") : "";
+      notice(token ? "" : OUTDATED);
+      return !!token;
+    } catch { notice(NOT_RUNNING); return false; }
+  }
+
+  async function api(path, body, retried) {
+    const opt = { headers: { "X-Setup-Token": token }, cache: "no-store" };
+    if (body !== undefined) { opt.method = "POST"; opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+    let r;
+    try { r = await fetch(path, opt); }
+    catch (e) { notice(NOT_RUNNING); throw new Error("dashboard not reachable"); }
+    if (r.status === 401 && !retried && await session()) return api(path, body, true);
+    if (r.status === 401) throw new Error("The setup dashboard did not accept this page (see the message at the top).");
+    notice("");
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    return data;
+  }
+  const toast = (msg) => { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 4000); };
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const btn = (label, cls, onClick, disabled) => { const b = el("button", "btn small " + (cls || ""), label); b.onclick = onClick; b.disabled = !!disabled; return b; };
+
+  let STEPS = [], STATUS = null, lastKey = "";
+  const openDetails = new Set();
+  const jobs = new Map(); let activeJob = null; const stepJob = {};
+
+  // ------------------------------------------------------------------ console
+  function showConsole(open) { $("console").classList.toggle("min", !open); $("conToggle").textContent = open ? "Minimise" : "Expand"; }
+  $("conToggle").onclick = () => showConsole($("console").classList.contains("min"));
+  $("conStop").onclick = async () => { if (activeJob) { await api("/api/job/stop", { job: activeJob }); toast("Stop requested"); } };
+
+  function lineClass(l) {
+    if (l.startsWith("$ ")) return "cmd";
+    if (l.startsWith("== OK")) return "ok";
+    if (l.startsWith("== FAILED") || l.startsWith("!!") || /\bFAIL(ED)?\b|Error|error:/.test(l)) return "err";
+    if (l.startsWith("== ")) return "sect";
+    if (/\bPASS\b|passed|ready/.test(l)) return "ok";
+    return "";
+  }
+  function renderConsole() {
+    const tabs = $("jobTabs"); tabs.replaceChildren();
+    [...jobs.values()].slice(-6).forEach(j => {
+      const b = el("button", j.id === activeJob ? "on" : "", (j.done ? (j.rc === 0 ? "✓ " : "✕ ") : "… ") + j.title);
+      b.onclick = () => { activeJob = j.id; paint(); renderConsole(); }; tabs.append(b);
+    });
+    const j = jobs.get(activeJob);
+    $("conStop").hidden = !j || j.done;
+    if (j) {
+      const title = $("conTitle"); title.replaceChildren(el("b", null, j.title), document.createTextNode(
+        j.done ? (j.rc === 0 ? " · finished" : ` · failed (exit ${j.rc})`) : " · running…"));
+    }
+  }
+  function paint() {
+    const j = jobs.get(activeJob), pre = $("conLog");
+    if (!j) return;
+    const stick = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 30;
+    pre.replaceChildren();
+    j.lines.forEach(l => { const s = el("span", lineClass(l), l + "\n"); pre.append(s); });
+    if (stick) pre.scrollTop = pre.scrollHeight;
+  }
+  async function follow(jobId, title, stepIds) {
+    const j = { id: jobId, title, lines: [], next: 0, done: false, rc: null };
+    jobs.set(jobId, j); activeJob = jobId; (stepIds || []).forEach(s => stepJob[s] = jobId);
+    showConsole(true); renderConsole(); render();
+    while (!j.done) {
+      try {
+        const d = await api(`/api/job/${jobId}?since=${j.next}`);
+        j.lines.push(...d.lines); j.next = d.next; j.done = d.done; j.rc = d.rc;
+        if (activeJob === jobId) paint();
+      } catch { break; }
+      if (!j.done) await new Promise(r => setTimeout(r, 700));
+    }
+    renderConsole(); await refresh();
+    toast(j.rc === 0 ? `Finished: ${title}` : `Failed: ${title} (see output)`);
+  }
+  async function run(step) {
+    try { const d = await api("/api/run", { step: step.id }); follow(d.job, step.title, [step.id]); }
+    catch (e) { toast(e.message); }
+  }
+
+  // ------------------------------------------------------------------ rendering
+  const stateOf = (s) => {
+    const jobId = stepJob[s.id], j = jobId && jobs.get(jobId);
+    if (STATUS && STATUS.running.includes(s.id)) return "running";
+    if (j && !j.done) return "running";
+    const last = STATUS && STATUS.last[s.id];
+    if (STATUS && STATUS.done[s.id]) return "done";
+    if (last && !last.ok) return "failed";
+    if (last && last.ok) return "done";
+    return "todo";
+  };
+  const pillFor = (state, s) => {
+    if (state === "done") return el("span", "pill ok", s.group === "test" ? "✓ Passed" : "✓ Done");
+    if (state === "running") { const p = el("span", "pill run"); p.append(el("i", "spin"), document.createTextNode("Running")); return p; }
+    if (state === "failed") return el("span", "pill bad", "Failed – see output");
+    return el("span", "pill", s.group === "setup" ? "Not done" : "Not run");
+  };
+  const RUN_LABEL = { setup: "Run", run: "Run", test: "Run test" };
+
+  function stepRow(s, index) {
+    const st = stateOf(s);
+    const row = el("div", `row is-${st === "todo" ? "todo" : st}`);
+    row.append(el("div", "num", st === "done" ? "✓" : st === "failed" ? "!" : String(index)));
+    const body = el("div", "body");
+    const title = el("div", "title", s.title);
+    if (s.optional) title.append(el("span", "tag", "optional"));
+    if (s.long) title.append(el("span", "time", s.long));
+    body.append(title, el("div", "desc", s.summary));
+    const det = el("details"); det.open = openDetails.has(s.id);
+    det.ontoggle = () => { det.open ? openDetails.add(s.id) : openDetails.delete(s.id); };
+    det.append(el("summary", null, "What this runs"));
+    s.commands.forEach(c => det.append(el("code", null, c)));
+    body.append(det);
+    const actions = el("div", "actions");
+    actions.append(pillFor(st, s));
+    const jid = stepJob[s.id];
+    if (jid) actions.append(btn("Output", "", () => { activeJob = jid; showConsole(true); paint(); renderConsole(); }));
+    actions.append(btn(st === "done" && s.group === "setup" ? "Run again" : RUN_LABEL[s.group], st === "done" ? "" : "primary", () => run(s), st === "running"));
+    row.append(body, actions);
+    return row;
+  }
+
+  function prereqRow(key, label, info, index) {
+    const row = el("div", "row " + (info.ok ? "is-done" : "is-todo"));
+    row.append(el("div", "num", info.ok ? "✓" : String(index)));
+    const body = el("div", "body");
+    const t = el("div", "title", label);
+    if (info.optional) t.append(el("span", "tag", "optional"));
+    body.append(t, el("div", "desc", info.detail + (info.fix && !info.ok ? " — " + info.fix : "")));
+    const a = el("div", "actions");
+    a.append(el("span", "pill " + (info.ok ? "ok" : info.optional ? "warn" : "bad"), info.ok ? "✓ OK" : info.optional ? "Optional" : "Needed"));
+    if (!info.ok && info.install && STATUS.prereq.winget.ok) a.append(btn("Install", "primary", async () => {
+      try { const d = await api("/api/action", { name: "install", package: info.install }); follow(d.job, "Install " + label); } catch (e) { toast(e.message); } }));
+    if (!info.ok && info.action) a.append(btn(info.action === "start_docker" ? "Start Docker" : "Start Ollama", "primary", async () => {
+      try { const d = await api("/api/action", { name: info.action }); toast(d.message); setTimeout(refresh, 3000); } catch (e) { toast(e.message); } }));
+    if (!info.ok && info.step) { const s = STEPS.find(x => x.id === info.step); if (s) a.append(btn("Download", "primary", () => run(s))); }
+    row.append(body, a);
+    return row;
+  }
+
+  function serviceRow(svc) {
+    const r = el("div", "svc");
+    r.append(el("span", `dot ${svc.up ? "up" : "down"} ${svc.required ? "req" : ""}`));
+    const info = el("div"); info.append(el("div", "n", svc.name));
+    let where = svc.where;
+    if (svc.id === "runtime" && svc.mode) where += svc.mode === "dashboard" ? " · started here" : svc.mode === "docker" ? " · in Docker" : " · started elsewhere";
+    if (svc.id === "runtime" && svc.detail && !svc.up) where += " · " + svc.detail;
+    info.append(el("div", "w", where)); r.append(info);
+    const a = el("div", "a");
+    const S = (id) => STEPS.find(s => s.id === id);
+    if (svc.id === "postgres") a.append(svc.up ? btn("Stop", "danger", () => run(S("postgres_stop"))) : btn("Start", "primary", () => run(S("postgres"))));
+    if (svc.id === "ollama" && !svc.up && svc.action) a.append(btn("Start", "primary", async () => { const d = await api("/api/action", { name: "start_ollama" }).catch(e => ({ message: e.message })); toast(d.message); }));
+    if (svc.id === "runtime") {
+      if (svc.mode === "dashboard") a.append(btn("Stop", "danger", async () => { await api("/api/runtime/stop", {}); toast("Stopping the runtime"); setTimeout(refresh, 1500); }));
+      else if (svc.mode === "docker") a.append(btn("Stop", "danger", () => run(S("compose_down"))));
+      else if (!svc.up) a.append(btn("Start", "primary", startLocal));
+    }
+    if (svc.link && svc.up) { const l = el("a", null, "Open"); l.href = svc.link; l.target = "_blank"; l.rel = "noopener"; a.append(l); }
+    r.append(a);
+    return r;
+  }
+
+  async function startLocal() {
+    try { const d = await api("/api/runtime/start", {}); follow(d.job, "Local runtime (uar serve)"); toast("Starting the runtime… it is ready when the Services panel shows it green."); }
+    catch (e) { toast(e.message); }
+  }
+
+  function render() {
+    if (!STATUS || !STEPS.length) return;
+    const P = STATUS.prereq, labels = { python: "Python 3.12 or newer", docker: "Docker Desktop installed", docker_running: "Docker Desktop running",
+      ollama: "Ollama installed", ollama_running: "Ollama running", model: "Local AI model", node: "Node.js (for the TypeScript SDK)" };
+    const pr = $("prereqs"); pr.replaceChildren();
+    ["python", "docker", "docker_running", "ollama", "ollama_running", "model", "node"].forEach((k, i) => pr.append(prereqRow(k, labels[k], P[k], i + 1)));
+
+    const setup = STEPS.filter(s => s.group === "setup"), runS = STEPS.filter(s => s.group === "run"), test = STEPS.filter(s => s.group === "test");
+    $("setupSteps").replaceChildren(...setup.map((s, i) => stepRow(s, i + 1)));
+
+    const rs = $("runSteps"); rs.replaceChildren();
+    const svcRt = STATUS.services.find(s => s.id === "runtime");
+    const local = el("div", "row " + (svcRt.mode === "dashboard" && svcRt.up ? "is-done" : "is-todo"));
+    local.append(el("div", "num", "A"));
+    const lb = el("div", "body"); const lt = el("div", "title", "Start the runtime on this PC"); lt.append(el("span", "tag", "recommended"));
+    lb.append(lt, el("div", "desc", "Runs `uar serve` from this dashboard. It stops when you stop it here or close the dashboard."));
+    const la = el("div", "actions");
+    if (svcRt.mode === "dashboard") { la.append(el("span", "pill " + (svcRt.up ? "ok" : "run"), svcRt.up ? "✓ Running" : "Starting…")); la.append(btn("Stop", "danger", async () => { await api("/api/runtime/stop", {}); setTimeout(refresh, 1500); })); if (STATUS.runtime_job) la.append(btn("Output", "", () => { if (!jobs.has(STATUS.runtime_job)) follow(STATUS.runtime_job, "Local runtime (uar serve)"); else { activeJob = STATUS.runtime_job; showConsole(true); paint(); renderConsole(); } })); }
+    else la.append(el("span", "pill", svcRt.up ? "In use by another runtime" : "Stopped"), btn("Start", "primary", startLocal, svcRt.up));
+    local.append(lb, la); rs.append(local);
+    runS.forEach((s, i) => { const r = stepRow(s, ["B", "·", "·"][i] || "·"); rs.append(r); });
+
+    $("testSteps").replaceChildren(...test.map((s, i) => stepRow(s, i + 1)));
+
+    const sv = $("services"); sv.replaceChildren(...STATUS.services.map(serviceRow));
+    const req = STATUS.services.filter(s => s.required), up = req.filter(s => s.up).length;
+    $("svcSummary").replaceChildren(el("span", "pill " + (up === req.length ? "ok" : "warn"), `${up} of ${req.length} required services up`));
+
+    const needed = ["venv", "install", "fixtures", "config", "model", "postgres", "check"];
+    const done = needed.filter(k => STATUS.done[k]).length;
+    const prOk = ["python", "docker", "docker_running", "ollama", "ollama_running"].filter(k => P[k].ok).length;
+    const total = needed.length + 5, doneAll = done + prOk;
+    $("progressBar").style.width = `${Math.round(doneAll / total * 100)}%`;
+    const allReady = doneAll === total && up === req.length;
+    $("progressLabel").replaceChildren(el("b", null, allReady ? "All set — everything is running" :
+      doneAll === total ? "Setup complete — start the runtime (step 3)" : `${doneAll} of ${total} setup items done`));
+  }
+
+  async function refresh() {
+    try {
+      STATUS = await api("/api/status");
+      // Re-render only when something visible changed, so buttons and open panels stay put.
+      const key = JSON.stringify([STATUS, [...jobs.values()].map(j => [j.id, j.done, j.rc])]);
+      if (key !== lastKey) { lastKey = key; render(); }
+    } catch (e) { console.error(e); }
+  }
+
+  $("setupAll").onclick = async () => {
+    try { const d = await api("/api/run-setup", {}); follow(d.job, "Complete setup", d.steps); }
+    catch (e) { toast(e.message); }
+  };
+  $("showKey").onclick = () => { const i = $("devKey"); const show = i.type === "password"; i.type = show ? "text" : "password"; $("showKey").textContent = show ? "Hide" : "Show"; };
+  $("copyKey").onclick = async () => {
+    const v = $("devKey").value; if (!v) return toast("No key yet — run setup step 4 first");
+    try { await navigator.clipboard.writeText(v); toast("Copied"); } catch { $("devKey").type = "text"; $("devKey").select(); toast("Press Ctrl+C to copy"); }
+  };
+
+  (async () => {
+    while (!(await session())) await new Promise(r => setTimeout(r, 3000));
+    while (true) { try { STEPS = await api("/api/steps"); break; } catch { await new Promise(r => setTimeout(r, 3000)); } }
+    await refresh();
+    const loadKey = async () => { try { const k = await api("/api/keys"); $("devKey").value = k.UAR_DEV_KEY || ""; } catch {} };
+    loadKey();
+    setInterval(() => { refresh(); if (!$("devKey").value) loadKey(); }, 3000);
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+{{- if .Values.mcp.enabled }}
+{{- $ns := .Values.mcp.namespace -}}
+{{- $port := .Values.mcp.port -}}
+{{- $root := . -}}
+{{- if .Values.mcp.createNamespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $ns }}
+  labels: {{- include "uar.labels" . | nindent 4 }}
+    uar.dev/role: plugins
+    pod-security.kubernetes.io/enforce: restricted
+---
+{{- end }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-workspace
+  namespace: {{ $ns }}
+  labels: {{- include "uar.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep   # generated reports survive uninstall
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: {{ .Values.mcp.workspaceStorage }}}}
+{{- range $server := list "fs" "db" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uar-mcp-{{ $server }}
+  namespace: {{ $ns }}
+  labels: {{- include "uar.labels" $root | nindent 4 }}
+spec:
+  selector: {app.kubernetes.io/name: uar-mcp-{{ $server }}, app.kubernetes.io/instance: {{ $root.Release.Name }}}
+  ports: [{name: mcp, port: {{ $port }}, targetPort: mcp}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uar-mcp-{{ $server }}
+  namespace: {{ $ns }}
+  labels: {{- include "uar.labels" $root | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: uar-mcp-{{ $server }}, app.kubernetes.io/instance: {{ $root.Release.Name }}}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: uar-mcp-{{ $server }}
+        app.kubernetes.io/instance: {{ $root.Release.Name }}
+        uar.dev/role: mcp-server
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, runAsNonRoot: true,
+                        seccompProfile: {type: RuntimeDefault}}
+      {{- if eq $server "fs" }}
+      initContainers:
+        - name: seed-workspace
+          image: {{ include "uar.image" $root }}
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+          command: ["sh", "-c", "mkdir -p /workspace/reports /workspace/docs && cp -n /app/examples/workspace/docs/* /workspace/docs/ || true"]
+          securityContext: {{- include "uar.restricted" $root | nindent 12 }}
+          volumeMounts: [{name: workspace, mountPath: /workspace}]
+      {{- end }}
+      containers:
+        - name: server
+          image: {{ include "uar.image" $root }}
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+          command: ["python", "-m", "uar_mcp_servers.{{ $server }}_server", "--http", "--host", "0.0.0.0",
+                    "--port", "{{ $port }}"]
+          env:
+            - name: UAR_MCP_ALLOWED_HOSTS
+              value: "uar-mcp-{{ $server }}.{{ $ns }}:{{ $port }},uar-mcp-{{ $server }}.{{ $ns }}.svc.cluster.local:{{ $port }}"
+            {{- if eq $server "fs" }}
+            - {name: UAR_FS_ROOT, value: /workspace}
+            - {name: UAR_FS_WRITE_DIRS, value: reports}
+            {{- else }}
+            - {name: UAR_DB_PATH, value: /app/examples/fixtures/sales.db}
+            {{- end }}
+          ports: [{name: mcp, containerPort: {{ $port }}}]
+          readinessProbe:
+            tcpSocket: {port: mcp}
+            periodSeconds: 5
+          resources: {{- toYaml $root.Values.mcp.resources | nindent 12 }}
+          securityContext: {{- include "uar.restricted" $root | nindent 12 }}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            {{- if eq $server "fs" }}
+            - {name: workspace, mountPath: /workspace}
+            {{- end }}
+      volumes:
+        - {name: tmp, emptyDir: {}}
+        {{- if eq $server "fs" }}
+        - name: workspace
+          persistentVolumeClaim: {claimName: {{ $root.Release.Name }}-workspace}
+        {{- end }}
+{{- end }}
+{{- end }}

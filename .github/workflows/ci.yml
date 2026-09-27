@@ -1,0 +1,57 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.12", "3.14"]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: {POSTGRES_USER: uar, POSTGRES_PASSWORD: uar-dev, POSTGRES_DB: uar}
+        ports: ["55440:5432"]
+        options: >-
+          --health-cmd "pg_isready -U uar" --health-interval 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "${{ matrix.python }}"}
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - name: Install
+        run: |
+          python -m pip install -r requirements.lock
+          python -m pip install -e ".[dev]" -e sdks/python
+          python scripts/make_fixtures.py
+      - name: Contracts are current and compatible
+        run: |
+          python scripts/gen_contracts.py --check
+          python scripts/check_breaking.py
+          python scripts/gen_ts_types.py --check
+      - name: TypeScript SDK
+        working-directory: sdks/typescript
+        run: npm ci || npm install && npm run build && npm test
+      - name: Python SDK against uar-mock
+        run: python -m pytest -q -o addopts="" sdks/python/tests
+      - name: Runtime (unit, contract, integration, recovery, security, dry-run, live-SDK conformance)
+        run: python -m pytest -q
+      - name: Container image and sandbox
+        if: matrix.python == '3.14'
+        run: |
+          docker build -f deploy/docker/Dockerfile -t uar-runtime:0.6.0 .
+          python -m pytest -q -m docker -o addopts="" runtime/tests/test_mcp.py
+
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: Lint and render
+        run: |
+          printf 'profile: standard\n' > /tmp/cfg.yaml
+          helm lint deploy/helm/uar --set-file config=/tmp/cfg.yaml
+          helm template uar deploy/helm/uar --set-file config=/tmp/cfg.yaml > /tmp/rendered.yaml

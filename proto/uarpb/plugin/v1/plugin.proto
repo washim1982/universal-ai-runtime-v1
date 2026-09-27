@@ -1,0 +1,98 @@
+// Universal AI Runtime — plugin protocol, version 1.
+// Plugins (model, tool, agent) run out of process and implement this service.
+// Contract defined in M0; the runtime-side plugin supervisor is delivered in M7.
+syntax = "proto3";
+
+package uar.plugin.v1;
+
+import "google/protobuf/struct.proto";
+
+service Plugin {
+  rpc Describe(DescribeRequest) returns (PluginDescriptor);
+  rpc Init(PluginInitRequest) returns (PluginInitResponse);
+  rpc Execute(PluginExecuteRequest) returns (PluginExecuteResponse);
+  rpc ExecuteStream(PluginExecuteRequest) returns (stream PluginEvent);
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+}
+
+message DescribeRequest {}
+
+message PluginDescriptor {
+  string id = 1;
+  string version = 2;
+  string kind = 3;  // model | tool | agent
+  string api = 4;   // "uar.plugin.v1"
+  repeated string capabilities = 5;
+  google.protobuf.Struct config_schema = 6;
+  google.protobuf.Struct input_schema = 7;
+  google.protobuf.Struct output_schema = 8;
+  // Tool plugins: the tools they expose.
+  repeated ToolDescriptor tools = 9;
+  // Model plugins: the model ids they serve.
+  repeated string models = 10;
+}
+
+message ToolDescriptor {
+  string name = 1;
+  string description = 2;
+  google.protobuf.Struct input_schema = 3;
+  string side_effect = 4;  // read | write | external
+}
+
+message PluginInitRequest {
+  google.protobuf.Struct config = 1;  // validated against config_schema
+  map<string, string> secrets = 2;    // resolved secret references only
+}
+message PluginInitResponse { bool ok = 1; string message = 2; }
+
+message ExecutionContext {
+  string tenant = 1;
+  string run_id = 2;
+  string request_id = 3;
+  int64 deadline_unix_ms = 4;
+  string idempotency_key = 5;
+  string capability_token = 6;
+  string traceparent = 7;  // W3C trace context
+}
+
+message ModelCall {
+  string model = 1;
+  repeated google.protobuf.Struct messages = 2;  // uar.v1.ChatMessage JSON
+  google.protobuf.Struct params = 3;
+  repeated google.protobuf.Struct tools = 4;
+}
+message ToolCall { string tool = 1; google.protobuf.Struct args = 2; }
+message AgentCall { string agent = 1; google.protobuf.Struct input = 2; }
+
+message PluginExecuteRequest {
+  ExecutionContext ctx = 1;
+  oneof call {
+    ModelCall model = 10;
+    ToolCall tool = 11;
+    AgentCall agent = 12;
+  }
+}
+
+message PluginExecuteResponse {
+  bool is_error = 1;
+  string error_code = 2;
+  string error_message = 3;
+  string text = 4;
+  google.protobuf.Struct output = 5;
+  int32 input_tokens = 6;
+  int32 output_tokens = 7;
+  string finish_reason = 8;
+}
+
+message PluginEvent {
+  oneof body {
+    string token = 1;
+    PluginExecuteResponse final = 2;
+  }
+}
+
+message HealthRequest {}
+message HealthResponse { bool serving = 1; string message = 2; }
+message ShutdownRequest { int32 grace_ms = 1; }
+message ShutdownResponse {}

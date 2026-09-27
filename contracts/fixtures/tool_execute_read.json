@@ -1,0 +1,46 @@
+{
+  "name": "tool_execute_read",
+  "description": "Read a file through the governed MCP filesystem tool.",
+  "operation": "ExecuteTool",
+  "request_type": "ToolRequest",
+  "response_type": "ToolResult",
+  "auth": "dev",
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/tool/execute",
+    "body": {
+      "tool": "fs.read_text",
+      "args": {
+        "path": "docs/faq.md"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "ignore": [
+      "request_id",
+      "duration_ms",
+      "content"
+    ],
+    "body": {
+      "request_id": "req_3",
+      "tool": "fs.read_text",
+      "is_error": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{...}"
+        }
+      ],
+      "structured": {
+        "path": "docs/faq.md",
+        "content": "# FAQ\nReturns within 30 days.\n",
+        "bytes": 30,
+        "truncated": false
+      },
+      "truncated": false,
+      "untrusted": true,
+      "duration_ms": 3
+    }
+  }
+}

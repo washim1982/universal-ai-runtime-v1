@@ -1,0 +1,32 @@
+{
+  "name": "error_unauthenticated",
+  "description": "Missing credentials: 401 with a structured error.",
+  "operation": "Infer",
+  "request_type": "InferenceRequest",
+  "response_type": null,
+  "auth": "none",
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/inference",
+    "body": {
+      "model": "local:default",
+      "input": "hi"
+    }
+  },
+  "response": {
+    "status": 401,
+    "ignore": [
+      "error.request_id",
+      "error.message"
+    ],
+    "body": {
+      "error": {
+        "code": "unauthenticated",
+        "message": "missing credentials",
+        "request_id": "req_x",
+        "retryable": false,
+        "details": {}
+      }
+    }
+  }
+}

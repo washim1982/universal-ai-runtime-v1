@@ -1,0 +1,11 @@
+Universal AI Runtime {{ .Chart.AppVersion }} installed in namespace {{ .Release.Namespace }}.
+
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ .Release.Name }}-runtime
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-runtime 9000:{{ .Values.runtime.httpPort }} 50051:{{ .Values.runtime.grpcPort }}
+  curl http://127.0.0.1:9000/readyz
+
+Data retention: the Postgres volume, its password Secret and the workspace volume are kept on
+`helm uninstall`. Delete them explicitly to discard data (see docs/runbooks/docker-desktop.md).
+{{- if .Values.networkPolicy.enabled }}
+NetworkPolicies are rendered; they are enforced only if the cluster's CNI supports them.
+{{- end }}

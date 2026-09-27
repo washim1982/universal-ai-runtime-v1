@@ -1,0 +1,52 @@
+{
+  "name": "inference_basic",
+  "description": "Synchronous inference through an alias.",
+  "operation": "Infer",
+  "request_type": "InferenceRequest",
+  "response_type": "InferenceResponse",
+  "auth": "dev",
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/inference",
+    "body": {
+      "model": "local:default",
+      "input": "hello"
+    }
+  },
+  "response": {
+    "status": 200,
+    "ignore": [
+      "request_id",
+      "usage"
+    ],
+    "body": {
+      "request_id": "req_0000000000000001",
+      "provider": "fake",
+      "model": "echo",
+      "content": "echo: hello",
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "usage": {
+        "input_tokens": 6,
+        "output_tokens": 3,
+        "estimated": false,
+        "price_version": "test-1",
+        "cost": {
+          "amount": "0",
+          "currency": "USD"
+        }
+      },
+      "route": {
+        "requested": "local:default",
+        "model_class": "local",
+        "provider": "fake",
+        "model": "echo",
+        "reasons": [
+          "alias local:default -> fake/echo",
+          "policy allowed"
+        ],
+        "fallback_used": false
+      }
+    }
+  }
+}

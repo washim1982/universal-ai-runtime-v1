@@ -1,0 +1,21 @@
+{
+  "name": "@uar/client",
+  "version": "0.6.0",
+  "description": "TypeScript/JavaScript client for the Universal AI Runtime (placeholder name: check availability before publishing)",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}
+  },
+  "files": ["dist"],
+  "engines": {"node": ">=18"},
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test test/conformance.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "private": true
+}

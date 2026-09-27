@@ -1,0 +1,11 @@
+.venv/
+.local/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+sdks/typescript/dist/
+sdks/python/build/
+*.egg-info/
+examples/workspace/reports/*
+!examples/workspace/reports/.gitkeep

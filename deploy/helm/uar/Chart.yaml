@@ -1,0 +1,6 @@
+apiVersion: v2
+name: uar
+description: Universal AI Runtime - local profile (Docker Desktop Kubernetes)
+type: application
+version: 0.6.0
+appVersion: "0.6.0"

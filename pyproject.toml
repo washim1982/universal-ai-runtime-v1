@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uar-runtime"
+version = "0.6.0"
+description = "Universal AI Runtime: one protocol for inference, MCP tools and durable agent graphs"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "grpcio>=1.66",
+  "grpcio-health-checking>=1.66",
+  "protobuf>=5.28",
+  "psycopg[binary,pool]>=3.2",
+  "mcp>=2.0",
+  "anthropic>=1.0",
+  "cel-python>=0.5",
+  "pyyaml>=6",
+  "jsonschema>=4.23",
+  "httpx>=0.27",
+  "pyjwt>=2.9",
+  "prometheus-client>=0.21",
+  "opentelemetry-sdk>=1.28",
+  "opentelemetry-exporter-otlp-proto-http>=1.28",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "grpcio-tools>=1.66", "websockets>=13"]
+
+[project.scripts]
+uar = "uar_runtime.main:main"
+
+[tool.setuptools.packages.find]
+where = ["runtime", "mcp-servers"]
+include = ["uar_runtime*", "uarpb*", "uar_mcp_servers*"]
+
+[tool.pytest.ini_options]
+testpaths = ["runtime/tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+markers = [
+  "live: needs real local model servers (Ollama / LM Studio / llama.cpp); run with -m live",
+  "docker: needs Docker (container sandbox)",
+]
+addopts = "-m 'not live and not docker'"
+filterwarnings = ["ignore::DeprecationWarning"]

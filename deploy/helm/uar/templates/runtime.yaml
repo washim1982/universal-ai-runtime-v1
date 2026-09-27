@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-runtime
+  labels: {{- include "uar.labels" . | nindent 4 }}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-runtime
+  labels: {{- include "uar.labels" . | nindent 4 }}
+spec:
+  selector: {app.kubernetes.io/name: uar-runtime, app.kubernetes.io/instance: {{ .Release.Name }}}
+  ports:
+    - {name: http, port: {{ .Values.runtime.httpPort }}, targetPort: http}
+    - {name: grpc, port: {{ .Values.runtime.grpcPort }}, targetPort: grpc}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-runtime
+  labels: {{- include "uar.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.runtime.replicas }}
+  selector:
+    matchLabels: {app.kubernetes.io/name: uar-runtime, app.kubernetes.io/instance: {{ .Release.Name }}}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: uar-runtime, app.kubernetes.io/instance: {{ .Release.Name }}}
+      annotations:
+        checksum/config: {{ .Values.config | sha256sum }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-runtime
+      securityContext: {runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001}
+      terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: migrate
+          image: {{ include "uar.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Waits for the database, then applies migrations (advisory-locked, safe with replicas).
+          command: ["sh", "-c", "until python -m uar_runtime.main migrate; do echo waiting for database; sleep 3; done"]
+          env: {{- include "uar.runtimeEnv" . | nindent 12 }}
+          envFrom: {{- include "uar.runtimeEnvFrom" . | nindent 12 }}
+          securityContext: {{- include "uar.restricted" . | nindent 12 }}
+          volumeMounts: {{- include "uar.runtimeMounts" . | nindent 12 }}
+      containers:
+        - name: runtime
+          image: {{ include "uar.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["serve"]
+          env: {{- include "uar.runtimeEnv" . | nindent 12 }}
+          envFrom: {{- include "uar.runtimeEnvFrom" . | nindent 12 }}
+          ports:
+            - {name: http, containerPort: {{ .Values.runtime.httpPort }}}
+            - {name: grpc, containerPort: {{ .Values.runtime.grpcPort }}}
+          readinessProbe:
+            httpGet: {path: /readyz, port: http}
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          startupProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 3
+            failureThreshold: 40
+          resources: {{- toYaml .Values.runtime.resources | nindent 12 }}
+          securityContext: {{- include "uar.restricted" . | nindent 12 }}
+          volumeMounts: {{- include "uar.runtimeMounts" . | nindent 12 }}
+      volumes:
+        - name: config
+          secret: {secretName: {{ .Release.Name }}-config}
+        - {name: tmp, emptyDir: {}}
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-runtime
+  labels: {{- include "uar.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: {service: {name: {{ .Release.Name }}-runtime, port: {name: http}}}
+{{- end }}

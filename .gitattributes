@@ -1,0 +1,9 @@
+# Normalise text to LF in the repository.
+* text=auto
+# Windows batch files need CRLF (cmd.exe can misparse labels with LF); shell scripts need LF.
+*.cmd text eol=crlf
+*.sh  text eol=lf
+# Binary fixtures and images.
+*.png binary
+*.db  binary
+*.pb  binary
