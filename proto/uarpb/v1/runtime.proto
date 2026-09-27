@@ -40,8 +40,26 @@ service Runtime {
   // Offline: never calls a model, tool, plugin or network endpoint.
   rpc DryRun(DryRunRequest) returns (DryRunReport);
 
-  // Contract reserved for M9; the MVP returns UNIMPLEMENTED / HTTP 501.
+  // Approvals. A decision is bound to the action and the hash of its arguments; it is accepted once,
+  // only while pending and unexpired, only from a principal of the same tenant with approvals:decide
+  // (and one of the approver roles, when the approval names them), never from the requester.
   rpc DecideApproval(ApprovalDecision) returns (Approval);
+  rpc ListApprovals(ListApprovalsRequest) returns (ListApprovalsResponse);
+  rpc GetApproval(GetApprovalRequest) returns (Approval);
+
+  // Tamper-evident audit (permission audit:read). Each tenant's audit rows form a hash chain.
+  rpc VerifyAudit(VerifyAuditRequest) returns (AuditVerification);
+  rpc ExportAudit(ExportAuditRequest) returns (ExportAuditResponse);
+
+  // Administration. Tenant-scoped like every other call, except logs and runtime components, which
+  // describe the process (restricted to the configured platform tenants).
+  rpc GetRuntimeInfo(GetRuntimeInfoRequest) returns (RuntimeInfo);        // admin
+  rpc ListUsage(ListUsageRequest) returns (ListUsageResponse);            // usage:read
+  rpc ListApiKeys(ListApiKeysRequest) returns (ListApiKeysResponse);      // keys:manage
+  rpc CreateApiKey(CreateApiKeyRequest) returns (CreatedApiKey);          // keys:manage
+  rpc RevokeApiKey(RevokeApiKeyRequest) returns (ApiKeyInfo);             // keys:manage
+  rpc GetAccessPolicy(GetAccessPolicyRequest) returns (AccessPolicy);     // keys:manage
+  rpc ListLogs(ListLogsRequest) returns (ListLogsResponse);               // logs:read
 
   // Plugins (administrators only). Versions are immutable; activation validates and health-checks
   // the version and affects new runs only (running runs keep the versions they started with).
@@ -248,7 +266,13 @@ message ToolCallEvent { string id = 1; string tool = 2; google.protobuf.Struct a
 message ToolResultEvent { string id = 1; string tool = 2; bool is_error = 3; string summary = 4; string node_id = 5; }
 message NodeStarted { string node_id = 1; string node_type = 2; int32 attempt = 3; }
 message NodeCompleted { string node_id = 1; string outcome = 2; int32 duration_ms = 3; string next = 4; }
-message ApprovalRequired { string approval_id = 1; string action = 2; string args_hash = 3; }
+message ApprovalRequired {
+  string approval_id = 1;
+  string action = 2;
+  string args_hash = 3;
+  string node_id = 4;
+  string expires_at = 5;
+}
 message Completed {
   string status = 1;
   string content = 2;
@@ -319,10 +343,72 @@ message DryRunReport {
   bool executed_nothing = 15;     // always true; asserted by tests
 }
 
-// ---------- approvals (M9) ----------
+// ---------- approvals ----------
 
-message ApprovalDecision { string approval_id = 1; bool approve = 2; string comment = 3; }
-message Approval { string approval_id = 1; string status = 2; string run_id = 3; }
+message ApprovalDecision {
+  string approval_id = 1;
+  bool approve = 2;
+  string comment = 3;
+  // Optional: when set it must equal the approval's args_hash (the approver saw these arguments).
+  string args_hash = 4;
+}
+
+message Approval {
+  string approval_id = 1;
+  string status = 2;  // pending | approved | rejected | expired | cancelled
+  string run_id = 3;
+  string node_id = 4;
+  string kind = 5;    // node (approval node) | tool (inline approval of a tool call)
+  string action = 6;  // approval node action, or the tool name
+  string args_hash = 7;
+  google.protobuf.Struct summary = 8;  // what the approver is asked to approve (redacted)
+  repeated string approver_roles = 9;
+  string requested_by = 10;
+  string decided_by = 11;
+  string comment = 12;
+  string created_at = 13;
+  string expires_at = 14;
+  string decided_at = 15;
+  bool consumed = 16;  // the approved action has been performed (an approval is usable once)
+}
+
+message ListApprovalsRequest { string status = 1; string run_id = 2; }
+message ListApprovalsResponse { repeated Approval approvals = 1; }
+message GetApprovalRequest { string approval_id = 1; }
+
+// ---------- audit ----------
+
+message VerifyAuditRequest {}
+
+message AuditVerification {
+  bool ok = 1;
+  int64 rows = 2;            // chained rows checked
+  int64 first_seq = 3;
+  int64 last_seq = 4;
+  string head_hash = 5;
+  int64 broken_at_seq = 6;   // first row that fails verification (0 = none)
+  string problem = 7;
+  int64 unchained_rows = 8;  // rows written before the chain existed (migration 0003)
+  int64 anchor_seq = 9;      // retention pruned the chain up to this row
+}
+
+message AuditRecord {
+  int64 seq = 1;
+  string ts = 2;
+  string actor = 3;
+  string action = 4;
+  string target = 5;
+  string outcome = 6;
+  string request_id = 7;
+  string run_id = 8;
+  string policy_version = 9;
+  google.protobuf.Struct details = 10;
+  string prev_hash = 11;
+  string hash = 12;
+}
+
+message ExportAuditRequest { int64 after_seq = 1; int32 limit = 2; }
+message ExportAuditResponse { repeated AuditRecord records = 1; int64 next_after_seq = 2; string head_hash = 3; }
 
 // ---------- plugins ----------
 
@@ -349,3 +435,114 @@ message ListPluginsRequest {}
 message ListPluginsResponse { repeated PluginVersion plugins = 1; }
 message ActivatePluginRequest { string plugin_id = 1; string version = 2; }
 message RollbackPluginRequest { string plugin_id = 1; }
+
+// ---------- administration ----------
+
+message GetRuntimeInfoRequest {}
+
+message ComponentStatus {
+  string name = 1;
+  string kind = 2;    // database | provider | mcp_server | plugin | oidc | worker
+  string status = 3;
+  bool ok = 4;
+}
+
+message RuntimeInfo {
+  string version = 1;
+  string profile = 2;
+  string started_at = 3;
+  int64 uptime_s = 4;
+  string host = 5;
+  int32 pid = 6;
+  bool worker = 7;
+  repeated string migrations = 8;
+  repeated ComponentStatus components = 9;
+  string tenant = 10;   // the caller's tenant and subject
+  string subject = 11;
+  bool platform_admin = 12;  // may read process-wide logs
+}
+
+message UsageRecord {
+  int64 id = 1;
+  string ts = 2;
+  string subject = 3;
+  string request_id = 4;
+  string run_id = 5;
+  string provider = 6;
+  string model = 7;
+  int32 input_tokens = 8;
+  int32 output_tokens = 9;
+  Money cost = 10;        // absent when the price is unknown
+  bool estimated = 11;
+  string price_version = 12;
+}
+
+message ListUsageRequest {
+  int64 before_id = 1;    // paging: records with a smaller id (0 = newest)
+  int32 limit = 2;
+  string subject = 3;
+  string model = 4;       // substring of provider/model
+  string since = 5;       // RFC 3339
+}
+
+message ListUsageResponse {
+  repeated UsageRecord records = 1;
+  int64 next_before_id = 2;
+  int64 total_requests = 3;        // for the filter, all pages
+  int64 total_input_tokens = 4;
+  int64 total_output_tokens = 5;
+  Money total_cost = 6;            // known prices only
+}
+
+message ApiKeyInfo {
+  string key_id = 1;
+  string subject = 2;
+  repeated string roles = 3;
+  string source = 4;       // config (read-only here) | api
+  string description = 5;
+  string created_by = 6;
+  string created_at = 7;
+  string expires_at = 8;
+  string revoked_at = 9;
+  string status = 10;      // active | expired | revoked
+}
+
+message ListApiKeysRequest { bool include_revoked = 1; }
+message ListApiKeysResponse { repeated ApiKeyInfo keys = 1; }
+
+message CreateApiKeyRequest {
+  string subject = 1;
+  repeated string roles = 2;
+  string description = 3;
+  int32 expires_in_days = 4;  // 0 = no expiry
+}
+
+// The secret is returned once; the runtime stores only its SHA-256.
+message CreatedApiKey { ApiKeyInfo key = 1; string api_key = 2; }
+
+message RevokeApiKeyRequest { string key_id = 1; string reason = 2; }
+
+message GetAccessPolicyRequest {}
+message RoleInfo { string name = 1; repeated string permissions = 2; }
+message RoleMapping { string source = 1; string kind = 2; repeated string roles = 3; }  // kind: group | subject
+message OidcIssuerInfo { string issuer = 1; string audience = 2; string keys = 3; repeated RoleMapping mappings = 4; }
+
+message AccessPolicy {
+  string tenant = 1;
+  repeated RoleInfo roles = 2;
+  repeated OidcIssuerInfo oidc = 3;
+  repeated string permissions = 4;   // every permission the runtime knows
+}
+
+message LogRecord {
+  int64 seq = 1;
+  string ts = 2;
+  string level = 3;
+  string logger = 4;
+  string message = 5;
+  google.protobuf.Struct fields = 6;
+}
+
+message ListLogsRequest { int64 after_seq = 1; int32 limit = 2; string min_level = 3; }
+message ListLogsResponse { repeated LogRecord records = 1; int64 next_after_seq = 2; int32 capacity = 3; }
+

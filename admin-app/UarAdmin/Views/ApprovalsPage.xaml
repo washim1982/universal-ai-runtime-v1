@@ -1,0 +1,68 @@
+<UserControl x:Class="UarAdmin.Views.ApprovalsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+    <StackPanel>
+      <TextBlock Text="Approvals" Style="{StaticResource H1}"/>
+      <TextBlock Style="{StaticResource Sub}" Margin="0,4,0,12"
+                 Text="Agent runs paused for a human decision. A decision applies to exactly the action and arguments shown, once; unanswered requests expire and are treated as rejected."/>
+    </StackPanel>
+    <DockPanel Grid.Row="1" Margin="0,0,0,10">
+      <CheckBox x:Name="AutoBox" DockPanel.Dock="Right" Content="Auto-refresh" IsChecked="True" VerticalAlignment="Center"/>
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Status" VerticalAlignment="Center" Margin="0,0,8,0"/>
+        <ComboBox x:Name="StatusBox" SelectedIndex="0" SelectionChanged="Status_Changed" Margin="0,0,12,0">
+          <ComboBoxItem Content="pending"/>
+          <ComboBoxItem Content="approved"/>
+          <ComboBoxItem Content="rejected"/>
+          <ComboBoxItem Content="expired"/>
+          <ComboBoxItem Content="cancelled"/>
+          <ComboBoxItem Content="all"/>
+        </ComboBox>
+        <Button Content="Refresh" Click="Refresh_Click"/>
+      </StackPanel>
+    </DockPanel>
+    <Grid Grid.Row="2">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="3*"/>
+        <ColumnDefinition Width="16"/>
+        <ColumnDefinition Width="2*"/>
+      </Grid.ColumnDefinitions>
+      <DataGrid x:Name="Grid" SelectionChanged="Grid_SelectionChanged">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Requested" Binding="{Binding Created}" Width="135"/>
+          <DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="*" MinWidth="160" FontWeight="SemiBold"/>
+          <DataGridTextColumn Header="Kind" Binding="{Binding Kind}" Width="45"/>
+          <DataGridTextColumn Header="Requested by" Binding="{Binding RequestedBy}" Width="110"/>
+          <DataGridTextColumn Header="Approvers" Binding="{Binding Approvers}" Width="90"/>
+          <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="70"/>
+        </DataGrid.Columns>
+      </DataGrid>
+      <Border Grid.Column="2" Style="{StaticResource Card}">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Top">
+            <TextBlock x:Name="DTitle" Text="Select an approval" Style="{StaticResource H2}"/>
+            <TextBlock x:Name="DMeta" Style="{StaticResource Sub}" FontSize="12"/>
+          </StackPanel>
+          <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <TextBlock x:Name="DDecision" TextWrapping="Wrap" Margin="0,0,0,10"/>
+            <StackPanel Orientation="Horizontal">
+              <Button x:Name="ApproveBtn" Style="{StaticResource SuccessButton}" Click="Approve_Click" IsEnabled="False">
+                <StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE73E;" Foreground="White" Margin="0,2,8,0"/><TextBlock Text="Approve" Foreground="White"/></StackPanel>
+              </Button>
+              <Button x:Name="RejectBtn" Style="{StaticResource DangerButton}" Click="Reject_Click" IsEnabled="False">
+                <StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE711;" Foreground="White" Margin="0,2,8,0"/><TextBlock Text="Reject" Foreground="White"/></StackPanel>
+              </Button>
+            </StackPanel>
+          </StackPanel>
+          <TextBox x:Name="DSummary" Style="{StaticResource Code}" Margin="0,10,0,0" TextWrapping="Wrap"/>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

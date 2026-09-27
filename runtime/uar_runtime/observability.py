@@ -8,7 +8,9 @@ from __future__ import annotations
 import json
 import logging
 import sys
+import threading
 import time
+from collections import deque
 from typing import Any
 
 from opentelemetry import context as otel_context
@@ -94,11 +96,58 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(out, default=str)
 
 
+class LogBuffer(logging.Handler):
+    """The most recent log records in memory, served by the admin API (ListLogs). Per process."""
+
+    LEVELS = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
+
+    def __init__(self, capacity: int = 5000):
+        super().__init__(logging.DEBUG)
+        self.capacity = capacity
+        self.records: deque[dict] = deque(maxlen=capacity)
+        self.seq = 0
+        self._lock = threading.Lock()
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            fields = redact(dict(getattr(record, "fields", None) or {}))
+            if record.exc_info:
+                fields["exc"] = logging.Formatter().formatException(record.exc_info)[-4000:]
+            item = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(record.created))
+                    + f".{int(record.msecs):03d}Z", "level": record.levelname, "logger": record.name,
+                    "message": record.getMessage()[:4000], "fields": fields}
+        except Exception:  # never let logging break the caller
+            return
+        with self._lock:
+            self.seq += 1
+            item["seq"] = self.seq
+            self.records.append(item)
+
+    def since(self, after_seq: int, limit: int, min_level: str = "") -> list[dict]:
+        floor = self.LEVELS.get(min_level.upper(), 0)
+        with self._lock:
+            items = [r for r in self.records if r["seq"] > after_seq and self.LEVELS.get(r["level"], 0) >= floor]
+        return items[:limit]
+
+
+LOG_BUFFER = LogBuffer()
+
+
+def attach_log_buffer(capacity: int | None = None) -> LogBuffer:
+    if capacity and capacity != LOG_BUFFER.capacity:
+        LOG_BUFFER.capacity = capacity
+        LOG_BUFFER.records = deque(LOG_BUFFER.records, maxlen=capacity)
+    root = logging.getLogger()
+    if LOG_BUFFER not in root.handlers:
+        root.addHandler(LOG_BUFFER)
+    return LOG_BUFFER
+
+
 def setup_logging(level: str = "INFO", as_json: bool = True) -> None:
     h = logging.StreamHandler(sys.stderr)
     h.setFormatter(JsonFormatter() if as_json else logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
     root = logging.getLogger()
-    root.handlers[:] = [h]
+    root.handlers[:] = [h, LOG_BUFFER]
     root.setLevel(level)
     for noisy in ("httpx", "httpcore", "mcp", "psycopg.pool", "uvicorn.access"):
         logging.getLogger(noisy).setLevel(logging.WARNING)

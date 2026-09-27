@@ -2,7 +2,7 @@
 
 image:
   repository: uar-runtime        # built locally; Docker Desktop's cluster shares the image store
-  tag: "0.6.0"
+  tag: "0.9.0"
   pullPolicy: IfNotPresent
 
 # Required: the runtime configuration (uar.yaml). Generate it with

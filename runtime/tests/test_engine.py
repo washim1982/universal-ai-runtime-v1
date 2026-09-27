@@ -61,7 +61,7 @@ async def run_to_end(env, agent_id, input_, key=None, timeout=30):
     (lambda d: d["spec"]["nodes"].__setitem__(0, {"id": "a", "type": "tool", "tool": "fs.write_text"}),
      "not in permissions.tools"),
     (lambda d: d["spec"].update(limits={"max_steps": 100000}), "max_steps"),
-    (lambda d: d["spec"]["nodes"].__setitem__(0, {"id": "a", "type": "approval"}), "approval nodes"),
+    (lambda d: d["spec"]["nodes"].__setitem__(0, {"id": "a", "type": "approval"}), "'action' is a required"),
     (lambda d: d["spec"]["nodes"][1].pop("type"), "type"),
 ])
 async def test_invalid_graphs_rejected(env, mutate, message):

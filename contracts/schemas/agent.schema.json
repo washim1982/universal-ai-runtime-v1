@@ -122,7 +122,15 @@
         {"if": {"properties": {"type": {"const": "return"}}}, "then": {
           "properties": {"id": true, "type": true, "description": true, "value": {"$ref": "#/$defs/mapping"}}, "additionalProperties": false}},
         {"if": {"properties": {"type": {"const": "approval"}}}, "then": {
-          "properties": {"id": true, "type": true, "description": true, "action": {"type": "string"}}, "additionalProperties": false}}
+          "required": ["action"],
+          "properties": {"id": true, "type": true, "description": true,
+            "action": {"type": "string", "minLength": 1, "description": "What is approved; bound into the approval with the hash of args."},
+            "args": {"type": "object", "description": "Values the decision is bound to (CEL allowed)."},
+            "summary": {"type": "object", "description": "Extra fields shown to the approver (CEL allowed); not part of the hash."},
+            "approvers": {"type": "array", "items": {"type": "string"}, "description": "Roles allowed to decide (empty = anyone with approvals:decide)."},
+            "expires_in_s": {"type": "number", "exclusiveMinimum": 0},
+            "on_reject": {"enum": ["fail", "continue"], "description": "fail (default): a rejected or expired approval fails the run; continue: the node outputs approved=false."}},
+          "additionalProperties": false}}
       ]
     }
   }

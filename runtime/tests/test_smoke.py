@@ -5,7 +5,7 @@ from conftest import headers
 
 async def test_startup_and_health(env):
     st = env.svc.startup_status
-    assert st["migrations"] == ["0001_initial", "0002_plugins"]
+    assert st["migrations"] == ["0001_initial", "0002_plugins", "0003_governance", "0004_api_keys"]
     assert st["mcp"] == {"fs": "3 tools", "db": "2 tools"}, st
     assert sorted(st["agents"]) == ["in_app_assistant", "report_generator"]
     async with httpx.AsyncClient(base_url=env.http) as c:

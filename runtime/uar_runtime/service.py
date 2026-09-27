@@ -17,6 +17,8 @@ from typing import Any, AsyncIterator
 
 import yaml
 
+from .admin import AdminService
+from .approvals import Approvals
 from .config import Settings
 from .engine.executor import Engine
 from .engine.graph import Graph
@@ -24,9 +26,11 @@ from .engine.runs import TERMINAL, RunService, run_view
 from .errors import UARError, invalid
 from .governance import Audit, Authenticator, Budget, Principal, RateLimiter
 from .mcp.orchestrator import CallContext, Orchestrator, args_hash
-from .observability import current_trace_id, get_tracer
+from .observability import attach_log_buffer, current_trace_id, get_tracer
 from .plugins.host import PluginManager
 from .plugins.integrate import install as install_plugin_integrations
+from .redaction import Redactor
+from .retention import Retention
 from .router.adapters.base import ChatRequest, ChatResult, ToolSpec
 from .router.service import ModelRouter
 from .simulation.planner import SimInputs, preview_inference, simulate, static_plan
@@ -45,13 +49,23 @@ class RuntimeService:
         self.s = settings
         self.store = store
         self.auth = Authenticator(settings)
-        self.audit = Audit(store)
+        self.redactor = Redactor(settings.redaction)
+        self.audit = Audit(store, self.redactor)
         self.budget = Budget(store)
         self.limiter = RateLimiter()
         self.router = ModelRouter(settings, store, self.audit, self.budget)
+        self.router.redactor = self.redactor
         self.orch = Orchestrator(settings, store, self.audit)
         self.runs = RunService(settings, store, self.audit)
-        self.engine = Engine(settings, store, self.runs, self.router, self.orch, self.auth)
+        self.runs.redactor = self.redactor
+        self.approvals = Approvals(settings, store, self.audit, self.redactor)
+        self.orch.approvals = self.runs.approvals = self.approvals
+        self.engine = Engine(settings, store, self.runs, self.router, self.orch, self.auth, self.approvals)
+        self.approvals.on_enqueue = self.engine.wake
+        self.retention = Retention(settings, store, self.audit)
+        self.admin = AdminService(self)
+        attach_log_buffer(settings.admin.log_buffer_records)
+        self._jobs: list[asyncio.Task] = []
         self.plugins = PluginManager(store, self.audit)
         self.plugin_agents = self.engine.plugin_agents
         self.runs.plugin_pins = self.plugins.pins
@@ -65,6 +79,9 @@ class RuntimeService:
     async def start(self, *, discover: bool = True, mcp: bool = True, worker: bool | None = None) -> None:
         await self.store.open()
         self.startup_status["migrations"] = await self.store.migrate()
+        await self.auth.start(self.store)
+        if self.auth.oidc:
+            self.startup_status["oidc"] = {i: c.last_error or f"{len(c.keys)} keys" for i, c in self.auth.oidc.items()}
         if discover:
             self.startup_status["providers"] = await self.router.refresh_catalog()
         if mcp:
@@ -74,14 +91,18 @@ class RuntimeService:
             self.startup_status["agents"] = await self._register_bundled_agents(Path(self.s.agents_dir))
         if worker if worker is not None else self.s.worker.embedded:
             self._worker = asyncio.create_task(self.engine.run_forever(), name="uar-worker")
+            if self.s.retention.enabled:
+                self._jobs.append(asyncio.create_task(self.retention.run_forever(), name="uar-retention"))
         self.started = True
         log.info("runtime started", extra={"fields": self.startup_status})
 
     async def stop(self) -> None:
         await self.engine.stop()
-        if self._worker:
-            self._worker.cancel()
-            await asyncio.gather(self._worker, return_exceptions=True)
+        for t in [self._worker, *self._jobs]:
+            if t:
+                t.cancel()
+        await asyncio.gather(*[t for t in [self._worker, *self._jobs] if t], return_exceptions=True)
+        await self.auth.stop()
         await self.orch.stop()
         await self.plugins.stop()
         await self.router.aclose()
@@ -285,6 +306,9 @@ class RuntimeService:
         run = await self._start_agent_run(p, req, request_id)
         g = await self.runs.load_graph(p.tenant, run["agent_id"], run["version"])
         run = await self.runs.wait(p, run["run_id"], float(g.limits["timeout_s"]) + 5)
+        if run["status"] == "waiting_approval":
+            raise UARError("failed_precondition", "the agent run is waiting for an approval; watch the run for its "
+                           "result", details={"run_id": run["run_id"], "status": run["status"]})
         if run["status"] != "succeeded":
             err = run.get("error") or {}
             raise UARError(err.get("code", "internal"), err.get("message", f"agent run {run['status']}"),
@@ -454,5 +478,58 @@ class RuntimeService:
     async def rollback_plugin(self, p: Principal, plugin_id: str, request_id: str) -> dict:
         return await self.plugins.rollback(p, plugin_id, request_id)
 
+    # ------------------------------------------------------------ approvals & audit
+
     async def decide_approval(self, p: Principal, req: dict, request_id: str) -> dict:
-        raise UARError("unimplemented", "approvals are planned for M9")
+        if not req.get("approval_id"):
+            raise invalid("approval_id is required")
+        return await self.approvals.decide(p, req["approval_id"], bool(req.get("approve")), req.get("comment", ""),
+                                           req.get("args_hash", ""), request_id)
+
+    async def list_approvals(self, p: Principal, req: dict) -> dict:
+        return await self.approvals.list(p, req.get("status", ""), req.get("run_id", ""))
+
+    async def get_approval(self, p: Principal, approval_id: str) -> dict:
+        return await self.approvals.get(p, approval_id)
+
+    async def verify_audit(self, p: Principal, request_id: str) -> dict:
+        p.require("audit:read")
+        result = await self.audit.verify(p.tenant)
+        await self.audit.record(p, "audit.verify", p.tenant, "ok" if result["ok"] else "broken",
+                                request_id=request_id, details={"rows": result["rows"],
+                                                                "broken_at_seq": result["broken_at_seq"]})
+        return result
+
+    # ------------------------------------------------------------ administration
+
+    async def runtime_info(self, p: Principal) -> dict:
+        return await self.admin.info(p)
+
+    async def list_usage(self, p: Principal, req: dict) -> dict:
+        return await self.admin.usage(p, req)
+
+    async def list_api_keys(self, p: Principal, include_revoked: bool) -> dict:
+        return await self.admin.list_keys(p, include_revoked)
+
+    async def create_api_key(self, p: Principal, req: dict, request_id: str) -> dict:
+        return await self.admin.create_key(p, req, request_id)
+
+    async def revoke_api_key(self, p: Principal, key_id: str, reason: str, request_id: str) -> dict:
+        return await self.admin.revoke_key(p, key_id, reason, request_id)
+
+    async def access_policy(self, p: Principal) -> dict:
+        return await self.admin.access_policy(p)
+
+    async def list_logs(self, p: Principal, req: dict) -> dict:
+        return await self.admin.logs(p, req)
+
+    async def export_audit(self, p: Principal, req: dict, request_id: str) -> dict:
+        p.require("audit:read")
+        after, limit = int(req.get("after_seq") or 0), int(req.get("limit") or 500)
+        if after < 0 or not 0 < limit <= 1000:
+            raise invalid("after_seq must be >= 0 and limit between 1 and 1000")
+        if after == 0:
+            # Recorded once per export (at its start), so paging "until empty" terminates.
+            await self.audit.record(p, "audit.export", p.tenant, "started", request_id=request_id,
+                                    details={"limit": limit}, required=True)
+        return await self.audit.export(p.tenant, after, limit)

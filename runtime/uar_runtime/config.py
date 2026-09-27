@@ -20,14 +20,17 @@ PERMISSIONS = {
     "models:list", "tools:list", "tools:execute",
     "inference:local", "inference:cloud", "inference:enterprise",
     "agents:register", "agents:read", "runs:start", "runs:read", "runs:cancel", "runs:resolve",
-    "dryrun", "approvals:decide", "plugins:manage", "admin",
+    "dryrun", "approvals:read", "approvals:decide", "plugins:manage", "audit:read", "usage:read",
+    "keys:manage", "logs:read", "admin",
 }
 DEFAULT_ROLES: dict[str, list[str]] = {
     "viewer": ["models:list", "tools:list", "agents:read", "runs:read"],
     "developer": ["models:list", "tools:list", "tools:execute", "inference:local", "inference:enterprise",
                   "agents:register", "agents:read", "runs:start", "runs:read", "runs:cancel", "dryrun"],
-    "operator": ["models:list", "tools:list", "agents:read", "runs:read", "runs:cancel", "runs:resolve", "dryrun"],
-    "approver": ["runs:read", "approvals:decide"],
+    "operator": ["models:list", "tools:list", "agents:read", "runs:read", "runs:cancel", "runs:resolve", "dryrun",
+                 "approvals:read"],
+    "approver": ["runs:read", "approvals:read", "approvals:decide"],
+    "auditor": ["runs:read", "approvals:read", "audit:read", "usage:read"],
     "admin": sorted(PERMISSIONS),
 }
 
@@ -94,20 +97,51 @@ class TenantCfg(Strict):
     quotas: QuotaCfg = QuotaCfg()
     allow_cloud: bool = False
     allow_cloud_fallback: bool = False
+    # Regions this tenant's data may be processed in. Empty = no residency constraint; otherwise only
+    # providers whose `region` is listed are used (a provider without a region never qualifies).
+    data_residency: list[str] = []
 
 
 class JwtCfg(Strict):
     issuer: str = "uar-dev"
     audience: str = "uar"
-    hs256_secret_env: str | None = None  # dev/test only; OIDC/JWKS arrives in M9
+    hs256_secret_env: str | None = None  # dev/test only; production identity uses `auth.oidc`
     tenant_claim: str = "uar_tenant"
     roles_claim: str = "uar_roles"
+
+
+class OidcCfg(Strict):
+    """An OpenID Connect issuer whose access tokens are accepted (signature checked against its JWKS)."""
+    issuer: str
+    audience: str
+    jwks_url: str
+    algorithms: list[Literal["RS256", "RS384", "RS512", "PS256", "ES256", "ES384", "EdDSA"]] = ["RS256", "ES256"]
+    # The tenant is fixed per issuer, or read from a claim and mapped (unmapped values are refused).
+    tenant: str | None = None
+    tenant_claim: str | None = None
+    tenant_map: dict[str, str] = {}
+    groups_claim: str = "groups"
+    group_roles: dict[str, list[str]] = {}     # IdP group -> UAR roles
+    subject_roles: dict[str, list[str]] = {}   # service accounts: token subject (client id) -> roles
+    leeway_s: int = 30
+    jwks_refresh_s: float = 600.0
+
+    @model_validator(mode="after")
+    def _check(self) -> "OidcCfg":
+        if bool(self.tenant) == bool(self.tenant_claim):
+            raise ValueError(f"oidc {self.issuer}: set exactly one of tenant or tenant_claim")
+        if self.tenant_claim and not self.tenant_map:
+            raise ValueError(f"oidc {self.issuer}: tenant_claim needs tenant_map (claim value -> tenant)")
+        if not self.jwks_url.startswith(("https://", "http://127.0.0.1", "http://localhost")):
+            raise ValueError(f"oidc {self.issuer}: jwks_url must use https")
+        return self
 
 
 class AuthCfg(Strict):
     tenants: list[TenantCfg]
     roles: dict[str, list[str]] = Field(default_factory=lambda: dict(DEFAULT_ROLES))
     jwt: JwtCfg | None = None
+    oidc: list[OidcCfg] = []
 
     @model_validator(mode="after")
     def _check(self) -> "AuthCfg":
@@ -115,6 +149,18 @@ class AuthCfg(Strict):
             bad = set(perms) - PERMISSIONS
             if bad:
                 raise ValueError(f"role {role}: unknown permissions {sorted(bad)}")
+        tenant_ids = {t.id for t in self.tenants}
+        issuers = [o.issuer for o in self.oidc]
+        if len(issuers) != len(set(issuers)):
+            raise ValueError("oidc issuers must be unique")
+        for o in self.oidc:
+            for tid in ([o.tenant] if o.tenant else list(o.tenant_map.values())):
+                if tid not in tenant_ids:
+                    raise ValueError(f"oidc {o.issuer}: unknown tenant {tid}")
+            for src, roles in list(o.group_roles.items()) + list(o.subject_roles.items()):
+                missing = set(roles) - set(self.roles)
+                if missing:
+                    raise ValueError(f"oidc {o.issuer} mapping {src}: unknown roles {sorted(missing)}")
         ids = [k.id for t in self.tenants for k in t.api_keys]
         if len(ids) != len(set(ids)):
             raise ValueError("api key ids must be unique")
@@ -140,12 +186,24 @@ class ProviderCfg(Strict):
     models: list[str] = []          # static catalog; empty = discover from the provider
     extra_headers: dict[str, str] = {}
     api_version: str | None = None  # azure_openai classic API (deployments + api-version)
+    region: str | None = None       # where requests are processed (data residency, router rules)
 
 
 class RuleCfg(Strict):
-    when: dict[str, Any] = {}       # keys: tenant, role, data_class
+    when: dict[str, Any] = {}       # keys: tenant, role, data_class, model_class
     deny: list[str] = []            # class names or model patterns
     allow: list[str] = []           # if present: only these classes/patterns
+    regions: list[str] = []         # if present: the provider's region must be one of these
+    max_input_per_mtok: str | None = None   # providers priced above this (or unpriced) are not used
+    prefer: Literal["order", "cost", "latency"] | None = None  # provider choice within a class
+
+    @field_validator("when")
+    @classmethod
+    def _keys(cls, v: dict[str, Any]) -> dict[str, Any]:
+        bad = set(v) - {"tenant", "role", "data_class", "model_class"}
+        if bad:
+            raise ValueError(f"unknown rule condition(s) {sorted(bad)}")
+        return v
 
 
 class FallbackCfg(Strict):
@@ -236,7 +294,9 @@ class ArgConstraint(Strict):
 
 class ToolPolicyCfg(Strict):
     tool: str                          # fnmatch pattern over namespaced tool names
-    effect: Literal["allow", "deny"] = "allow"
+    # require_approval: allowed inside agent runs once a human approves this exact call (tool + args hash)
+    effect: Literal["allow", "deny", "require_approval"] = "allow"
+    approver_roles: list[str] = []     # require_approval: who may decide (empty = any approvals:decide)
     roles: list[str] = []              # empty = any role
     tenants: list[str] = []            # empty = any tenant
     args: dict[str, ArgConstraint] = {}
@@ -250,6 +310,50 @@ class LimitsCfg(Strict):
     timeout_s: float = 600
     max_depth: int = 2
     auto_tool_max_steps: int = 6
+
+
+class AdminCfg(Strict):
+    # Tenants whose administrators may read process-wide data (service logs, runtime components).
+    # Empty = any tenant's admins: suitable only when one organisation runs the runtime.
+    platform_tenants: list[str] = []
+    key_refresh_s: float = 5.0        # how quickly keys created/revoked on another replica take effect
+    log_buffer_records: int = 5000    # in-memory service log records served by ListLogs
+
+
+class ApprovalsCfg(Strict):
+    default_ttl_s: float = 86_400       # pending approvals expire (fail closed) after this
+    max_ttl_s: float = 7 * 86_400
+    allow_self_approval: bool = False   # the principal that started the run may not decide by default
+
+
+class RedactionPatternCfg(Strict):
+    name: str
+    regex: str
+    replace: str = ""                   # default: [redacted:<name>]
+
+    @field_validator("regex")
+    @classmethod
+    def _compiles(cls, v: str) -> str:
+        re.compile(v)
+        return v
+
+
+class RedactionCfg(Strict):
+    # Built-in detectors: email, card_number (Luhn-checked), us_ssn, iban, ipv4, phone
+    builtin: list[Literal["email", "card_number", "us_ssn", "iban", "ipv4", "phone"]] = []
+    patterns: list[RedactionPatternCfg] = []
+    audit: bool = True                  # audit details
+    events: bool = True                 # run event log (tool summaries, errors, completed output copy)
+    egress_classes: list[ModelClass] = []   # prompts sent to these model classes are redacted first
+
+
+class RetentionCfg(Strict):
+    enabled: bool = False
+    interval_s: float = 3600
+    runs_days: int | None = None        # terminal runs (+ events, intents, approvals)
+    usage_days: int | None = None
+    audit_days: int | None = None       # prunes the oldest audit rows; the chain keeps an anchor
+    idempotency_days: int | None = 7
 
 
 class Settings(Strict):
@@ -266,6 +370,10 @@ class Settings(Strict):
     mcp_servers: list[McpServerCfg] = []
     tool_policies: list[ToolPolicyCfg] = []
     limits: LimitsCfg = LimitsCfg()
+    approvals: ApprovalsCfg = ApprovalsCfg()
+    admin: AdminCfg = AdminCfg()
+    redaction: RedactionCfg = RedactionCfg()
+    retention: RetentionCfg = RetentionCfg()
     agents_dir: str | None = None  # register *.yaml agents at startup for every tenant
 
     @model_validator(mode="after")
@@ -283,6 +391,13 @@ class Settings(Strict):
         for alias, target in self.router.aliases.items():
             if "/" not in target or target.split("/", 1)[0] not in pids:
                 raise ValueError(f"alias {alias} -> {target}: target must be provider/model")
+        for t in self.auth.tenants:
+            if t.data_residency and not any(p.region in t.data_residency for p in self.providers):
+                raise ValueError(f"tenant {t.id}: no provider is in its data residency {t.data_residency}")
+        for pol in self.tool_policies:
+            missing = set(pol.approver_roles) - set(self.auth.roles)
+            if missing:
+                raise ValueError(f"tool policy {pol.tool}: unknown approver roles {sorted(missing)}")
         sids = [s.id for s in self.mcp_servers]
         if len(sids) != len(set(sids)):
             raise ValueError("mcp server ids must be unique")

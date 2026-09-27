@@ -52,9 +52,29 @@ bodies on the runtime's HTTP server, so the Java SDK pins HTTP/1.1. On this mach
 Windows trust store (`-Djavax.net.ssl.trustStoreType=Windows-ROOT`) because a TLS-inspecting
 component's root certificate is trusted by Windows but not by the JDK.
 
-## M9 — Enterprise governance
+## M9 — Enterprise governance 🟡
 
-Pending.
+Recorded 2026-09-27. Default suite: **157 passed** (adds `test_governance.py` 27, `test_router_rules.py` 2,
+`test_admin_api.py` 6). Migrations `0003_governance`, `0004_api_keys`.
+
+| Gate item | Evidence |
+|---|---|
+| Approval nodes; approved and denied paths | `test_approval_node_approved_path_and_no_replay`, `test_approval_node_rejected_path` (`on_reject: continue` routes to the denied branch) |
+| Inline approvals bound to action + argument hash, used once, no replay | `test_tool_call_waits_for_approval_of_its_exact_arguments`, `test_approval_consumed_once`, `test_other_tenant_runs_do_not_reuse_approvals`; a wrong `args_hash` on the decision is refused |
+| Expiry fails closed | `test_unanswered_approval_expires_and_fails_closed` |
+| Separation of duties, approver roles | requester cannot decide (`test_requester_cannot_approve_own_run`); approver without the named role → 403 |
+| Approvals inside sub-agents; cancel while waiting | `test_sub_agent_approval_parks_and_resumes_parent`, `test_cancel_waiting_run_cancels_its_approval` |
+| Tamper-evident audit, verify and export | `test_audit_chain_verifies_and_exports`, `test_audit_is_append_only_and_tampering_is_detected` (modified row, deleted row and truncated tail each detected; UPDATE/DELETE blocked by a trigger) |
+| OIDC/JWKS SSO, group → role mapping, service accounts | `test_oidc_*` (valid, wrong audience, expired, unmapped tenant, foreign issuer, forged signature, HS256 algorithm confusion, key rotation) |
+| Router rules v2 (region, residency, cost/latency) | `test_router_data_residency`, `test_router_region_cost_and_latency_rules` |
+| Redaction policies | `test_prompts_to_cloud_models_are_redacted`, `test_event_log_and_audit_are_redacted` |
+| Retention/deletion jobs | `test_retention_prunes_and_audit_chain_still_verifies` (chain anchored after pruning) |
+| Cross-tenant suite incl. approvals, audit, keys, usage | `test_other_tenant_cannot_see_or_decide_approvals`, `test_api_key_lifecycle`, `test_inference_history_is_tenant_scoped_and_paged` |
+| Administration API + Windows admin app | `test_admin_api.py`; UAR Admin (`admin-app/`) exercised against a live runtime (see its README) |
+
+Still open for M9: the compliance controls map document and the two worked examples
+(code assistant with approved/denied file writes, enterprise workflow). Approval of direct
+`ExecuteTool` calls is not supported: tools that need approval run only inside agent runs.
 
 ## M10 — Distributed deployment and production readiness
 

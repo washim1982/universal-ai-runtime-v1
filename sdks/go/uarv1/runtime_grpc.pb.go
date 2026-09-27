@@ -27,23 +27,34 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Runtime_Infer_FullMethodName          = "/uar.v1.Runtime/Infer"
-	Runtime_InferStream_FullMethodName    = "/uar.v1.Runtime/InferStream"
-	Runtime_ExecuteTool_FullMethodName    = "/uar.v1.Runtime/ExecuteTool"
-	Runtime_ListTools_FullMethodName      = "/uar.v1.Runtime/ListTools"
-	Runtime_ListModels_FullMethodName     = "/uar.v1.Runtime/ListModels"
-	Runtime_RegisterAgent_FullMethodName  = "/uar.v1.Runtime/RegisterAgent"
-	Runtime_StartRun_FullMethodName       = "/uar.v1.Runtime/StartRun"
-	Runtime_GetRun_FullMethodName         = "/uar.v1.Runtime/GetRun"
-	Runtime_WatchRun_FullMethodName       = "/uar.v1.Runtime/WatchRun"
-	Runtime_CancelRun_FullMethodName      = "/uar.v1.Runtime/CancelRun"
-	Runtime_ResolveRun_FullMethodName     = "/uar.v1.Runtime/ResolveRun"
-	Runtime_DryRun_FullMethodName         = "/uar.v1.Runtime/DryRun"
-	Runtime_DecideApproval_FullMethodName = "/uar.v1.Runtime/DecideApproval"
-	Runtime_RegisterPlugin_FullMethodName = "/uar.v1.Runtime/RegisterPlugin"
-	Runtime_ListPlugins_FullMethodName    = "/uar.v1.Runtime/ListPlugins"
-	Runtime_ActivatePlugin_FullMethodName = "/uar.v1.Runtime/ActivatePlugin"
-	Runtime_RollbackPlugin_FullMethodName = "/uar.v1.Runtime/RollbackPlugin"
+	Runtime_Infer_FullMethodName           = "/uar.v1.Runtime/Infer"
+	Runtime_InferStream_FullMethodName     = "/uar.v1.Runtime/InferStream"
+	Runtime_ExecuteTool_FullMethodName     = "/uar.v1.Runtime/ExecuteTool"
+	Runtime_ListTools_FullMethodName       = "/uar.v1.Runtime/ListTools"
+	Runtime_ListModels_FullMethodName      = "/uar.v1.Runtime/ListModels"
+	Runtime_RegisterAgent_FullMethodName   = "/uar.v1.Runtime/RegisterAgent"
+	Runtime_StartRun_FullMethodName        = "/uar.v1.Runtime/StartRun"
+	Runtime_GetRun_FullMethodName          = "/uar.v1.Runtime/GetRun"
+	Runtime_WatchRun_FullMethodName        = "/uar.v1.Runtime/WatchRun"
+	Runtime_CancelRun_FullMethodName       = "/uar.v1.Runtime/CancelRun"
+	Runtime_ResolveRun_FullMethodName      = "/uar.v1.Runtime/ResolveRun"
+	Runtime_DryRun_FullMethodName          = "/uar.v1.Runtime/DryRun"
+	Runtime_DecideApproval_FullMethodName  = "/uar.v1.Runtime/DecideApproval"
+	Runtime_ListApprovals_FullMethodName   = "/uar.v1.Runtime/ListApprovals"
+	Runtime_GetApproval_FullMethodName     = "/uar.v1.Runtime/GetApproval"
+	Runtime_VerifyAudit_FullMethodName     = "/uar.v1.Runtime/VerifyAudit"
+	Runtime_ExportAudit_FullMethodName     = "/uar.v1.Runtime/ExportAudit"
+	Runtime_GetRuntimeInfo_FullMethodName  = "/uar.v1.Runtime/GetRuntimeInfo"
+	Runtime_ListUsage_FullMethodName       = "/uar.v1.Runtime/ListUsage"
+	Runtime_ListApiKeys_FullMethodName     = "/uar.v1.Runtime/ListApiKeys"
+	Runtime_CreateApiKey_FullMethodName    = "/uar.v1.Runtime/CreateApiKey"
+	Runtime_RevokeApiKey_FullMethodName    = "/uar.v1.Runtime/RevokeApiKey"
+	Runtime_GetAccessPolicy_FullMethodName = "/uar.v1.Runtime/GetAccessPolicy"
+	Runtime_ListLogs_FullMethodName        = "/uar.v1.Runtime/ListLogs"
+	Runtime_RegisterPlugin_FullMethodName  = "/uar.v1.Runtime/RegisterPlugin"
+	Runtime_ListPlugins_FullMethodName     = "/uar.v1.Runtime/ListPlugins"
+	Runtime_ActivatePlugin_FullMethodName  = "/uar.v1.Runtime/ActivatePlugin"
+	Runtime_RollbackPlugin_FullMethodName  = "/uar.v1.Runtime/RollbackPlugin"
 )
 
 // RuntimeClient is the client API for Runtime service.
@@ -68,8 +79,24 @@ type RuntimeClient interface {
 	ResolveRun(ctx context.Context, in *ResolveRunRequest, opts ...grpc.CallOption) (*Run, error)
 	// Offline: never calls a model, tool, plugin or network endpoint.
 	DryRun(ctx context.Context, in *DryRunRequest, opts ...grpc.CallOption) (*DryRunReport, error)
-	// Contract reserved for M9; the MVP returns UNIMPLEMENTED / HTTP 501.
+	// Approvals. A decision is bound to the action and the hash of its arguments; it is accepted once,
+	// only while pending and unexpired, only from a principal of the same tenant with approvals:decide
+	// (and one of the approver roles, when the approval names them), never from the requester.
 	DecideApproval(ctx context.Context, in *ApprovalDecision, opts ...grpc.CallOption) (*Approval, error)
+	ListApprovals(ctx context.Context, in *ListApprovalsRequest, opts ...grpc.CallOption) (*ListApprovalsResponse, error)
+	GetApproval(ctx context.Context, in *GetApprovalRequest, opts ...grpc.CallOption) (*Approval, error)
+	// Tamper-evident audit (permission audit:read). Each tenant's audit rows form a hash chain.
+	VerifyAudit(ctx context.Context, in *VerifyAuditRequest, opts ...grpc.CallOption) (*AuditVerification, error)
+	ExportAudit(ctx context.Context, in *ExportAuditRequest, opts ...grpc.CallOption) (*ExportAuditResponse, error)
+	// Administration. Tenant-scoped like every other call, except logs and runtime components, which
+	// describe the process (restricted to the configured platform tenants).
+	GetRuntimeInfo(ctx context.Context, in *GetRuntimeInfoRequest, opts ...grpc.CallOption) (*RuntimeInfo, error)
+	ListUsage(ctx context.Context, in *ListUsageRequest, opts ...grpc.CallOption) (*ListUsageResponse, error)
+	ListApiKeys(ctx context.Context, in *ListApiKeysRequest, opts ...grpc.CallOption) (*ListApiKeysResponse, error)
+	CreateApiKey(ctx context.Context, in *CreateApiKeyRequest, opts ...grpc.CallOption) (*CreatedApiKey, error)
+	RevokeApiKey(ctx context.Context, in *RevokeApiKeyRequest, opts ...grpc.CallOption) (*ApiKeyInfo, error)
+	GetAccessPolicy(ctx context.Context, in *GetAccessPolicyRequest, opts ...grpc.CallOption) (*AccessPolicy, error)
+	ListLogs(ctx context.Context, in *ListLogsRequest, opts ...grpc.CallOption) (*ListLogsResponse, error)
 	// Plugins (administrators only). Versions are immutable; activation validates and health-checks
 	// the version and affects new runs only (running runs keep the versions they started with).
 	RegisterPlugin(ctx context.Context, in *RegisterPluginRequest, opts ...grpc.CallOption) (*PluginVersion, error)
@@ -234,6 +261,116 @@ func (c *runtimeClient) DecideApproval(ctx context.Context, in *ApprovalDecision
 	return out, nil
 }
 
+func (c *runtimeClient) ListApprovals(ctx context.Context, in *ListApprovalsRequest, opts ...grpc.CallOption) (*ListApprovalsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListApprovalsResponse)
+	err := c.cc.Invoke(ctx, Runtime_ListApprovals_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) GetApproval(ctx context.Context, in *GetApprovalRequest, opts ...grpc.CallOption) (*Approval, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Approval)
+	err := c.cc.Invoke(ctx, Runtime_GetApproval_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) VerifyAudit(ctx context.Context, in *VerifyAuditRequest, opts ...grpc.CallOption) (*AuditVerification, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuditVerification)
+	err := c.cc.Invoke(ctx, Runtime_VerifyAudit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) ExportAudit(ctx context.Context, in *ExportAuditRequest, opts ...grpc.CallOption) (*ExportAuditResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportAuditResponse)
+	err := c.cc.Invoke(ctx, Runtime_ExportAudit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) GetRuntimeInfo(ctx context.Context, in *GetRuntimeInfoRequest, opts ...grpc.CallOption) (*RuntimeInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RuntimeInfo)
+	err := c.cc.Invoke(ctx, Runtime_GetRuntimeInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) ListUsage(ctx context.Context, in *ListUsageRequest, opts ...grpc.CallOption) (*ListUsageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUsageResponse)
+	err := c.cc.Invoke(ctx, Runtime_ListUsage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) ListApiKeys(ctx context.Context, in *ListApiKeysRequest, opts ...grpc.CallOption) (*ListApiKeysResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListApiKeysResponse)
+	err := c.cc.Invoke(ctx, Runtime_ListApiKeys_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) CreateApiKey(ctx context.Context, in *CreateApiKeyRequest, opts ...grpc.CallOption) (*CreatedApiKey, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreatedApiKey)
+	err := c.cc.Invoke(ctx, Runtime_CreateApiKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) RevokeApiKey(ctx context.Context, in *RevokeApiKeyRequest, opts ...grpc.CallOption) (*ApiKeyInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiKeyInfo)
+	err := c.cc.Invoke(ctx, Runtime_RevokeApiKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) GetAccessPolicy(ctx context.Context, in *GetAccessPolicyRequest, opts ...grpc.CallOption) (*AccessPolicy, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AccessPolicy)
+	err := c.cc.Invoke(ctx, Runtime_GetAccessPolicy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) ListLogs(ctx context.Context, in *ListLogsRequest, opts ...grpc.CallOption) (*ListLogsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListLogsResponse)
+	err := c.cc.Invoke(ctx, Runtime_ListLogs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *runtimeClient) RegisterPlugin(ctx context.Context, in *RegisterPluginRequest, opts ...grpc.CallOption) (*PluginVersion, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PluginVersion)
@@ -296,8 +433,24 @@ type RuntimeServer interface {
 	ResolveRun(context.Context, *ResolveRunRequest) (*Run, error)
 	// Offline: never calls a model, tool, plugin or network endpoint.
 	DryRun(context.Context, *DryRunRequest) (*DryRunReport, error)
-	// Contract reserved for M9; the MVP returns UNIMPLEMENTED / HTTP 501.
+	// Approvals. A decision is bound to the action and the hash of its arguments; it is accepted once,
+	// only while pending and unexpired, only from a principal of the same tenant with approvals:decide
+	// (and one of the approver roles, when the approval names them), never from the requester.
 	DecideApproval(context.Context, *ApprovalDecision) (*Approval, error)
+	ListApprovals(context.Context, *ListApprovalsRequest) (*ListApprovalsResponse, error)
+	GetApproval(context.Context, *GetApprovalRequest) (*Approval, error)
+	// Tamper-evident audit (permission audit:read). Each tenant's audit rows form a hash chain.
+	VerifyAudit(context.Context, *VerifyAuditRequest) (*AuditVerification, error)
+	ExportAudit(context.Context, *ExportAuditRequest) (*ExportAuditResponse, error)
+	// Administration. Tenant-scoped like every other call, except logs and runtime components, which
+	// describe the process (restricted to the configured platform tenants).
+	GetRuntimeInfo(context.Context, *GetRuntimeInfoRequest) (*RuntimeInfo, error)
+	ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error)
+	ListApiKeys(context.Context, *ListApiKeysRequest) (*ListApiKeysResponse, error)
+	CreateApiKey(context.Context, *CreateApiKeyRequest) (*CreatedApiKey, error)
+	RevokeApiKey(context.Context, *RevokeApiKeyRequest) (*ApiKeyInfo, error)
+	GetAccessPolicy(context.Context, *GetAccessPolicyRequest) (*AccessPolicy, error)
+	ListLogs(context.Context, *ListLogsRequest) (*ListLogsResponse, error)
 	// Plugins (administrators only). Versions are immutable; activation validates and health-checks
 	// the version and affects new runs only (running runs keep the versions they started with).
 	RegisterPlugin(context.Context, *RegisterPluginRequest) (*PluginVersion, error)
@@ -352,6 +505,39 @@ func (UnimplementedRuntimeServer) DryRun(context.Context, *DryRunRequest) (*DryR
 }
 func (UnimplementedRuntimeServer) DecideApproval(context.Context, *ApprovalDecision) (*Approval, error) {
 	return nil, status.Error(codes.Unimplemented, "method DecideApproval not implemented")
+}
+func (UnimplementedRuntimeServer) ListApprovals(context.Context, *ListApprovalsRequest) (*ListApprovalsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListApprovals not implemented")
+}
+func (UnimplementedRuntimeServer) GetApproval(context.Context, *GetApprovalRequest) (*Approval, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetApproval not implemented")
+}
+func (UnimplementedRuntimeServer) VerifyAudit(context.Context, *VerifyAuditRequest) (*AuditVerification, error) {
+	return nil, status.Error(codes.Unimplemented, "method VerifyAudit not implemented")
+}
+func (UnimplementedRuntimeServer) ExportAudit(context.Context, *ExportAuditRequest) (*ExportAuditResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExportAudit not implemented")
+}
+func (UnimplementedRuntimeServer) GetRuntimeInfo(context.Context, *GetRuntimeInfoRequest) (*RuntimeInfo, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetRuntimeInfo not implemented")
+}
+func (UnimplementedRuntimeServer) ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListUsage not implemented")
+}
+func (UnimplementedRuntimeServer) ListApiKeys(context.Context, *ListApiKeysRequest) (*ListApiKeysResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListApiKeys not implemented")
+}
+func (UnimplementedRuntimeServer) CreateApiKey(context.Context, *CreateApiKeyRequest) (*CreatedApiKey, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateApiKey not implemented")
+}
+func (UnimplementedRuntimeServer) RevokeApiKey(context.Context, *RevokeApiKeyRequest) (*ApiKeyInfo, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeApiKey not implemented")
+}
+func (UnimplementedRuntimeServer) GetAccessPolicy(context.Context, *GetAccessPolicyRequest) (*AccessPolicy, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAccessPolicy not implemented")
+}
+func (UnimplementedRuntimeServer) ListLogs(context.Context, *ListLogsRequest) (*ListLogsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListLogs not implemented")
 }
 func (UnimplementedRuntimeServer) RegisterPlugin(context.Context, *RegisterPluginRequest) (*PluginVersion, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterPlugin not implemented")
@@ -606,6 +792,204 @@ func _Runtime_DecideApproval_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Runtime_ListApprovals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListApprovalsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).ListApprovals(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_ListApprovals_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).ListApprovals(ctx, req.(*ListApprovalsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_GetApproval_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetApprovalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).GetApproval(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_GetApproval_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).GetApproval(ctx, req.(*GetApprovalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_VerifyAudit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyAuditRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).VerifyAudit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_VerifyAudit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).VerifyAudit(ctx, req.(*VerifyAuditRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_ExportAudit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportAuditRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).ExportAudit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_ExportAudit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).ExportAudit(ctx, req.(*ExportAuditRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_GetRuntimeInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRuntimeInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).GetRuntimeInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_GetRuntimeInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).GetRuntimeInfo(ctx, req.(*GetRuntimeInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_ListUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUsageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).ListUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_ListUsage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).ListUsage(ctx, req.(*ListUsageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_ListApiKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListApiKeysRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).ListApiKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_ListApiKeys_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).ListApiKeys(ctx, req.(*ListApiKeysRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_CreateApiKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateApiKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).CreateApiKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_CreateApiKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).CreateApiKey(ctx, req.(*CreateApiKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_RevokeApiKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeApiKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).RevokeApiKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_RevokeApiKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).RevokeApiKey(ctx, req.(*RevokeApiKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_GetAccessPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccessPolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).GetAccessPolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_GetAccessPolicy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).GetAccessPolicy(ctx, req.(*GetAccessPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_ListLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListLogsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).ListLogs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_ListLogs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).ListLogs(ctx, req.(*ListLogsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Runtime_RegisterPlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterPluginRequest)
 	if err := dec(in); err != nil {
@@ -728,6 +1112,50 @@ var Runtime_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DecideApproval",
 			Handler:    _Runtime_DecideApproval_Handler,
+		},
+		{
+			MethodName: "ListApprovals",
+			Handler:    _Runtime_ListApprovals_Handler,
+		},
+		{
+			MethodName: "GetApproval",
+			Handler:    _Runtime_GetApproval_Handler,
+		},
+		{
+			MethodName: "VerifyAudit",
+			Handler:    _Runtime_VerifyAudit_Handler,
+		},
+		{
+			MethodName: "ExportAudit",
+			Handler:    _Runtime_ExportAudit_Handler,
+		},
+		{
+			MethodName: "GetRuntimeInfo",
+			Handler:    _Runtime_GetRuntimeInfo_Handler,
+		},
+		{
+			MethodName: "ListUsage",
+			Handler:    _Runtime_ListUsage_Handler,
+		},
+		{
+			MethodName: "ListApiKeys",
+			Handler:    _Runtime_ListApiKeys_Handler,
+		},
+		{
+			MethodName: "CreateApiKey",
+			Handler:    _Runtime_CreateApiKey_Handler,
+		},
+		{
+			MethodName: "RevokeApiKey",
+			Handler:    _Runtime_RevokeApiKey_Handler,
+		},
+		{
+			MethodName: "GetAccessPolicy",
+			Handler:    _Runtime_GetAccessPolicy_Handler,
+		},
+		{
+			MethodName: "ListLogs",
+			Handler:    _Runtime_ListLogs_Handler,
 		},
 		{
 			MethodName: "RegisterPlugin",

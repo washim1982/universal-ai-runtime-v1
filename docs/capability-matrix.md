@@ -1,6 +1,6 @@
 # Capability matrix
 
-Status of every UAR capability from `Mission_Comparison.md`, as of 2026-09-27 (M8).
+Status of every UAR capability from `Mission_Comparison.md`, as of 2026-09-27 (M9 + admin app).
 Only **live-tested** and **fixture-tested** entries may be claimed as supported.
 
 | Legend | Meaning |
@@ -31,14 +31,14 @@ Only **live-tested** and **fixture-tested** entries may be claimed as supported.
 |---|---|
 | Multi-model routing, aliases, `local:`/`cloud:`/`enterprise:` classes | fixture-tested + live-tested (local) |
 | Router rules (tenant / role / data class), capability matching, opt-in fallback, circuit breaker | fixture-tested |
-| Cost/latency-aware selection, region rules | planned (M9) |
+| Router rules v2: data residency, provider regions, price caps, prefer cost / latency | fixture-tested (`test_router_rules.py`) |
 | MCP gateway, orchestration, per-call authorization, audit, intents | fixture-tested (real MCP servers) |
 | MCP server hosting: supervised stdio / container; Streamable HTTP | fixture-tested; Kubernetes Deployments written, not deployed |
 | Tool sandboxing: roots, links, ADS, exclusive writes, read-only SQL, container isolation | fixture-tested |
 | Native tool plugins | fixture-tested (TypeScript reference plugin, Python test plugin) |
 | Agent gateway (start / get / watch / cancel / resolve on HTTP, gRPC, WebSocket) | fixture-tested |
 | Durable engine: checkpoints, fencing, recovery, ambiguous writes, loops, parallel, sub-agents | fixture-tested + live-tested (report agent on granite4) |
-| Approval nodes | planned (M9); contract present, returns 501 |
+| Approvals: approval nodes and inline tool approvals (bound to action + args hash, decided once, used once, expiry fails closed, sub-agent approvals park the parent) | fixture-tested (`test_governance.py`) |
 | Dry-run: static plan + fixture simulation, non-executing | fixture-tested |
 | Agent plugins (executable and declarative) | fixture-tested (Python reference plugin, declarative package) |
 | SDKs: Python, TypeScript | fixture-tested (mock + live runtime) |
@@ -47,8 +47,12 @@ Only **live-tested** and **fixture-tested** entries may be claimed as supported.
 | Kubernetes-native / Helm / Docker Desktop Kubernetes | implemented, **not verified** (no cluster) |
 | Local-only mode (`profile: local-only` blocks cloud routes) | fixture-tested via egress policy; container stack ran with cloud credentials absent |
 | Plugin runtime (register, integrity, activate, pin, rollback, breaker) | fixture-tested |
-| RBAC, tenant isolation, audit (fail-closed, payload-free) | fixture-tested; tamper evidence planned (M9) |
+| RBAC, tenant isolation, audit (fail-closed, payload-free, per-tenant SHA-256 hash chain, append-only trigger, verify + export API) | fixture-tested (tampering, deletion and truncation detected) |
 | Model and tool usage policies, token budgets | fixture-tested |
 | Agent sandboxing (declared permissions, narrowed sub-agent tools) | fixture-tested |
 | Observability: OTel traces, Prometheus metrics, usage/cost ledger | fixture-tested + verified in Jaeger |
-| SSO/OIDC, approvals, redaction policies, retention jobs | planned (M9) |
+| SSO/OIDC (JWKS, key rotation, group and service-account role mapping), custom roles | fixture-tested against a local JWKS endpoint; not tested with a commercial IdP |
+| Content redaction (audit, event log, approval summaries, prompts to chosen model classes) | fixture-tested (pattern-based detectors) |
+| Retention and deletion jobs (runs, usage, idempotency, audit with chain anchor) | fixture-tested |
+| Administration API: runtime info, inference history, API keys (create/revoke, hot reload), access policy, service logs | fixture-tested (`test_admin_api.py`) |
+| Windows admin app (UAR Admin, WPF) | built and exercised against a live 0.9 runtime: page snapshots and a harness driving start / stop / restart, approvals, keys, audit and logs |

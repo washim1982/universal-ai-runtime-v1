@@ -31,7 +31,7 @@ from mcp import StdioServerParameters
 
 from ..config import McpServerCfg, Settings
 from ..errors import UARError
-from ..governance import Audit, Principal, matches_any, tool_decision, tool_visible
+from ..governance import Audit, Principal, matches_any, tool_decision, tool_effect, tool_visible
 from ..observability import POLICY_DENIALS, TOOL_CALLS, TOOL_SECONDS, get_tracer
 from ..store import Store, dumps, jsonb
 
@@ -61,6 +61,7 @@ class CallContext:
     node_id: str | None = None
     agent_tools: list[str] | None = None     # agent permission patterns; None = not in an agent run
     intent_id: str | None = None             # engine-provided durable intent id
+    approval_id: str | None = None           # approved request for a require_approval tool call
 
 
 @dataclass
@@ -240,6 +241,7 @@ class Orchestrator:
         self.sessions = {c.id: ServerSession(c, settings) for c in settings.mcp_servers}
         self.plugin_tools: dict[str, dict[str, ToolInfo]] = {}   # plugin id -> tools (set by plugins.integrate)
         self.plugin_call = None                                   # async (plugin_id, name, args, timeout) -> response
+        self.approvals = None                                     # set by the service
 
     async def start(self, timeout: float = 60) -> dict[str, str]:
         status: dict[str, str] = {}
@@ -279,6 +281,11 @@ class Orchestrator:
             raise UARError("permission_denied", "missing permission tools:list")
         return [t for t in self.catalog().values() if tool_visible(self.s.tool_policies, p, t.name)]
 
+    def approval_rule(self, p: Principal, t: ToolInfo, args: dict):
+        """The policy rule when this call needs a human approval first, else None."""
+        effect, _, rule = tool_effect(self.s.tool_policies, p, t.name, args)
+        return rule if effect == "require_approval" else None
+
     def authorize(self, p: Principal, t: ToolInfo, args: dict, ctx: CallContext) -> str:
         """Raise unless this exact call is allowed. Returns the policy reason."""
         p.require("tools:execute")
@@ -306,6 +313,17 @@ class Orchestrator:
             TOOL_CALLS.labels(name, "denied").inc()
             raise
         ah = args_hash(name, args)
+        if self.approval_rule(p, t, args) is not None:
+            # Consumed atomically: an approval authorises this exact call once.
+            if not (ctx.approval_id and ctx.run_id and self.approvals is not None and
+                    await self.approvals.consume(p.tenant, ctx.approval_id, ctx.run_id, name, ah)):
+                POLICY_DENIALS.labels("approval").inc()
+                await self.audit.record(p, "tool.execute", name, "denied", request_id=ctx.request_id,
+                                        run_id=ctx.run_id, details={"reason": "approval required", "args_hash": ah},
+                                        required=False)
+                raise UARError("policy_denied", f"{name} requires an approved request (run it inside an agent run "
+                               "and approve the call)", details={"tool": name, "args_hash": ah})
+            reason += f"; approval {ctx.approval_id}"
         await self.audit.record(p, "tool.execute", name, "intent", request_id=ctx.request_id, run_id=ctx.run_id,
                                 details={"args_hash": ah, "side_effect": t.side_effect, "policy": reason})
         intent_id = None

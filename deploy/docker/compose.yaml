@@ -23,7 +23,7 @@ services:
 
   uar:
     profiles: [full]
-    image: uar-runtime:0.6.0
+    image: uar-runtime:0.9.0
     build: {context: ../.., dockerfile: deploy/docker/Dockerfile}
     depends_on: {postgres: {condition: service_healthy}}
     environment:

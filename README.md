@@ -54,7 +54,7 @@ The developer API key is in `.local/credentials.env` (`UAR_DEV_KEY`). Then:
 curl -s localhost:9000/api/v1/inference -H "X-API-Key: <UAR_DEV_KEY>" -H "Content-Type: application/json" -d "{\"model\":\"local:default\",\"input\":\"hello\"}"
 ```
 
-Containerised instead: `docker build -f deploy/docker/Dockerfile -t uar-runtime:0.6.0 .` then
+Containerised instead: `docker build -f deploy/docker/Dockerfile -t uar-runtime:0.9.0 .` then
 `docker compose -f deploy/docker/compose.yaml --profile full up -d` (runtime + Postgres + Jaeger at
 http://localhost:16686). Kubernetes: [docs/runbooks/docker-desktop.md](docs/runbooks/docker-desktop.md).
 

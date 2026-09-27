@@ -145,9 +145,9 @@ async def test_container_sandbox(tmp_path):
     """The fs server inside a locked-down container: no network, read-only rootfs, dropped caps."""
     if not shutil.which("docker"):
         pytest.skip("docker not installed")
-    img = subprocess.run(["docker", "image", "inspect", "uar-runtime:0.6.0"], capture_output=True)
+    img = subprocess.run(["docker", "image", "inspect", "uar-runtime:0.9.0"], capture_output=True)
     if img.returncode != 0:
-        pytest.skip("build the image first: docker build -f deploy/docker/Dockerfile -t uar-runtime:0.6.0 .")
+        pytest.skip("build the image first: docker build -f deploy/docker/Dockerfile -t uar-runtime:0.9.0 .")
     from uar_runtime.config import McpServerCfg, MountCfg, Settings
     from uar_runtime.mcp.orchestrator import ServerSession
     ws = tmp_path / "ws"
@@ -157,7 +157,7 @@ async def test_container_sandbox(tmp_path):
     # so let the sandbox user write into this throwaway workspace (Docker Desktop ignores this).
     for d in (ws, ws / "reports"):
         os.chmod(d, 0o777)
-    cfg = McpServerCfg(id="cfs", sandbox="container", image="uar-runtime:0.6.0",
+    cfg = McpServerCfg(id="cfs", sandbox="container", image="uar-runtime:0.9.0",
                        command="python", args=["-m", "uar_mcp_servers.fs_server"],
                        env={"UAR_FS_ROOT": "/workspace", "UAR_FS_WRITE_DIRS": "reports"},
                        mounts=[MountCfg(src=str(ws), dst="/workspace", readonly=False)], timeout_s=60)

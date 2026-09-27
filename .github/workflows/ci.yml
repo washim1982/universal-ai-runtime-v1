@@ -45,6 +45,7 @@ jobs:
           (cd plugin-sdks/typescript && npm install --no-audit --no-fund)
           (cd plugins/reference/ts-tool && npm install --no-audit --no-fund)
           dotnet build -c Release plugins/reference/dotnet-tool
+          dotnet build -c Release admin-app/UarAdmin   # Windows admin app (builds anywhere via EnableWindowsTargeting)
           mvn -q -B -f plugin-sdks/java install
           mvn -q -B -f plugins/reference/java-agent package
       - name: Go, Rust, .NET and Java SDKs against uar-mock
@@ -64,7 +65,7 @@ jobs:
       - name: Container image and sandbox
         if: matrix.python == '3.14'
         run: |
-          docker build -f deploy/docker/Dockerfile -t uar-runtime:0.6.0 .
+          docker build -f deploy/docker/Dockerfile -t uar-runtime:0.9.0 .
           python -m pytest -q -m docker -o addopts="" runtime/tests/test_mcp.py
 
   helm:

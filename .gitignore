@@ -17,3 +17,4 @@ plugin-sdks/java/target/
 plugins/reference/java-agent/target/
 bin/
 obj/
+admin-app/dist/

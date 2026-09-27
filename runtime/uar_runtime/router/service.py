@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import logging
 import time
 from dataclasses import dataclass
@@ -79,6 +80,19 @@ class ModelRouter:
         self.catalog: dict[str, set[str] | None] = {p.id: (self._norm(p.models) if p.models else None)
                                                     for p in settings.providers}
         self.concurrency = Concurrency()
+        self.latency: dict[str, float] = {}   # provider -> EWMA seconds (router rules: prefer latency)
+        self.redactor = None                  # set by the service: redaction of prompts to some classes
+
+    def _observe(self, provider: str, seconds: float) -> None:
+        old = self.latency.get(provider)
+        self.latency[provider] = seconds if old is None else 0.8 * old + 0.2 * seconds
+
+    def _egress(self, r: Route, req: ChatRequest) -> ChatRequest:
+        """The request as sent to this route: redacted when its model class is configured for it."""
+        if self.redactor is None or not self.redactor.egress(r.model_class):
+            return req
+        msgs = [{**m, "content": self.redactor.value(m["content"])} if "content" in m else m for m in req.messages]
+        return dataclasses.replace(req, messages=msgs)
 
     @staticmethod
     def _norm(models: list[str]) -> set[str]:
@@ -108,7 +122,8 @@ class ModelRouter:
 
     def context(self, p: Principal, tenant: TenantCfg, data_class: str = "", caps: tuple[str, ...] = ()) -> RouteContext:
         return RouteContext(p, tenant, data_class, caps, dict(self.catalog),
-                            {pid for pid, b in self.breakers.items() if time.monotonic() < b.open_until})
+                            {pid for pid, b in self.breakers.items() if time.monotonic() < b.open_until},
+                            dict(self.latency))
 
     def route(self, requested: str, ctx: RouteContext) -> Route:
         try:
@@ -154,7 +169,10 @@ class ModelRouter:
         if route.model_class != "local":
             # Data leaves the host: record intent first (fail closed).
             await self.audit.record(p, "model.invoke", route.qualified, "intent", request_id=request_id,
-                                    run_id=run_id, details={"provider": route.provider, "class": route.model_class})
+                                    run_id=run_id, details={"provider": route.provider, "class": route.model_class,
+                                                            "region": self.s.provider(route.provider).region or "",
+                                                            "redacted": bool(self.redactor and
+                                                                             self.redactor.egress(route.model_class))})
         return await self.budget.reserve(tenant, self._reservation(req))
 
     async def chat(self, p: Principal, tenant: TenantCfg, route: Route, req: ChatRequest, ctx: RouteContext,
@@ -174,7 +192,8 @@ class ModelRouter:
                 with get_tracer().start_as_current_span("model.chat") as span:
                     span.set_attributes({"gen_ai.system": r.provider, "gen_ai.request.model": r.model,
                                          "uar.model_class": r.model_class})
-                    res = await self._call(r, lambda a: a.chat(req))
+                    sent = self._egress(r, req)
+                    res = await self._call(r, lambda a: a.chat(sent))
                     u = self.usage(r, req, res)
                     span.set_attributes({"gen_ai.usage.input_tokens": u.input_tokens,
                                          "gen_ai.usage.output_tokens": u.output_tokens,
@@ -191,6 +210,7 @@ class ModelRouter:
                 MODEL_SECONDS.labels(r.provider, r.model, "error").observe(time.monotonic() - t0)
                 raise
             MODEL_SECONDS.labels(r.provider, r.model, "ok").observe(time.monotonic() - t0)
+            self._observe(r.provider, time.monotonic() - t0)
             await self.budget.settle(tenant, reserved, u.input_tokens + u.output_tokens)
             await self._record(p, r, u, request_id, run_id)
             if r.model_class != "local":
@@ -253,7 +273,7 @@ class ModelRouter:
                 await self.budget.settle(tenant, reserved, 0)
                 raise UARError("unavailable", f"{r.provider}: at capacity, try again later") from None
             t0 = time.monotonic()
-            gen = self.adapters[r.provider].stream(req).__aiter__()
+            gen = self.adapters[r.provider].stream(self._egress(r, req)).__aiter__()
             try:
                 first = await gen.__anext__()
             except ProviderUnavailable:
@@ -270,6 +290,7 @@ class ModelRouter:
                 await self.budget.settle(tenant, reserved, 0)
                 raise
             MODEL_TTFT.labels(r.provider).observe(time.monotonic() - t0)
+            self._observe(r.provider, time.monotonic() - t0)
             return r, self._drain(p, tenant, r, req, gen, first, sem, breaker, reserved, t0, request_id, run_id)
         raise UARError("unavailable", "no provider available")
 

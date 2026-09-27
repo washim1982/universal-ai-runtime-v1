@@ -395,14 +395,18 @@ class NodeCompleted(_message.Message):
     def __init__(self, node_id: _Optional[str] = ..., outcome: _Optional[str] = ..., duration_ms: _Optional[int] = ..., next: _Optional[str] = ...) -> None: ...
 
 class ApprovalRequired(_message.Message):
-    __slots__ = ("approval_id", "action", "args_hash")
+    __slots__ = ("approval_id", "action", "args_hash", "node_id", "expires_at")
     APPROVAL_ID_FIELD_NUMBER: _ClassVar[int]
     ACTION_FIELD_NUMBER: _ClassVar[int]
     ARGS_HASH_FIELD_NUMBER: _ClassVar[int]
+    NODE_ID_FIELD_NUMBER: _ClassVar[int]
+    EXPIRES_AT_FIELD_NUMBER: _ClassVar[int]
     approval_id: str
     action: str
     args_hash: str
-    def __init__(self, approval_id: _Optional[str] = ..., action: _Optional[str] = ..., args_hash: _Optional[str] = ...) -> None: ...
+    node_id: str
+    expires_at: str
+    def __init__(self, approval_id: _Optional[str] = ..., action: _Optional[str] = ..., args_hash: _Optional[str] = ..., node_id: _Optional[str] = ..., expires_at: _Optional[str] = ...) -> None: ...
 
 class Completed(_message.Message):
     __slots__ = ("status", "content", "output", "finish_reason")
@@ -521,24 +525,144 @@ class DryRunReport(_message.Message):
     def __init__(self, request_id: _Optional[str] = ..., mode: _Optional[str] = ..., valid: _Optional[bool] = ..., errors: _Optional[_Iterable[str]] = ..., warnings: _Optional[_Iterable[str]] = ..., steps: _Optional[_Iterable[_Union[PlannedStep, _Mapping]]] = ..., routes: _Optional[_Iterable[_Union[RouteDecision, _Mapping]]] = ..., permissions_required: _Optional[_Iterable[str]] = ..., permissions_missing: _Optional[_Iterable[str]] = ..., unresolved: _Optional[_Iterable[str]] = ..., branches: _Optional[_Iterable[str]] = ..., estimated_input_tokens_max: _Optional[int] = ..., estimated_output_tokens_max: _Optional[int] = ..., estimated_cost_max: _Optional[_Union[Money, _Mapping]] = ..., executed_nothing: _Optional[bool] = ...) -> None: ...
 
 class ApprovalDecision(_message.Message):
-    __slots__ = ("approval_id", "approve", "comment")
+    __slots__ = ("approval_id", "approve", "comment", "args_hash")
     APPROVAL_ID_FIELD_NUMBER: _ClassVar[int]
     APPROVE_FIELD_NUMBER: _ClassVar[int]
     COMMENT_FIELD_NUMBER: _ClassVar[int]
+    ARGS_HASH_FIELD_NUMBER: _ClassVar[int]
     approval_id: str
     approve: bool
     comment: str
-    def __init__(self, approval_id: _Optional[str] = ..., approve: _Optional[bool] = ..., comment: _Optional[str] = ...) -> None: ...
+    args_hash: str
+    def __init__(self, approval_id: _Optional[str] = ..., approve: _Optional[bool] = ..., comment: _Optional[str] = ..., args_hash: _Optional[str] = ...) -> None: ...
 
 class Approval(_message.Message):
-    __slots__ = ("approval_id", "status", "run_id")
+    __slots__ = ("approval_id", "status", "run_id", "node_id", "kind", "action", "args_hash", "summary", "approver_roles", "requested_by", "decided_by", "comment", "created_at", "expires_at", "decided_at", "consumed")
     APPROVAL_ID_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    NODE_ID_FIELD_NUMBER: _ClassVar[int]
+    KIND_FIELD_NUMBER: _ClassVar[int]
+    ACTION_FIELD_NUMBER: _ClassVar[int]
+    ARGS_HASH_FIELD_NUMBER: _ClassVar[int]
+    SUMMARY_FIELD_NUMBER: _ClassVar[int]
+    APPROVER_ROLES_FIELD_NUMBER: _ClassVar[int]
+    REQUESTED_BY_FIELD_NUMBER: _ClassVar[int]
+    DECIDED_BY_FIELD_NUMBER: _ClassVar[int]
+    COMMENT_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    EXPIRES_AT_FIELD_NUMBER: _ClassVar[int]
+    DECIDED_AT_FIELD_NUMBER: _ClassVar[int]
+    CONSUMED_FIELD_NUMBER: _ClassVar[int]
     approval_id: str
     status: str
     run_id: str
-    def __init__(self, approval_id: _Optional[str] = ..., status: _Optional[str] = ..., run_id: _Optional[str] = ...) -> None: ...
+    node_id: str
+    kind: str
+    action: str
+    args_hash: str
+    summary: _struct_pb2.Struct
+    approver_roles: _containers.RepeatedScalarFieldContainer[str]
+    requested_by: str
+    decided_by: str
+    comment: str
+    created_at: str
+    expires_at: str
+    decided_at: str
+    consumed: bool
+    def __init__(self, approval_id: _Optional[str] = ..., status: _Optional[str] = ..., run_id: _Optional[str] = ..., node_id: _Optional[str] = ..., kind: _Optional[str] = ..., action: _Optional[str] = ..., args_hash: _Optional[str] = ..., summary: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., approver_roles: _Optional[_Iterable[str]] = ..., requested_by: _Optional[str] = ..., decided_by: _Optional[str] = ..., comment: _Optional[str] = ..., created_at: _Optional[str] = ..., expires_at: _Optional[str] = ..., decided_at: _Optional[str] = ..., consumed: _Optional[bool] = ...) -> None: ...
+
+class ListApprovalsRequest(_message.Message):
+    __slots__ = ("status", "run_id")
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    status: str
+    run_id: str
+    def __init__(self, status: _Optional[str] = ..., run_id: _Optional[str] = ...) -> None: ...
+
+class ListApprovalsResponse(_message.Message):
+    __slots__ = ("approvals",)
+    APPROVALS_FIELD_NUMBER: _ClassVar[int]
+    approvals: _containers.RepeatedCompositeFieldContainer[Approval]
+    def __init__(self, approvals: _Optional[_Iterable[_Union[Approval, _Mapping]]] = ...) -> None: ...
+
+class GetApprovalRequest(_message.Message):
+    __slots__ = ("approval_id",)
+    APPROVAL_ID_FIELD_NUMBER: _ClassVar[int]
+    approval_id: str
+    def __init__(self, approval_id: _Optional[str] = ...) -> None: ...
+
+class VerifyAuditRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class AuditVerification(_message.Message):
+    __slots__ = ("ok", "rows", "first_seq", "last_seq", "head_hash", "broken_at_seq", "problem", "unchained_rows", "anchor_seq")
+    OK_FIELD_NUMBER: _ClassVar[int]
+    ROWS_FIELD_NUMBER: _ClassVar[int]
+    FIRST_SEQ_FIELD_NUMBER: _ClassVar[int]
+    LAST_SEQ_FIELD_NUMBER: _ClassVar[int]
+    HEAD_HASH_FIELD_NUMBER: _ClassVar[int]
+    BROKEN_AT_SEQ_FIELD_NUMBER: _ClassVar[int]
+    PROBLEM_FIELD_NUMBER: _ClassVar[int]
+    UNCHAINED_ROWS_FIELD_NUMBER: _ClassVar[int]
+    ANCHOR_SEQ_FIELD_NUMBER: _ClassVar[int]
+    ok: bool
+    rows: int
+    first_seq: int
+    last_seq: int
+    head_hash: str
+    broken_at_seq: int
+    problem: str
+    unchained_rows: int
+    anchor_seq: int
+    def __init__(self, ok: _Optional[bool] = ..., rows: _Optional[int] = ..., first_seq: _Optional[int] = ..., last_seq: _Optional[int] = ..., head_hash: _Optional[str] = ..., broken_at_seq: _Optional[int] = ..., problem: _Optional[str] = ..., unchained_rows: _Optional[int] = ..., anchor_seq: _Optional[int] = ...) -> None: ...
+
+class AuditRecord(_message.Message):
+    __slots__ = ("seq", "ts", "actor", "action", "target", "outcome", "request_id", "run_id", "policy_version", "details", "prev_hash", "hash")
+    SEQ_FIELD_NUMBER: _ClassVar[int]
+    TS_FIELD_NUMBER: _ClassVar[int]
+    ACTOR_FIELD_NUMBER: _ClassVar[int]
+    ACTION_FIELD_NUMBER: _ClassVar[int]
+    TARGET_FIELD_NUMBER: _ClassVar[int]
+    OUTCOME_FIELD_NUMBER: _ClassVar[int]
+    REQUEST_ID_FIELD_NUMBER: _ClassVar[int]
+    RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    POLICY_VERSION_FIELD_NUMBER: _ClassVar[int]
+    DETAILS_FIELD_NUMBER: _ClassVar[int]
+    PREV_HASH_FIELD_NUMBER: _ClassVar[int]
+    HASH_FIELD_NUMBER: _ClassVar[int]
+    seq: int
+    ts: str
+    actor: str
+    action: str
+    target: str
+    outcome: str
+    request_id: str
+    run_id: str
+    policy_version: str
+    details: _struct_pb2.Struct
+    prev_hash: str
+    hash: str
+    def __init__(self, seq: _Optional[int] = ..., ts: _Optional[str] = ..., actor: _Optional[str] = ..., action: _Optional[str] = ..., target: _Optional[str] = ..., outcome: _Optional[str] = ..., request_id: _Optional[str] = ..., run_id: _Optional[str] = ..., policy_version: _Optional[str] = ..., details: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., prev_hash: _Optional[str] = ..., hash: _Optional[str] = ...) -> None: ...
+
+class ExportAuditRequest(_message.Message):
+    __slots__ = ("after_seq", "limit")
+    AFTER_SEQ_FIELD_NUMBER: _ClassVar[int]
+    LIMIT_FIELD_NUMBER: _ClassVar[int]
+    after_seq: int
+    limit: int
+    def __init__(self, after_seq: _Optional[int] = ..., limit: _Optional[int] = ...) -> None: ...
+
+class ExportAuditResponse(_message.Message):
+    __slots__ = ("records", "next_after_seq", "head_hash")
+    RECORDS_FIELD_NUMBER: _ClassVar[int]
+    NEXT_AFTER_SEQ_FIELD_NUMBER: _ClassVar[int]
+    HEAD_HASH_FIELD_NUMBER: _ClassVar[int]
+    records: _containers.RepeatedCompositeFieldContainer[AuditRecord]
+    next_after_seq: int
+    head_hash: str
+    def __init__(self, records: _Optional[_Iterable[_Union[AuditRecord, _Mapping]]] = ..., next_after_seq: _Optional[int] = ..., head_hash: _Optional[str] = ...) -> None: ...
 
 class RegisterPluginRequest(_message.Message):
     __slots__ = ("manifest",)
@@ -593,3 +717,251 @@ class RollbackPluginRequest(_message.Message):
     PLUGIN_ID_FIELD_NUMBER: _ClassVar[int]
     plugin_id: str
     def __init__(self, plugin_id: _Optional[str] = ...) -> None: ...
+
+class GetRuntimeInfoRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class ComponentStatus(_message.Message):
+    __slots__ = ("name", "kind", "status", "ok")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    KIND_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    OK_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    kind: str
+    status: str
+    ok: bool
+    def __init__(self, name: _Optional[str] = ..., kind: _Optional[str] = ..., status: _Optional[str] = ..., ok: _Optional[bool] = ...) -> None: ...
+
+class RuntimeInfo(_message.Message):
+    __slots__ = ("version", "profile", "started_at", "uptime_s", "host", "pid", "worker", "migrations", "components", "tenant", "subject", "platform_admin")
+    VERSION_FIELD_NUMBER: _ClassVar[int]
+    PROFILE_FIELD_NUMBER: _ClassVar[int]
+    STARTED_AT_FIELD_NUMBER: _ClassVar[int]
+    UPTIME_S_FIELD_NUMBER: _ClassVar[int]
+    HOST_FIELD_NUMBER: _ClassVar[int]
+    PID_FIELD_NUMBER: _ClassVar[int]
+    WORKER_FIELD_NUMBER: _ClassVar[int]
+    MIGRATIONS_FIELD_NUMBER: _ClassVar[int]
+    COMPONENTS_FIELD_NUMBER: _ClassVar[int]
+    TENANT_FIELD_NUMBER: _ClassVar[int]
+    SUBJECT_FIELD_NUMBER: _ClassVar[int]
+    PLATFORM_ADMIN_FIELD_NUMBER: _ClassVar[int]
+    version: str
+    profile: str
+    started_at: str
+    uptime_s: int
+    host: str
+    pid: int
+    worker: bool
+    migrations: _containers.RepeatedScalarFieldContainer[str]
+    components: _containers.RepeatedCompositeFieldContainer[ComponentStatus]
+    tenant: str
+    subject: str
+    platform_admin: bool
+    def __init__(self, version: _Optional[str] = ..., profile: _Optional[str] = ..., started_at: _Optional[str] = ..., uptime_s: _Optional[int] = ..., host: _Optional[str] = ..., pid: _Optional[int] = ..., worker: _Optional[bool] = ..., migrations: _Optional[_Iterable[str]] = ..., components: _Optional[_Iterable[_Union[ComponentStatus, _Mapping]]] = ..., tenant: _Optional[str] = ..., subject: _Optional[str] = ..., platform_admin: _Optional[bool] = ...) -> None: ...
+
+class UsageRecord(_message.Message):
+    __slots__ = ("id", "ts", "subject", "request_id", "run_id", "provider", "model", "input_tokens", "output_tokens", "cost", "estimated", "price_version")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    TS_FIELD_NUMBER: _ClassVar[int]
+    SUBJECT_FIELD_NUMBER: _ClassVar[int]
+    REQUEST_ID_FIELD_NUMBER: _ClassVar[int]
+    RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    PROVIDER_FIELD_NUMBER: _ClassVar[int]
+    MODEL_FIELD_NUMBER: _ClassVar[int]
+    INPUT_TOKENS_FIELD_NUMBER: _ClassVar[int]
+    OUTPUT_TOKENS_FIELD_NUMBER: _ClassVar[int]
+    COST_FIELD_NUMBER: _ClassVar[int]
+    ESTIMATED_FIELD_NUMBER: _ClassVar[int]
+    PRICE_VERSION_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    ts: str
+    subject: str
+    request_id: str
+    run_id: str
+    provider: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+    cost: Money
+    estimated: bool
+    price_version: str
+    def __init__(self, id: _Optional[int] = ..., ts: _Optional[str] = ..., subject: _Optional[str] = ..., request_id: _Optional[str] = ..., run_id: _Optional[str] = ..., provider: _Optional[str] = ..., model: _Optional[str] = ..., input_tokens: _Optional[int] = ..., output_tokens: _Optional[int] = ..., cost: _Optional[_Union[Money, _Mapping]] = ..., estimated: _Optional[bool] = ..., price_version: _Optional[str] = ...) -> None: ...
+
+class ListUsageRequest(_message.Message):
+    __slots__ = ("before_id", "limit", "subject", "model", "since")
+    BEFORE_ID_FIELD_NUMBER: _ClassVar[int]
+    LIMIT_FIELD_NUMBER: _ClassVar[int]
+    SUBJECT_FIELD_NUMBER: _ClassVar[int]
+    MODEL_FIELD_NUMBER: _ClassVar[int]
+    SINCE_FIELD_NUMBER: _ClassVar[int]
+    before_id: int
+    limit: int
+    subject: str
+    model: str
+    since: str
+    def __init__(self, before_id: _Optional[int] = ..., limit: _Optional[int] = ..., subject: _Optional[str] = ..., model: _Optional[str] = ..., since: _Optional[str] = ...) -> None: ...
+
+class ListUsageResponse(_message.Message):
+    __slots__ = ("records", "next_before_id", "total_requests", "total_input_tokens", "total_output_tokens", "total_cost")
+    RECORDS_FIELD_NUMBER: _ClassVar[int]
+    NEXT_BEFORE_ID_FIELD_NUMBER: _ClassVar[int]
+    TOTAL_REQUESTS_FIELD_NUMBER: _ClassVar[int]
+    TOTAL_INPUT_TOKENS_FIELD_NUMBER: _ClassVar[int]
+    TOTAL_OUTPUT_TOKENS_FIELD_NUMBER: _ClassVar[int]
+    TOTAL_COST_FIELD_NUMBER: _ClassVar[int]
+    records: _containers.RepeatedCompositeFieldContainer[UsageRecord]
+    next_before_id: int
+    total_requests: int
+    total_input_tokens: int
+    total_output_tokens: int
+    total_cost: Money
+    def __init__(self, records: _Optional[_Iterable[_Union[UsageRecord, _Mapping]]] = ..., next_before_id: _Optional[int] = ..., total_requests: _Optional[int] = ..., total_input_tokens: _Optional[int] = ..., total_output_tokens: _Optional[int] = ..., total_cost: _Optional[_Union[Money, _Mapping]] = ...) -> None: ...
+
+class ApiKeyInfo(_message.Message):
+    __slots__ = ("key_id", "subject", "roles", "source", "description", "created_by", "created_at", "expires_at", "revoked_at", "status")
+    KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    SUBJECT_FIELD_NUMBER: _ClassVar[int]
+    ROLES_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_FIELD_NUMBER: _ClassVar[int]
+    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
+    CREATED_BY_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    EXPIRES_AT_FIELD_NUMBER: _ClassVar[int]
+    REVOKED_AT_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    key_id: str
+    subject: str
+    roles: _containers.RepeatedScalarFieldContainer[str]
+    source: str
+    description: str
+    created_by: str
+    created_at: str
+    expires_at: str
+    revoked_at: str
+    status: str
+    def __init__(self, key_id: _Optional[str] = ..., subject: _Optional[str] = ..., roles: _Optional[_Iterable[str]] = ..., source: _Optional[str] = ..., description: _Optional[str] = ..., created_by: _Optional[str] = ..., created_at: _Optional[str] = ..., expires_at: _Optional[str] = ..., revoked_at: _Optional[str] = ..., status: _Optional[str] = ...) -> None: ...
+
+class ListApiKeysRequest(_message.Message):
+    __slots__ = ("include_revoked",)
+    INCLUDE_REVOKED_FIELD_NUMBER: _ClassVar[int]
+    include_revoked: bool
+    def __init__(self, include_revoked: _Optional[bool] = ...) -> None: ...
+
+class ListApiKeysResponse(_message.Message):
+    __slots__ = ("keys",)
+    KEYS_FIELD_NUMBER: _ClassVar[int]
+    keys: _containers.RepeatedCompositeFieldContainer[ApiKeyInfo]
+    def __init__(self, keys: _Optional[_Iterable[_Union[ApiKeyInfo, _Mapping]]] = ...) -> None: ...
+
+class CreateApiKeyRequest(_message.Message):
+    __slots__ = ("subject", "roles", "description", "expires_in_days")
+    SUBJECT_FIELD_NUMBER: _ClassVar[int]
+    ROLES_FIELD_NUMBER: _ClassVar[int]
+    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
+    EXPIRES_IN_DAYS_FIELD_NUMBER: _ClassVar[int]
+    subject: str
+    roles: _containers.RepeatedScalarFieldContainer[str]
+    description: str
+    expires_in_days: int
+    def __init__(self, subject: _Optional[str] = ..., roles: _Optional[_Iterable[str]] = ..., description: _Optional[str] = ..., expires_in_days: _Optional[int] = ...) -> None: ...
+
+class CreatedApiKey(_message.Message):
+    __slots__ = ("key", "api_key")
+    KEY_FIELD_NUMBER: _ClassVar[int]
+    API_KEY_FIELD_NUMBER: _ClassVar[int]
+    key: ApiKeyInfo
+    api_key: str
+    def __init__(self, key: _Optional[_Union[ApiKeyInfo, _Mapping]] = ..., api_key: _Optional[str] = ...) -> None: ...
+
+class RevokeApiKeyRequest(_message.Message):
+    __slots__ = ("key_id", "reason")
+    KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    key_id: str
+    reason: str
+    def __init__(self, key_id: _Optional[str] = ..., reason: _Optional[str] = ...) -> None: ...
+
+class GetAccessPolicyRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class RoleInfo(_message.Message):
+    __slots__ = ("name", "permissions")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    PERMISSIONS_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    permissions: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, name: _Optional[str] = ..., permissions: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class RoleMapping(_message.Message):
+    __slots__ = ("source", "kind", "roles")
+    SOURCE_FIELD_NUMBER: _ClassVar[int]
+    KIND_FIELD_NUMBER: _ClassVar[int]
+    ROLES_FIELD_NUMBER: _ClassVar[int]
+    source: str
+    kind: str
+    roles: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, source: _Optional[str] = ..., kind: _Optional[str] = ..., roles: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class OidcIssuerInfo(_message.Message):
+    __slots__ = ("issuer", "audience", "keys", "mappings")
+    ISSUER_FIELD_NUMBER: _ClassVar[int]
+    AUDIENCE_FIELD_NUMBER: _ClassVar[int]
+    KEYS_FIELD_NUMBER: _ClassVar[int]
+    MAPPINGS_FIELD_NUMBER: _ClassVar[int]
+    issuer: str
+    audience: str
+    keys: str
+    mappings: _containers.RepeatedCompositeFieldContainer[RoleMapping]
+    def __init__(self, issuer: _Optional[str] = ..., audience: _Optional[str] = ..., keys: _Optional[str] = ..., mappings: _Optional[_Iterable[_Union[RoleMapping, _Mapping]]] = ...) -> None: ...
+
+class AccessPolicy(_message.Message):
+    __slots__ = ("tenant", "roles", "oidc", "permissions")
+    TENANT_FIELD_NUMBER: _ClassVar[int]
+    ROLES_FIELD_NUMBER: _ClassVar[int]
+    OIDC_FIELD_NUMBER: _ClassVar[int]
+    PERMISSIONS_FIELD_NUMBER: _ClassVar[int]
+    tenant: str
+    roles: _containers.RepeatedCompositeFieldContainer[RoleInfo]
+    oidc: _containers.RepeatedCompositeFieldContainer[OidcIssuerInfo]
+    permissions: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, tenant: _Optional[str] = ..., roles: _Optional[_Iterable[_Union[RoleInfo, _Mapping]]] = ..., oidc: _Optional[_Iterable[_Union[OidcIssuerInfo, _Mapping]]] = ..., permissions: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class LogRecord(_message.Message):
+    __slots__ = ("seq", "ts", "level", "logger", "message", "fields")
+    SEQ_FIELD_NUMBER: _ClassVar[int]
+    TS_FIELD_NUMBER: _ClassVar[int]
+    LEVEL_FIELD_NUMBER: _ClassVar[int]
+    LOGGER_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    FIELDS_FIELD_NUMBER: _ClassVar[int]
+    seq: int
+    ts: str
+    level: str
+    logger: str
+    message: str
+    fields: _struct_pb2.Struct
+    def __init__(self, seq: _Optional[int] = ..., ts: _Optional[str] = ..., level: _Optional[str] = ..., logger: _Optional[str] = ..., message: _Optional[str] = ..., fields: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
+
+class ListLogsRequest(_message.Message):
+    __slots__ = ("after_seq", "limit", "min_level")
+    AFTER_SEQ_FIELD_NUMBER: _ClassVar[int]
+    LIMIT_FIELD_NUMBER: _ClassVar[int]
+    MIN_LEVEL_FIELD_NUMBER: _ClassVar[int]
+    after_seq: int
+    limit: int
+    min_level: str
+    def __init__(self, after_seq: _Optional[int] = ..., limit: _Optional[int] = ..., min_level: _Optional[str] = ...) -> None: ...
+
+class ListLogsResponse(_message.Message):
+    __slots__ = ("records", "next_after_seq", "capacity")
+    RECORDS_FIELD_NUMBER: _ClassVar[int]
+    NEXT_AFTER_SEQ_FIELD_NUMBER: _ClassVar[int]
+    CAPACITY_FIELD_NUMBER: _ClassVar[int]
+    records: _containers.RepeatedCompositeFieldContainer[LogRecord]
+    next_after_seq: int
+    capacity: int
+    def __init__(self, records: _Optional[_Iterable[_Union[LogRecord, _Mapping]]] = ..., next_after_seq: _Optional[int] = ..., capacity: _Optional[int] = ...) -> None: ...

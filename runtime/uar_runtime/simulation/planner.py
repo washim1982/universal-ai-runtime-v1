@@ -20,7 +20,7 @@ from ..config import Settings, TenantCfg
 from ..engine import cel
 from ..engine.graph import Graph
 from ..errors import UARError
-from ..governance import Principal, tool_decision
+from ..governance import Principal, tool_decision, tool_effect, tool_rule
 from ..router.resolve import RouteContext, check_route_policy, price_for, resolve
 
 MAX_BRANCHES = 32
@@ -219,6 +219,12 @@ async def _plan_node(inp: SimInputs, r: Report, g: Graph, sid: str, n: dict, vis
         if info["side_effect"] != "read":
             r.warnings.append(f"{sid}: {info['side_effect']} tool - a real run records a durable intent before "
                               "the call and never retries it automatically")
+        rule = tool_rule(s.tool_policies, p, n["tool"])
+        needs = (rule is not None and rule.effect == "require_approval") if cel.expressions(args) else             tool_effect(s.tool_policies, p, n["tool"], args)[0] == "require_approval"
+        if step["status"] != "denied" and needs:
+            step["detail"] += " - needs approval"
+            r.warnings.append(f"{sid}: {n['tool']} requires a human approval of its exact arguments; a real run "
+                              "pauses (waiting_approval) until it is decided")
     elif t == "agent":
         if depth + 1 > g.limits["max_depth"]:
             r.errors.append(f"{sid}: exceeds max_depth {g.limits['max_depth']}")
@@ -231,6 +237,11 @@ async def _plan_node(inp: SimInputs, r: Report, g: Graph, sid: str, n: dict, vis
             return step
         step["detail"] = f"sub-agent {child.agent_id}@{child.version}"
         await static_plan(inp, child, r, prefix=f"{sid}/", depth=depth + 1)
+    elif t == "approval":
+        roles = n.get("approvers") or []
+        step["detail"] = f"approval of {n['action']}" + (f" by {', '.join(roles)}" if roles else "")
+        r.warnings.append(f"{sid}: pauses the run until a human decides; a rejection or expiry "
+                          + ("continues with approved=false" if n.get("on_reject") == "continue" else "fails the run"))
     elif t in ("transform", "condition", "loop", "return", "parallel"):
         if t == "loop":
             step["detail"] = f"up to {n['max_iterations']} iterations"
@@ -286,7 +297,7 @@ async def simulate(inp: SimInputs, g: Graph, input_: dict, fixtures: dict, seed:
                     r.steps.append(step)
                     r.errors.append(f"{nid}: {why}")
                     break
-            if t in ("llm", "tool", "agent", "parallel"):
+            if t in ("llm", "tool", "agent", "parallel", "approval"):
                 out, ok = fixture(nid)
                 if not ok:
                     step["status"] = "unresolved"
@@ -301,6 +312,14 @@ async def simulate(inp: SimInputs, g: Graph, input_: dict, fixtures: dict, seed:
                         break
                 if t == "llm" and not node.get("output_schema") and not isinstance(out, dict):
                     out = {"text": str(out)}
+                if t == "approval":
+                    out = out if isinstance(out, dict) else {"approved": bool(out)}
+                    out.setdefault("status", "approved" if out.get("approved") else "rejected")
+                    if not out.get("approved") and node.get("on_reject", "fail") != "continue":
+                        step.update({"status": "simulated", "output": out})
+                        r.steps.append(_structify(step))
+                        r.errors.append(f"{nid}: {node['action']} not approved; the run fails here")
+                        break
                 visits[nid] = visits.get(nid, 0) + 1
                 step.update({"status": "simulated", "output": out})
                 st["nodes"][nid] = {"output": out}

@@ -1,0 +1,25 @@
+<Window x:Class="UarAdmin.Dialogs.KeyCreatedDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="API key created" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" Background="White" ShowInTaskbar="False">
+  <StackPanel Margin="22">
+    <StackPanel Orientation="Horizontal">
+      <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE73E;" Foreground="{StaticResource Success}" FontSize="20" Margin="0,4,10,0"/>
+      <TextBlock Text="API key created" Style="{StaticResource H1}" FontSize="19"/>
+    </StackPanel>
+    <TextBlock x:Name="Summary" Style="{StaticResource Sub}" Margin="0,6,0,14"/>
+    <Border Background="{StaticResource WarningSoft}" CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
+      <TextBlock TextWrapping="Wrap" Foreground="#92400E"
+                 Text="Copy the key now. It is shown only once: the runtime keeps just a SHA-256 hash and cannot show it again."/>
+    </Border>
+    <TextBox x:Name="KeyBox" Style="{StaticResource Code}" FontSize="13" Padding="8" TextWrapping="Wrap" Height="Auto"/>
+    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+      <Button Style="{StaticResource Primary}" Click="Copy_Click">
+        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8C8;" Foreground="White" Margin="0,2,8,0"/><TextBlock Text="Copy key" Foreground="White"/></StackPanel>
+      </Button>
+      <Button x:Name="SaveProfileBtn" Content="Save as a connection in UAR Admin" Click="SaveProfile_Click"/>
+      <Button Content="Done" IsCancel="True" Click="Done_Click" Margin="0"/>
+    </StackPanel>
+  </StackPanel>
+</Window>

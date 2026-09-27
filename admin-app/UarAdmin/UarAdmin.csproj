@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- UAR Admin: Windows desktop administration for the Universal AI Runtime.
+       Build:    dotnet build admin-app/UarAdmin
+       Publish:  admin-app/build.cmd   (self-contained single-file UarAdmin.exe) -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RollForward>LatestMajor</RollForward>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>UarAdmin</AssemblyName>
+    <RootNamespace>UarAdmin</RootNamespace>
+    <Version>0.9.0</Version>
+    <Product>UAR Admin</Product>
+    <ApplicationIcon>Assets\uar.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\uar.ico" />
+  </ItemGroup>
+</Project>

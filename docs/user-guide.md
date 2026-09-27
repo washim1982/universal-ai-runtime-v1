@@ -139,7 +139,7 @@ Stop it with `Ctrl+C`.
 ### B. Docker Compose (runtime image + Postgres + Jaeger)
 
 ```powershell
-docker build -f deploy/docker/Dockerfile -t uar-runtime:0.6.0 .
+docker build -f deploy/docker/Dockerfile -t uar-runtime:0.9.0 .
 docker compose -f deploy/docker/compose.yaml --profile full up -d
 docker logs uar-uar-1 2>&1 | Select-String "runtime started"
 ```
@@ -155,6 +155,27 @@ Invoke-RestMethod "$BASE/readyz" | ConvertTo-Json -Compress
 ```
 
 Expected: `{"ready":true,"database":true,"mcp":{"fs":true,"db":true}}`
+
+---
+
+### C. From UAR Admin (Windows app)
+
+Double-click `admin.cmd` in the project folder. The first run builds the app (needs the .NET SDK 8
+or newer); after that it opens directly. It connects to `http://127.0.0.1:9000` with the local
+admin key from `.local\credentials.env`.
+
+| Page | Use it to |
+|---|---|
+| Overview | Start, stop or restart the runtime; see the health of the database, model providers, tool servers, plugins and worker |
+| Access & keys | Create API keys with chosen roles and expiry (shown once), revoke keys, review roles and SSO mappings |
+| API reference | Browse every endpoint, try requests with your key, copy `curl` commands |
+| Inference history | Model calls per user and model, with tokens and cost; CSV export |
+| Approvals | Approve or reject agent actions that wait for a human |
+| Audit trail | Read and export the audit log; **Verify chain** detects tampering |
+| Service logs | Live runtime logs, or the output of a runtime the app started |
+
+The admin pages need runtime 0.9 or newer. If you use the Docker runtime (option B), rebuild the
+image first. Details: [admin-app/README.md](../admin-app/README.md).
 
 ---
 
@@ -453,7 +474,7 @@ database, so your data isn't touched.
 | Contracts current and compatible | `.\.venv\Scripts\python.exe scripts\gen_contracts.py --check; .\.venv\Scripts\python.exe scripts\check_breaking.py; .\.venv\Scripts\python.exe scripts\gen_ts_types.py --check` | — | 3 "up to date / no breaking changes" lines |
 | **Runtime (main suite)** | `.\.venv\Scripts\python.exe -m pytest` | Postgres | **103 passed**, 7 deselected (~20 s) |
 | Live local models | `.\.venv\Scripts\python.exe -m pytest -m live -o addopts= -rs runtime\tests\test_live.py` | Ollama; LM Studio optional; llama.cpp needs `$env:UAR_LLAMACPP_KEY` | 5 passed, 1 skipped without the llama.cpp key (up to ~5 min when LM Studio loads the 27B model) |
-| Container sandbox | `.\.venv\Scripts\python.exe -m pytest -m docker -o addopts= runtime\tests\test_mcp.py` | image `uar-runtime:0.6.0` | 1 passed |
+| Container sandbox | `.\.venv\Scripts\python.exe -m pytest -m docker -o addopts= runtime\tests\test_mcp.py` | image `uar-runtime:0.9.0` | 1 passed |
 | Python SDK vs mock | `.\.venv\Scripts\python.exe -m pytest -o addopts= sdks\python\tests` | — | 10 passed |
 | TypeScript SDK vs mock | `cd sdks\typescript; npm test; cd ..\..` | built SDK | 9 pass |
 | **End to end against a running deployment** | `.\.venv\Scripts\python.exe scripts\smoke_test.py` | running runtime + Ollama | 27/27 |
@@ -486,7 +507,7 @@ Run one file or one test like this:
    option B, rebuild and restart:
 
    ```powershell
-   docker build -f deploy/docker/Dockerfile -t uar-runtime:0.6.0 .
+   docker build -f deploy/docker/Dockerfile -t uar-runtime:0.9.0 .
    docker compose -f deploy/docker/compose.yaml --profile full up -d uar
    ```
 
@@ -537,7 +558,7 @@ In short:
 4. Install:
 
    ```powershell
-   docker build -f deploy/docker/Dockerfile -t uar-runtime:0.6.0 .
+   docker build -f deploy/docker/Dockerfile -t uar-runtime:0.9.0 .
    .\.venv\Scripts\python.exe scripts\bootstrap_local.py --k8s
    kubectl create namespace uar-system
    helm install uar deploy/helm/uar -n uar-system --set-file config=.local/uar-k8s.yaml

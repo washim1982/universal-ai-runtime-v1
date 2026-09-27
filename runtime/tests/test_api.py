@@ -303,12 +303,12 @@ async def test_models_and_tools_catalog(env):
     assert next(t for t in tools if t["name"] == "fs.write_text")["side_effect"] == "write"
 
 
-async def test_openapi_served_and_approvals_unimplemented(env):
+async def test_openapi_served_and_unknown_approval_not_found(env):
     async with httpx.AsyncClient(base_url=env.http, headers=headers(env.keys.admin)) as c:
         spec = (await c.get("/api/v1/openapi.json")).json()
-        assert "/api/v1/inference" in spec["paths"]
+        assert "/api/v1/inference" in spec["paths"] and "/api/v1/approvals" in spec["paths"]
         r = await c.post("/api/v1/approvals/ap_1/decision", json={"approve": True})
-        assert r.status_code == 501
+        assert r.status_code == 404
 
 
 async def test_auto_tool_mode_executes_tools_under_policy(env):

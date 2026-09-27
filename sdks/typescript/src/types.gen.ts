@@ -264,6 +264,8 @@ export interface ApprovalRequired {
   approval_id?: string;
   action?: string;
   args_hash?: string;
+  node_id?: string;
+  expires_at?: string;
 }
 
 export interface Completed {
@@ -348,12 +350,90 @@ export interface ApprovalDecision {
   approval_id?: string;
   approve?: boolean;
   comment?: string;
+  /** Optional: when set it must equal the approval's args_hash (the approver saw these arguments). */
+  args_hash?: string;
 }
 
 export interface Approval {
   approval_id?: string;
+  /** pending | approved | rejected | expired | cancelled */
   status?: string;
   run_id?: string;
+  node_id?: string;
+  /** node (approval node) | tool (inline approval of a tool call) */
+  kind?: string;
+  /** approval node action, or the tool name */
+  action?: string;
+  args_hash?: string;
+  /** what the approver is asked to approve (redacted) */
+  summary?: Record<string, unknown>;
+  approver_roles?: string[];
+  requested_by?: string;
+  decided_by?: string;
+  comment?: string;
+  created_at?: string;
+  expires_at?: string;
+  decided_at?: string;
+  /** the approved action has been performed (an approval is usable once) */
+  consumed?: boolean;
+}
+
+export interface ListApprovalsRequest {
+  status?: string;
+  run_id?: string;
+}
+
+export interface ListApprovalsResponse {
+  approvals?: Approval[];
+}
+
+export interface GetApprovalRequest {
+  approval_id?: string;
+}
+
+export interface VerifyAuditRequest {
+}
+
+export interface AuditVerification {
+  ok?: boolean;
+  /** chained rows checked */
+  rows?: number | string;
+  first_seq?: number | string;
+  last_seq?: number | string;
+  head_hash?: string;
+  /** first row that fails verification (0 = none) */
+  broken_at_seq?: number | string;
+  problem?: string;
+  /** rows written before the chain existed (migration 0003) */
+  unchained_rows?: number | string;
+  /** retention pruned the chain up to this row */
+  anchor_seq?: number | string;
+}
+
+export interface AuditRecord {
+  seq?: number | string;
+  ts?: string;
+  actor?: string;
+  action?: string;
+  target?: string;
+  outcome?: string;
+  request_id?: string;
+  run_id?: string;
+  policy_version?: string;
+  details?: Record<string, unknown>;
+  prev_hash?: string;
+  hash?: string;
+}
+
+export interface ExportAuditRequest {
+  after_seq?: number | string;
+  limit?: number;
+}
+
+export interface ExportAuditResponse {
+  records?: AuditRecord[];
+  next_after_seq?: number | string;
+  head_hash?: string;
 }
 
 export interface RegisterPluginRequest {
@@ -393,4 +473,162 @@ export interface ActivatePluginRequest {
 
 export interface RollbackPluginRequest {
   plugin_id?: string;
+}
+
+export interface GetRuntimeInfoRequest {
+}
+
+export interface ComponentStatus {
+  name?: string;
+  /** database | provider | mcp_server | plugin | oidc | worker */
+  kind?: string;
+  status?: string;
+  ok?: boolean;
+}
+
+export interface RuntimeInfo {
+  version?: string;
+  profile?: string;
+  started_at?: string;
+  uptime_s?: number | string;
+  host?: string;
+  pid?: number;
+  worker?: boolean;
+  migrations?: string[];
+  components?: ComponentStatus[];
+  /** the caller's tenant and subject */
+  tenant?: string;
+  subject?: string;
+  /** may read process-wide logs */
+  platform_admin?: boolean;
+}
+
+export interface UsageRecord {
+  id?: number | string;
+  ts?: string;
+  subject?: string;
+  request_id?: string;
+  run_id?: string;
+  provider?: string;
+  model?: string;
+  input_tokens?: number;
+  output_tokens?: number;
+  /** absent when the price is unknown */
+  cost?: Money;
+  estimated?: boolean;
+  price_version?: string;
+}
+
+export interface ListUsageRequest {
+  /** paging: records with a smaller id (0 = newest) */
+  before_id?: number | string;
+  limit?: number;
+  subject?: string;
+  /** substring of provider/model */
+  model?: string;
+  /** RFC 3339 */
+  since?: string;
+}
+
+export interface ListUsageResponse {
+  records?: UsageRecord[];
+  next_before_id?: number | string;
+  /** for the filter, all pages */
+  total_requests?: number | string;
+  total_input_tokens?: number | string;
+  total_output_tokens?: number | string;
+  /** known prices only */
+  total_cost?: Money;
+}
+
+export interface ApiKeyInfo {
+  key_id?: string;
+  subject?: string;
+  roles?: string[];
+  /** config (read-only here) | api */
+  source?: string;
+  description?: string;
+  created_by?: string;
+  created_at?: string;
+  expires_at?: string;
+  revoked_at?: string;
+  /** active | expired | revoked */
+  status?: string;
+}
+
+export interface ListApiKeysRequest {
+  include_revoked?: boolean;
+}
+
+export interface ListApiKeysResponse {
+  keys?: ApiKeyInfo[];
+}
+
+export interface CreateApiKeyRequest {
+  subject?: string;
+  roles?: string[];
+  description?: string;
+  /** 0 = no expiry */
+  expires_in_days?: number;
+}
+
+/** The secret is returned once; the runtime stores only its SHA-256. */
+export interface CreatedApiKey {
+  key?: ApiKeyInfo;
+  api_key?: string;
+}
+
+export interface RevokeApiKeyRequest {
+  key_id?: string;
+  reason?: string;
+}
+
+export interface GetAccessPolicyRequest {
+}
+
+export interface RoleInfo {
+  name?: string;
+  permissions?: string[];
+}
+
+export interface RoleMapping {
+  source?: string;
+  kind?: string;
+  roles?: string[];
+}
+
+export interface OidcIssuerInfo {
+  issuer?: string;
+  audience?: string;
+  keys?: string;
+  mappings?: RoleMapping[];
+}
+
+export interface AccessPolicy {
+  tenant?: string;
+  roles?: RoleInfo[];
+  oidc?: OidcIssuerInfo[];
+  /** every permission the runtime knows */
+  permissions?: string[];
+}
+
+export interface LogRecord {
+  seq?: number | string;
+  ts?: string;
+  level?: string;
+  logger?: string;
+  message?: string;
+  fields?: Record<string, unknown>;
+}
+
+export interface ListLogsRequest {
+  after_seq?: number | string;
+  limit?: number;
+  min_level?: string;
+}
+
+export interface ListLogsResponse {
+  records?: LogRecord[];
+  next_after_seq?: number | string;
+  capacity?: number;
 }

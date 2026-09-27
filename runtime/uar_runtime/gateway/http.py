@@ -225,7 +225,76 @@ def create_app(svc: RuntimeService) -> FastAPI:
     @app.post("/api/v1/approvals/{approval_id}/decision")
     async def approval(request: Request, approval_id: str):
         req = await body(request, pb.ApprovalDecision)
+        if req.get("approval_id") not in (None, "", approval_id):
+            raise UARError("invalid_argument", "approval_id in the body does not match the path")
+        req["approval_id"] = approval_id
         return await call(request, lambda p, r: svc.decide_approval(p, req, r), pb.Approval)
+
+    @app.get("/api/v1/approvals")
+    async def list_approvals(request: Request):
+        q = {k: request.query_params.get(k, "") for k in ("status", "run_id")}
+        return await call(request, lambda p, r: svc.list_approvals(p, q), pb.ListApprovalsResponse)
+
+    @app.get("/api/v1/approvals/{approval_id}")
+    async def get_approval(request: Request, approval_id: str):
+        return await call(request, lambda p, r: svc.get_approval(p, approval_id), pb.Approval)
+
+    @app.get("/api/v1/audit/verify")
+    async def verify_audit(request: Request):
+        return await call(request, lambda p, r: svc.verify_audit(p, r), pb.AuditVerification)
+
+    @app.get("/api/v1/audit/export")
+    async def export_audit(request: Request):
+        try:
+            q = {"after_seq": int(request.query_params.get("after_seq", "0")),
+                 "limit": int(request.query_params.get("limit", "500"))}
+        except ValueError:
+            raise UARError("invalid_argument", "after_seq and limit must be integers") from None
+        return await call(request, lambda p, r: svc.export_audit(p, q, r), pb.ExportAuditResponse)
+
+    # ---------------------------------------------------------------- administration
+
+    def qint(request: Request, name: str, default: int = 0) -> int:
+        try:
+            return int(request.query_params.get(name, default))
+        except ValueError:
+            raise UARError("invalid_argument", f"{name} must be an integer") from None
+
+    @app.get("/api/v1/admin/info")
+    async def runtime_info(request: Request):
+        return await call(request, lambda p, r: svc.runtime_info(p), pb.RuntimeInfo)
+
+    @app.get("/api/v1/usage")
+    async def list_usage(request: Request):
+        q = {"before_id": qint(request, "before_id"), "limit": qint(request, "limit", 100),
+             **{k: request.query_params.get(k, "") for k in ("subject", "model", "since")}}
+        return await call(request, lambda p, r: svc.list_usage(p, q), pb.ListUsageResponse)
+
+    @app.get("/api/v1/admin/keys")
+    async def list_keys(request: Request):
+        inc = request.query_params.get("include_revoked", "false").lower() in ("1", "true", "yes")
+        return await call(request, lambda p, r: svc.list_api_keys(p, inc), pb.ListApiKeysResponse)
+
+    @app.post("/api/v1/admin/keys")
+    async def create_key(request: Request):
+        req = await body(request, pb.CreateApiKeyRequest)
+        return await call(request, lambda p, r: svc.create_api_key(p, req, r), pb.CreatedApiKey)
+
+    @app.post("/api/v1/admin/keys/{key_id}/revoke")
+    async def revoke_key(request: Request, key_id: str):
+        req = await body(request, pb.RevokeApiKeyRequest)
+        return await call(request, lambda p, r: svc.revoke_api_key(p, key_id, req.get("reason", ""), r),
+                          pb.ApiKeyInfo)
+
+    @app.get("/api/v1/admin/access")
+    async def access_policy(request: Request):
+        return await call(request, lambda p, r: svc.access_policy(p), pb.AccessPolicy)
+
+    @app.get("/api/v1/admin/logs")
+    async def list_logs(request: Request):
+        q = {"after_seq": qint(request, "after_seq"), "limit": qint(request, "limit", 500),
+             "min_level": request.query_params.get("min_level", "")}
+        return await call(request, lambda p, r: svc.list_logs(p, q), pb.ListLogsResponse)
 
     # ---------------------------------------------------------------- WebSocket
 

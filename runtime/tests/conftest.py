@@ -44,10 +44,15 @@ class Keys:
     ops: str
     other_tenant: str
     cloud_dev: str
+    approver: str
+    finance: str
+    auditor: str
+    globex_admin: str
 
 
 def make_keys() -> tuple[Keys, list[dict]]:
-    names = ["dev", "admin", "viewer", "ops", "other_tenant", "cloud_dev"]
+    names = ["dev", "admin", "viewer", "ops", "other_tenant", "cloud_dev", "approver", "finance", "auditor",
+             "globex_admin"]
     ks = {n: _key() for n in names}
     tenants = [
         {"id": "acme", "allow_cloud": False, "quotas": {"requests_per_minute": 100000, "concurrent_requests": 64},
@@ -56,10 +61,18 @@ def make_keys() -> tuple[Keys, list[dict]]:
              {"id": ks["admin"][0], "sha256": hash_key(ks["admin"][1]), "subject": "admin@acme", "roles": ["admin"]},
              {"id": ks["viewer"][0], "sha256": hash_key(ks["viewer"][1]), "subject": "viewer@acme", "roles": ["viewer"]},
              {"id": ks["ops"][0], "sha256": hash_key(ks["ops"][1]), "subject": "ops@acme", "roles": ["operator"]},
+             {"id": ks["approver"][0], "sha256": hash_key(ks["approver"][1]), "subject": "approver@acme",
+              "roles": ["approver"]},
+             {"id": ks["finance"][0], "sha256": hash_key(ks["finance"][1]), "subject": "cfo@acme",
+              "roles": ["approver", "finance"]},
+             {"id": ks["auditor"][0], "sha256": hash_key(ks["auditor"][1]), "subject": "auditor@acme",
+              "roles": ["auditor"]},
          ]},
         {"id": "globex", "quotas": {"requests_per_minute": 100000, "concurrent_requests": 64},
          "api_keys": [{"id": ks["other_tenant"][0], "sha256": hash_key(ks["other_tenant"][1]),
-                       "subject": "dev@globex", "roles": ["developer"]}]},
+                       "subject": "dev@globex", "roles": ["developer"]},
+                      {"id": ks["globex_admin"][0], "sha256": hash_key(ks["globex_admin"][1]),
+                       "subject": "admin@globex", "roles": ["admin"]}]},
         {"id": "cloudco", "allow_cloud": True, "allow_cloud_fallback": True,
          "quotas": {"requests_per_minute": 100000, "concurrent_requests": 64, "tokens_per_day": 1_000_000},
          "api_keys": [{"id": ks["cloud_dev"][0], "sha256": hash_key(ks["cloud_dev"][1]), "subject": "dev@cloudco",
@@ -94,6 +107,9 @@ def settings_dict(db_url: str, tenants: list[dict], ws: Path, base: Path, **over
                            "cloud_user": ["inference:cloud"],
                            "operator": ["models:list", "tools:list", "agents:read", "runs:read", "runs:cancel",
                                         "runs:resolve", "dryrun"],
+                           "approver": ["runs:read", "approvals:read", "approvals:decide"],
+                           "finance": ["approvals:read"],
+                           "auditor": ["runs:read", "approvals:read", "audit:read"],
                            "admin": ["admin"]},
                  "jwt": {"hs256_secret_env": "UAR_TEST_JWT_SECRET"}},
         "providers": [
@@ -156,12 +172,16 @@ class Env:
     db_url: str
 
 
-async def start_env(tmp: Path, name: str, *, worker: bool = True, serve: bool = True, **over) -> tuple[Env, list]:
+async def start_env(tmp: Path, name: str, *, worker: bool = True, serve: bool = True, customize=None,
+                    **over) -> tuple[Env, list]:
     os.environ.setdefault("UAR_TEST_JWT_SECRET", secrets.token_urlsafe(32))
     keys, tenants = make_keys()
     ws = make_workspace(tmp)
     db_url = create_db(name)
-    s = Settings.model_validate(settings_dict(db_url, tenants, ws, tmp, **over))
+    d = settings_dict(db_url, tenants, ws, tmp, **over)
+    if customize is not None:
+        customize(d)
+    s = Settings.model_validate(d)
     s.worker.embedded = worker
     svc = RuntimeService(s, Store(db_url, max_size=20))
     await svc.start()

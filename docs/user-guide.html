@@ -303,6 +303,26 @@ Invoke-RestMethod -Method Post http://localhost:9000/api/v1/inference -Headers $
 </ol>
 <p>After updating the project files, click <b>Run again</b> on <i>Install the runtime and the Python SDK</i>, restart the runtime, and run the <b>End-to-end check</b>.</p>
 
+<h2 id="admin">Administer with UAR Admin</h2>
+<p class="sub">UAR Admin is a Windows app for the daily administration of the runtime. It uses the same admin key as the setup dashboard, so there is nothing to configure.</p>
+<ol class="check">
+  <li>Double-click <code>admin.cmd</code> in the project folder. The first time it builds the app, which takes about a minute and needs the <a href="https://dotnet.microsoft.com/download" target="_blank" rel="noopener">.NET SDK 8 or newer</a>.</li>
+  <li>On <b>Overview</b>, check that the runtime shows <i>Running</i>. If it shows <i>Stopped</i>, click <b>Start</b>.</li>
+</ol>
+<div class="tbl"><table>
+  <thead><tr><th>Page</th><th>What you can do there</th></tr></thead>
+  <tbody>
+    <tr><td>Overview</td><td>Start, stop or restart the runtime. See whether the database, models, tool servers and plugins are healthy, and how many approvals are waiting.</td></tr>
+    <tr><td>Access &amp; keys</td><td>Create an API key for a person or program, choose its roles and when it expires, and copy it. The key is shown only once. Revoke keys that are no longer needed.</td></tr>
+    <tr><td>API reference</td><td>See every endpoint, try a request with one click, or copy a ready-made <code>curl</code> command.</td></tr>
+    <tr><td>Inference history</td><td>See who called which model, how many tokens were used and what it cost. Export to Excel (CSV).</td></tr>
+    <tr><td>Approvals</td><td>Agents can pause and ask a person first, for example before paying an invoice. Read the request, then click <b>Approve</b> or <b>Reject</b>.</td></tr>
+    <tr><td>Audit trail</td><td>Every sensitive action, who did it and when. <b>Verify chain</b> proves that nothing was changed or deleted.</td></tr>
+    <tr><td>Service logs</td><td>Live messages from the runtime, to see what it is doing or why something failed.</td></tr>
+  </tbody>
+</table></div>
+<p>If the pages show errors after updating the project files, restart the runtime. If you run UAR in Docker, rebuild its image first with the <i>Build the container image</i> step in the setup dashboard.</p>
+
 <h2 id="services">What the services mean</h2>
 <p class="sub">In the Services panel, <span class="dot g"></span> is running, <span class="dot r"></span> is a required service that is stopped, and <span class="dot x"></span> is an optional service that is stopped.</p>
 <div class="tbl"><table>

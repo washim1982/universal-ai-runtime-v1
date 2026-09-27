@@ -666,6 +666,12 @@
         },
         "args_hash": {
           "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string"
         }
       },
       "additionalProperties": false
@@ -1327,6 +1333,10 @@
         },
         "comment": {
           "type": "string"
+        },
+        "args_hash": {
+          "type": "string",
+          "description": "Optional: when set it must equal the approval's args_hash (the approver saw these arguments)."
         }
       },
       "additionalProperties": false
@@ -1338,9 +1348,231 @@
           "type": "string"
         },
         "status": {
+          "type": "string",
+          "description": "pending | approved | rejected | expired | cancelled"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "description": "node (approval node) | tool (inline approval of a tool call)"
+        },
+        "action": {
+          "type": "string",
+          "description": "approval node action, or the tool name"
+        },
+        "args_hash": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "object",
+          "description": "what the approver is asked to approve (redacted)"
+        },
+        "approver_roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requested_by": {
+          "type": "string"
+        },
+        "decided_by": {
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string"
+        },
+        "decided_at": {
+          "type": "string"
+        },
+        "consumed": {
+          "type": "boolean",
+          "description": "the approved action has been performed (an approval is usable once)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListApprovalsRequest": {
+      "type": "object",
+      "properties": {
+        "status": {
           "type": "string"
         },
         "run_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListApprovalsResponse": {
+      "type": "object",
+      "properties": {
+        "approvals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Approval"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "GetApprovalRequest": {
+      "type": "object",
+      "properties": {
+        "approval_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "VerifyAuditRequest": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "AuditVerification": {
+      "type": "object",
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "rows": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "chained rows checked"
+        },
+        "first_seq": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "last_seq": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "head_hash": {
+          "type": "string"
+        },
+        "broken_at_seq": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "first row that fails verification (0 = none)"
+        },
+        "problem": {
+          "type": "string"
+        },
+        "unchained_rows": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "rows written before the chain existed (migration 0003)"
+        },
+        "anchor_seq": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "retention pruned the chain up to this row"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AuditRecord": {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "ts": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "outcome": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        },
+        "prev_hash": {
+          "type": "string"
+        },
+        "hash": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExportAuditRequest": {
+      "type": "object",
+      "properties": {
+        "after_seq": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExportAuditResponse": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditRecord"
+          }
+        },
+        "next_after_seq": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "head_hash": {
           "type": "string"
         }
       },
@@ -1434,6 +1666,466 @@
       "properties": {
         "plugin_id": {
           "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "GetRuntimeInfoRequest": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "ComponentStatus": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "description": "database | provider | mcp_server | plugin | oidc | worker"
+        },
+        "status": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RuntimeInfo": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "started_at": {
+          "type": "string"
+        },
+        "uptime_s": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "host": {
+          "type": "string"
+        },
+        "pid": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "worker": {
+          "type": "boolean"
+        },
+        "migrations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ComponentStatus"
+          }
+        },
+        "tenant": {
+          "type": "string",
+          "description": "the caller's tenant and subject"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "platform_admin": {
+          "type": "boolean",
+          "description": "may read process-wide logs"
+        }
+      },
+      "additionalProperties": false
+    },
+    "UsageRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "ts": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "input_tokens": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "output_tokens": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "cost": {
+          "$ref": "#/$defs/Money",
+          "description": "absent when the price is unknown"
+        },
+        "estimated": {
+          "type": "boolean"
+        },
+        "price_version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListUsageRequest": {
+      "type": "object",
+      "properties": {
+        "before_id": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "paging: records with a smaller id (0 = newest)"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string",
+          "description": "substring of provider/model"
+        },
+        "since": {
+          "type": "string",
+          "description": "RFC 3339"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListUsageResponse": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UsageRecord"
+          }
+        },
+        "next_before_id": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "total_requests": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "for the filter, all pages"
+        },
+        "total_input_tokens": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "total_output_tokens": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "total_cost": {
+          "$ref": "#/$defs/Money",
+          "description": "known prices only"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ApiKeyInfo": {
+      "type": "object",
+      "properties": {
+        "key_id": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "type": "string",
+          "description": "config (read-only here) | api"
+        },
+        "description": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string"
+        },
+        "revoked_at": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "description": "active | expired | revoked"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListApiKeysRequest": {
+      "type": "object",
+      "properties": {
+        "include_revoked": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListApiKeysResponse": {
+      "type": "object",
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiKeyInfo"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "CreateApiKeyRequest": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "expires_in_days": {
+          "type": "integer",
+          "format": "int32",
+          "description": "0 = no expiry"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CreatedApiKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/ApiKeyInfo"
+        },
+        "api_key": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "description": "The secret is returned once; the runtime stores only its SHA-256."
+    },
+    "RevokeApiKeyRequest": {
+      "type": "object",
+      "properties": {
+        "key_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "GetAccessPolicyRequest": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "RoleInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "RoleMapping": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "OidcIssuerInfo": {
+      "type": "object",
+      "properties": {
+        "issuer": {
+          "type": "string"
+        },
+        "audience": {
+          "type": "string"
+        },
+        "keys": {
+          "type": "string"
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoleMapping"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "AccessPolicy": {
+      "type": "object",
+      "properties": {
+        "tenant": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoleInfo"
+          }
+        },
+        "oidc": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OidcIssuerInfo"
+          }
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "every permission the runtime knows"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LogRecord": {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "ts": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "logger": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListLogsRequest": {
+      "type": "object",
+      "properties": {
+        "after_seq": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "min_level": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListLogsResponse": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LogRecord"
+          }
+        },
+        "next_after_seq": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "capacity": {
+          "type": "integer",
+          "format": "int32"
         }
       },
       "additionalProperties": false

@@ -23,6 +23,7 @@ from typing import Any
 import jsonschema
 from opentelemetry import context as otel_context
 
+from ..approvals import Approvals, WaitForApproval
 from ..config import Settings
 from ..errors import UARError
 from ..governance import Authenticator, Principal, matches_any
@@ -68,8 +69,10 @@ def _initial_state(g: Graph, perm_chain: list[list[str]] | None = None) -> dict:
 
 class Engine:
     def __init__(self, settings: Settings, store: Store, runs: RunService, router: ModelRouter,
-                 orchestrator: Orchestrator, auth: Authenticator):
+                 orchestrator: Orchestrator, auth: Authenticator, approvals: Approvals):
         self.s = settings
+        self.approvals = approvals
+        self._expiry_checked = 0.0
         self.store = store
         self.runs = runs
         self.router = router
@@ -94,6 +97,9 @@ class Engine:
         cfg = self.s.worker
         while not self._stopping:
             try:
+                if time.monotonic() - self._expiry_checked >= 1.0:
+                    self._expiry_checked = time.monotonic()
+                    await self.approvals.expire_due()
                 while len(self._tasks) < cfg.concurrency:
                     row = await self.claim()
                     if row is None:
@@ -164,15 +170,15 @@ class Engine:
 
     def principal(self, snap: dict) -> Principal:
         key_id = snap.get("key_id", "")
-        if key_id and key_id != "jwt" and key_id not in self.auth.keys:
+        if key_id and key_id not in ("jwt", "oidc") and not self.auth.key_active(key_id):
             raise UARError("unauthenticated", "the credential that started this run has been revoked")
         roles = tuple(snap.get("roles", []))
         return Principal(snap["tenant"], snap["subject"], roles, key_id, self.auth.permissions(roles))
 
     async def execute(self, run: dict, fence: int) -> dict:
         """Execute (or resume) a run to a terminal or attention state. Returns the final state."""
-        rid = run["run_id"]
         pin_token = current_pins.set(run.get("plugins") or {})
+        st: dict | None = None
         try:
             if run["attempts"] > MAX_CRASH_ATTEMPTS:
                 raise UARError("internal", f"run abandoned after {MAX_CRASH_ATTEMPTS} worker attempts")
@@ -184,6 +190,10 @@ class Engine:
             if st.get("pending"):
                 await self._resume_pending(run, fence, p, g, st)
             return await self._loop(run, fence, p, g, st)
+        except WaitForApproval as w:
+            parked = await self._park(run, fence, st, w.approval)
+            return {"status": "waiting_approval" if parked else "running",
+                    "approval_id": w.approval["approval_id"]}
         except RunCancelled:
             return await self._finalize(run, fence, "cancelled", None,
                                         UARError("cancelled", "run cancelled; completed external actions are not "
@@ -352,7 +362,63 @@ class Engine:
             return await self._tool(run, fence, p, g, st, nid, node, ctx, events)
         if t == "agent":
             return await self._agent(run, fence, p, g, st, nid, node, ctx)
+        if t == "approval":
+            return await self._approval_node(run, st, nid, node, ctx)
         raise UARError("invalid_graph", f"unsupported node type {t}")
+
+    # ------------------------------------------------------------ approvals
+
+    async def _gate(self, run, st, nid, kind, action, ah, summary, roles, ttl) -> dict:
+        reuse = (st.get("approvals") or {}).pop(nid, None)
+        try:
+            return await self.approvals.gate(run, nid, kind, action, ah, summary, roles, ttl, reuse)
+        except WaitForApproval as w:
+            st["pending"] = {"node": nid, "kind": "approval", "approval_id": w.approval["approval_id"]}
+            raise
+
+    async def _approval_node(self, run, st, nid, node, ctx) -> dict:
+        args = cel.render_mapping(node.get("args") or {}, ctx)
+        summary = {"description": node.get("description", ""), "args": args,
+                   **(cel.render_mapping(node.get("summary") or {}, ctx) or {})}
+        ah = args_hash(node["action"], args if isinstance(args, dict) else {"value": args})
+        row = await self._gate(run, st, nid, "node", node["action"], ah, summary, node.get("approvers") or [],
+                               node.get("expires_in_s"))
+        out = {"approved": row["status"] == "approved", "status": row["status"], "approval_id": row["approval_id"],
+               "decided_by": row["decided_by"] or "", "comment": row["comment"] or ""}
+        if row["status"] == "approved":
+            await self.approvals.store.execute("UPDATE approvals SET consumed_at=COALESCE(consumed_at, now()) "
+                                               "WHERE approval_id=%s", row["approval_id"])
+            return out
+        if node.get("on_reject", "fail") == "continue":
+            return out
+        raise UARError("policy_denied", f"{node['action']} was not approved ({row['status']})", retryable=False,
+                       details={"approval_id": row["approval_id"], "status": row["status"]})
+
+    async def _park(self, run: dict, fence: int, st: dict | None, approval: dict) -> bool:
+        """Release the run until the approval is decided. If it was decided meanwhile, requeue instead.
+        Locking the approval row orders this against a concurrent decision or expiry."""
+        rid = run["run_id"]
+        async with self.store.tx() as c:
+            a = await (await c.execute("SELECT status FROM approvals WHERE approval_id=%s FOR UPDATE",
+                                       (approval["approval_id"],))).fetchone()
+            parked = a is not None and a["status"] == "pending"
+            status = "waiting_approval" if parked else ("running" if run.get("parent_run_id") else "queued")
+            sets, args = ["status=%s", "lease_owner=NULL", "lease_expires_at=NULL", "updated_at=now()"], [status]
+            if st is not None:
+                sets += ["checkpoint=%s", "steps=%s", "current_node=%s", "usage=%s"]
+                args += [jsonb(st), st["steps"], st.get("next"), jsonb(self._usage(st))]
+            cur = await c.execute(f"UPDATE runs SET {', '.join(sets)} WHERE run_id=%s AND lease_version=%s",
+                                  (*args, rid, fence))
+            if cur.rowcount == 0:
+                raise LeaseLost(rid)
+            if parked:   # also on parent runs parked on a sub-run's approval, so their watchers see it
+                await self.runs.append_event(rid, {"approval_required": {
+                    "approval_id": approval["approval_id"], "action": approval["action"],
+                    "args_hash": approval["args_hash"], "node_id": approval["node_id"],
+                    "expires_at": approval["expires_at"].isoformat().replace("+00:00", "Z")}}, conn=c)
+        if not parked and not run.get("parent_run_id"):
+            self.wake()
+        return parked
 
     # ------------------------------------------------------------ node types
 
@@ -416,6 +482,18 @@ class Engine:
         if not all(matches_any(name, pats) for pats in chain):
             raise UARError("policy_denied", f"{name} is not permitted by a parent agent")
         cctx = CallContext(run.get("request_id") or "", run["run_id"], nid, agent_tools)
+        rule = self.orch.approval_rule(p, info, args)
+        if rule is not None:
+            if not allow_write:
+                raise UARError("invalid_graph", f"{nid}: tools that need approval are not allowed in parallel branches")
+            self.orch.authorize(p, info, args, cctx)  # never ask a human about a call policy would refuse
+            row = await self._gate(run, st, nid, "tool", name, args_hash(name, args),
+                                   {"tool": name, "side_effect": info.side_effect, "args": args},
+                                   rule.approver_roles, None)
+            if row["status"] != "approved":
+                raise UARError("policy_denied", f"{name} was not approved ({row['status']})", retryable=False,
+                               details={"approval_id": row["approval_id"], "status": row["status"]})
+            cctx.approval_id = row["approval_id"]
         if info.side_effect != "read":
             if not allow_write:
                 raise UARError("invalid_graph", f"{nid}: {info.side_effect} tools are not allowed in parallel branches")
@@ -479,14 +557,25 @@ class Engine:
         return await self._run_child(child_run_id, run, nid)
 
     async def _run_child(self, child_run_id: str, parent: dict, nid: str) -> Any:
-        row = await self.store.fetchone(
-            "UPDATE runs SET lease_owner=%s, lease_version=lease_version+1 WHERE run_id=%s RETURNING *",
-            self.worker_id, child_run_id)
-        if row["status"] not in ("running", "queued"):
-            result = row
-        else:
-            await self.execute(row, row["lease_version"])
-            result = await self.store.fetchone("SELECT * FROM runs WHERE run_id=%s", child_run_id)
+        for _ in range(5):
+            row = await self.store.fetchone(
+                "UPDATE runs SET lease_owner=%s, lease_version=lease_version+1 WHERE run_id=%s RETURNING *",
+                self.worker_id, child_run_id)
+            if row["status"] in ("running", "queued"):
+                await self.execute(row, row["lease_version"])
+                row = await self.store.fetchone("SELECT * FROM runs WHERE run_id=%s", child_run_id)
+            if row["status"] == "waiting_approval":
+                # The sub-run (or one of its own sub-runs) is parked: park the parent on the same approval.
+                a = await self.store.fetchone(
+                    "WITH RECURSIVE down AS (SELECT run_id FROM runs WHERE run_id=%s UNION ALL SELECT r.run_id "
+                    "FROM runs r JOIN down ON r.parent_run_id = down.run_id) SELECT * FROM approvals WHERE run_id "
+                    "IN (SELECT run_id FROM down) AND status='pending' ORDER BY created_at LIMIT 1", child_run_id)
+                if a is not None:
+                    raise WaitForApproval(a)
+                continue
+            if row["status"] != "running":   # "running" = the sub-run's approval was decided meanwhile
+                break
+        result = row
         if result["status"] == "succeeded":
             return result["output"]
         if result["status"] == "needs_attention":
@@ -517,6 +606,11 @@ class Engine:
     async def _resume_pending(self, run, fence, p, g, st) -> None:
         pend = st["pending"]
         nid = pend["node"]
+        if pend["kind"] == "approval":
+            # Re-run the node; it picks up the decided approval it was parked on.
+            st.setdefault("approvals", {})[nid] = pend["approval_id"]
+            st["pending"] = None
+            return
         if pend["kind"] == "agent":
             output = await self._run_child(pend["child_run_id"], run, nid)
             st["nodes"][nid] = {"output": output}

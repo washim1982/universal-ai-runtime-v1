@@ -35,6 +35,8 @@ class RunService:
         self._graphs: dict[str, Graph] = {}
         self.on_enqueue: Callable[[], None] = lambda: None
         self.plugin_pins: Callable[[], dict] = dict  # active plugin versions, recorded on each new run
+        self.approvals = None                          # set by the service (cancel of parked runs)
+        self.redactor = None                           # set by the service (event log redaction)
 
     # ------------------------------------------------------------ agents
 
@@ -132,6 +134,8 @@ class RunService:
     async def append_event(self, run_id: str, body: dict, conn=None, request_id: str = "") -> int:
         sql = ("INSERT INTO run_events (run_id, seq, body) SELECT %s, COALESCE(MAX(seq),0)+1, %s FROM run_events "
                "WHERE run_id=%s RETURNING seq")
+        if self.redactor is not None and self.redactor.cfg.events and self.redactor.active:
+            body = self.redactor.value(body)
         args = (run_id, jsonb(body), run_id)
         for _ in range(5):
             try:
@@ -158,6 +162,14 @@ class RunService:
                                   (jsonb({"code": "cancelled", "message": "cancelled before start"}), run_id, p.tenant))
             if await cur.fetchone():
                 await self.append_event(run_id, {"completed": {"status": "cancelled"}}, conn=c)
+            elif run["status"] == "waiting_approval" and self.approvals is not None:
+                await self.approvals.cancel_tree(c, run_id)
+                cur = await c.execute("SELECT status FROM runs WHERE run_id=%s", (run_id,))
+                if (await cur.fetchone())["status"] == "cancelled":
+                    await self.append_event(run_id, {"completed": {"status": "cancelled"}}, conn=c)
+                else:
+                    await c.execute("UPDATE runs SET cancel_requested=true, updated_at=now() WHERE run_id=%s "
+                                    "AND tenant=%s", (run_id, p.tenant))
             else:
                 await c.execute("UPDATE runs SET cancel_requested=true, updated_at=now() WHERE run_id=%s AND tenant=%s",
                                 (run_id, p.tenant))
@@ -197,7 +209,7 @@ class RunService:
         deadline = asyncio.get_running_loop().time() + timeout_s
         while True:
             run = await self.get_run(p, run_id)
-            if run["status"] in TERMINAL or run["status"] == "needs_attention":
+            if run["status"] in TERMINAL or run["status"] in ("needs_attention", "waiting_approval"):
                 return run
             if asyncio.get_running_loop().time() > deadline:
                 raise UARError("deadline_exceeded", f"run {run_id} still {run['status']}",

@@ -13,7 +13,7 @@ each step there when you run it.
 ## Install
 
 ```bash
-docker build -f deploy/docker/Dockerfile -t uar-runtime:0.6.0 .      # Docker Desktop's cluster sees local images
+docker build -f deploy/docker/Dockerfile -t uar-runtime:0.9.0 .      # Docker Desktop's cluster sees local images
 python scripts/bootstrap_local.py --k8s                                # .local/uar-k8s.yaml (reuses your keys)
 kubectl create namespace uar-system
 helm install uar deploy/helm/uar -n uar-system --set-file config=.local/uar-k8s.yaml

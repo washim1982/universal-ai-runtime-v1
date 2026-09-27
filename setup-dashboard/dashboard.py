@@ -99,7 +99,7 @@ def steps() -> list[Step]:
               ([npm(), "run", "build"], "sdks/typescript")], optional=True, long="~30 s", needs=("node",)),
         Step("image", "setup", "Build the container image",
              "Only needed to run the runtime in Docker or Kubernetes.",
-             [(["docker", "build", "-f", "deploy/docker/Dockerfile", "-t", "uar-runtime:0.6.0", "."], None)],
+             [(["docker", "build", "-f", "deploy/docker/Dockerfile", "-t", "uar-runtime:0.9.0", "."], None)],
              optional=True, long="1–3 min", needs=("docker_running",)),
         # --- run
         Step("compose_up", "run", "Start the runtime in Docker (with tracing)",
@@ -411,7 +411,7 @@ _IMAGE = {"ok": False, "at": 0.0}
 def _image_exists() -> bool:
     if time.time() - _IMAGE["at"] < 15:
         return _IMAGE["ok"]
-    rc, _ = run_quiet(["docker", "image", "inspect", "uar-runtime:0.6.0"])
+    rc, _ = run_quiet(["docker", "image", "inspect", "uar-runtime:0.9.0"])
     _IMAGE.update(ok=rc == 0, at=time.time())
     return rc == 0
 

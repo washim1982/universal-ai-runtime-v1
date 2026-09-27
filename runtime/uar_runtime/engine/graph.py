@@ -78,8 +78,8 @@ def compile_graph(definition: dict, limits: LimitsCfg) -> Graph:
             edges[e["from"]].append(e)
     for nid, n in nodes.items():
         t, out = n["type"], edges[nid]
-        if t == "approval":
-            problems.append(f"{nid}: approval nodes are not available until M9")
+        if t == "approval" and n.get("on_reject") == "continue" and out and not all("when" in e for e in out):
+            warnings.append(f"{nid}: on_reject is continue but an unguarded edge also follows a rejection")
         if t == "return" and out:
             problems.append(f"{nid}: return nodes cannot have outgoing edges")
         if t != "return" and not out:
@@ -164,7 +164,7 @@ def _check_expr(where: str, expr: str, nodes: dict) -> None:
 
 
 def _check_node_exprs(nid: str, n: dict, nodes: dict) -> None:
-    for key in ("args", "value", "set", "input"):
+    for key in ("args", "value", "set", "input", "summary"):
         for x in cel.expressions(n.get(key)):
             _check_expr(f"{nid}.{key}", x, nodes)
     for key in ("prompt", "system"):

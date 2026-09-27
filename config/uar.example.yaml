@@ -30,7 +30,16 @@ auth:
         - {id: "__ADMIN_ID__", sha256: "__ADMIN_SHA__", subject: "admin@acme", roles: [admin]}
         - {id: "__OPS_ID__", sha256: "__OPS_SHA__", subject: "ops@acme", roles: [operator]}
   jwt:
-    hs256_secret_env: UAR_JWT_SECRET   # dev/test only; OIDC arrives in M9
+    hs256_secret_env: UAR_JWT_SECRET   # dev/test only; production sign-in uses oidc below
+  # Single sign-on: accept access tokens from an OpenID Connect provider (signature checked with its JWKS).
+  # oidc:
+  #   - issuer: https://login.example.com/
+  #     audience: uar
+  #     jwks_url: https://login.example.com/.well-known/jwks.json
+  #     tenant: acme                       # or tenant_claim + tenant_map for several tenants
+  #     groups_claim: groups
+  #     group_roles: {uar-admins: [admin], engineers: [developer], finance: [approver]}
+  #     subject_roles: {ci-pipeline-client-id: [developer]}   # service accounts
 
 providers:
   - {id: ollama, type: ollama, model_class: local, base_url: "${UAR_OLLAMA_URL:-http://127.0.0.1:11434}",
@@ -95,3 +104,16 @@ tool_policies:
   - {tool: "db.*", roles: [developer, admin]}
 
 agents_dir: examples/agents
+
+# Human approvals (approval nodes and tool policies with effect: require_approval).
+approvals: {default_ttl_s: 86400, allow_self_approval: false}
+
+# Redact personal data from the audit log, the run event log, and prompts sent to cloud models.
+redaction: {builtin: [email, card_number, us_ssn], egress_classes: [cloud]}
+
+# Delete old data automatically (days). The audit hash chain stays verifiable after pruning.
+retention: {enabled: false, runs_days: 90, usage_days: 400, audit_days: 400}
+
+# Administration API (used by UAR Admin, admin-app/). Tenants whose admins may read process-wide
+# service logs; list only the operator's tenant when several organisations share a runtime.
+admin: {platform_tenants: [acme]}

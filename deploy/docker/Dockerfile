@@ -1,6 +1,6 @@
 # Universal AI Runtime image. Also used for the first-party MCP servers (stdio container sandbox
 # and the Kubernetes uar-plugins deployments), with a different command.
-#   docker build -f deploy/docker/Dockerfile -t uar-runtime:0.6.0 .
+#   docker build -f deploy/docker/Dockerfile -t uar-runtime:0.9.0 .
 FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \

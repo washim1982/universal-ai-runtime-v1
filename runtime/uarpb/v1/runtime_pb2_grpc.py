@@ -99,6 +99,61 @@ class RuntimeStub:
                 request_serializer=uarpb_dot_v1_dot_runtime__pb2.ApprovalDecision.SerializeToString,
                 response_deserializer=uarpb_dot_v1_dot_runtime__pb2.Approval.FromString,
                 _registered_method=True)
+        self.ListApprovals = channel.unary_unary(
+                '/uar.v1.Runtime/ListApprovals',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.ListApprovalsRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListApprovalsResponse.FromString,
+                _registered_method=True)
+        self.GetApproval = channel.unary_unary(
+                '/uar.v1.Runtime/GetApproval',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.GetApprovalRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.Approval.FromString,
+                _registered_method=True)
+        self.VerifyAudit = channel.unary_unary(
+                '/uar.v1.Runtime/VerifyAudit',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.VerifyAuditRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.AuditVerification.FromString,
+                _registered_method=True)
+        self.ExportAudit = channel.unary_unary(
+                '/uar.v1.Runtime/ExportAudit',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.ExportAuditRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.ExportAuditResponse.FromString,
+                _registered_method=True)
+        self.GetRuntimeInfo = channel.unary_unary(
+                '/uar.v1.Runtime/GetRuntimeInfo',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.GetRuntimeInfoRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.RuntimeInfo.FromString,
+                _registered_method=True)
+        self.ListUsage = channel.unary_unary(
+                '/uar.v1.Runtime/ListUsage',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.ListUsageRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListUsageResponse.FromString,
+                _registered_method=True)
+        self.ListApiKeys = channel.unary_unary(
+                '/uar.v1.Runtime/ListApiKeys',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.ListApiKeysRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListApiKeysResponse.FromString,
+                _registered_method=True)
+        self.CreateApiKey = channel.unary_unary(
+                '/uar.v1.Runtime/CreateApiKey',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.CreateApiKeyRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.CreatedApiKey.FromString,
+                _registered_method=True)
+        self.RevokeApiKey = channel.unary_unary(
+                '/uar.v1.Runtime/RevokeApiKey',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.RevokeApiKeyRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.ApiKeyInfo.FromString,
+                _registered_method=True)
+        self.GetAccessPolicy = channel.unary_unary(
+                '/uar.v1.Runtime/GetAccessPolicy',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.GetAccessPolicyRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.AccessPolicy.FromString,
+                _registered_method=True)
+        self.ListLogs = channel.unary_unary(
+                '/uar.v1.Runtime/ListLogs',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.ListLogsRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListLogsResponse.FromString,
+                _registered_method=True)
         self.RegisterPlugin = channel.unary_unary(
                 '/uar.v1.Runtime/RegisterPlugin',
                 request_serializer=uarpb_dot_v1_dot_runtime__pb2.RegisterPluginRequest.SerializeToString,
@@ -203,7 +258,85 @@ class RuntimeServicer:
         raise NotImplementedError('Method not implemented!')
 
     def DecideApproval(self, request, context):
-        """Contract reserved for M9; the MVP returns UNIMPLEMENTED / HTTP 501.
+        """Approvals. A decision is bound to the action and the hash of its arguments; it is accepted once,
+        only while pending and unexpired, only from a principal of the same tenant with approvals:decide
+        (and one of the approver roles, when the approval names them), never from the requester.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListApprovals(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetApproval(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def VerifyAudit(self, request, context):
+        """Tamper-evident audit (permission audit:read). Each tenant's audit rows form a hash chain.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ExportAudit(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetRuntimeInfo(self, request, context):
+        """Administration. Tenant-scoped like every other call, except logs and runtime components, which
+        describe the process (restricted to the configured platform tenants).
+        admin
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListUsage(self, request, context):
+        """usage:read
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListApiKeys(self, request, context):
+        """keys:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CreateApiKey(self, request, context):
+        """keys:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RevokeApiKey(self, request, context):
+        """keys:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetAccessPolicy(self, request, context):
+        """keys:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListLogs(self, request, context):
+        """logs:read
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -302,6 +435,61 @@ def add_RuntimeServicer_to_server(servicer, server):
                     servicer.DecideApproval,
                     request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ApprovalDecision.FromString,
                     response_serializer=uarpb_dot_v1_dot_runtime__pb2.Approval.SerializeToString,
+            ),
+            'ListApprovals': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListApprovals,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListApprovalsRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.ListApprovalsResponse.SerializeToString,
+            ),
+            'GetApproval': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetApproval,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.GetApprovalRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.Approval.SerializeToString,
+            ),
+            'VerifyAudit': grpc.unary_unary_rpc_method_handler(
+                    servicer.VerifyAudit,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.VerifyAuditRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.AuditVerification.SerializeToString,
+            ),
+            'ExportAudit': grpc.unary_unary_rpc_method_handler(
+                    servicer.ExportAudit,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ExportAuditRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.ExportAuditResponse.SerializeToString,
+            ),
+            'GetRuntimeInfo': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetRuntimeInfo,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.GetRuntimeInfoRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.RuntimeInfo.SerializeToString,
+            ),
+            'ListUsage': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListUsage,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListUsageRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.ListUsageResponse.SerializeToString,
+            ),
+            'ListApiKeys': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListApiKeys,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListApiKeysRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.ListApiKeysResponse.SerializeToString,
+            ),
+            'CreateApiKey': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateApiKey,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.CreateApiKeyRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.CreatedApiKey.SerializeToString,
+            ),
+            'RevokeApiKey': grpc.unary_unary_rpc_method_handler(
+                    servicer.RevokeApiKey,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.RevokeApiKeyRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.ApiKeyInfo.SerializeToString,
+            ),
+            'GetAccessPolicy': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAccessPolicy,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.GetAccessPolicyRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.AccessPolicy.SerializeToString,
+            ),
+            'ListLogs': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListLogs,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListLogsRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.ListLogsResponse.SerializeToString,
             ),
             'RegisterPlugin': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterPlugin,
@@ -675,6 +863,303 @@ class Runtime:
             '/uar.v1.Runtime/DecideApproval',
             uarpb_dot_v1_dot_runtime__pb2.ApprovalDecision.SerializeToString,
             uarpb_dot_v1_dot_runtime__pb2.Approval.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListApprovals(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/ListApprovals',
+            uarpb_dot_v1_dot_runtime__pb2.ListApprovalsRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.ListApprovalsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetApproval(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/GetApproval',
+            uarpb_dot_v1_dot_runtime__pb2.GetApprovalRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.Approval.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def VerifyAudit(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/VerifyAudit',
+            uarpb_dot_v1_dot_runtime__pb2.VerifyAuditRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.AuditVerification.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ExportAudit(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/ExportAudit',
+            uarpb_dot_v1_dot_runtime__pb2.ExportAuditRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.ExportAuditResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetRuntimeInfo(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/GetRuntimeInfo',
+            uarpb_dot_v1_dot_runtime__pb2.GetRuntimeInfoRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.RuntimeInfo.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListUsage(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/ListUsage',
+            uarpb_dot_v1_dot_runtime__pb2.ListUsageRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.ListUsageResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListApiKeys(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/ListApiKeys',
+            uarpb_dot_v1_dot_runtime__pb2.ListApiKeysRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.ListApiKeysResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CreateApiKey(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/CreateApiKey',
+            uarpb_dot_v1_dot_runtime__pb2.CreateApiKeyRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.CreatedApiKey.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RevokeApiKey(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/RevokeApiKey',
+            uarpb_dot_v1_dot_runtime__pb2.RevokeApiKeyRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.ApiKeyInfo.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetAccessPolicy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/GetAccessPolicy',
+            uarpb_dot_v1_dot_runtime__pb2.GetAccessPolicyRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.AccessPolicy.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListLogs(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/ListLogs',
+            uarpb_dot_v1_dot_runtime__pb2.ListLogsRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.ListLogsResponse.FromString,
             options,
             channel_credentials,
             insecure,

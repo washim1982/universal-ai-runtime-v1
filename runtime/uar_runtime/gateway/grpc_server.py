@@ -130,6 +130,53 @@ class RuntimeServicer(pbg.RuntimeServicer):
         return await self._unary(context, "DecideApproval", lambda p, r: self.svc.decide_approval(p, req, r),
                                  pb.Approval)
 
+    async def ListApprovals(self, request, context):
+        req = from_proto(request)
+        return await self._unary(context, "ListApprovals", lambda p, r: self.svc.list_approvals(p, req),
+                                 pb.ListApprovalsResponse)
+
+    async def GetApproval(self, request, context):
+        return await self._unary(context, "GetApproval", lambda p, r: self.svc.get_approval(p, request.approval_id),
+                                 pb.Approval)
+
+    async def VerifyAudit(self, request, context):
+        return await self._unary(context, "VerifyAudit", lambda p, r: self.svc.verify_audit(p, r),
+                                 pb.AuditVerification)
+
+    async def GetRuntimeInfo(self, request, context):
+        return await self._unary(context, "GetRuntimeInfo", lambda p, r: self.svc.runtime_info(p), pb.RuntimeInfo)
+
+    async def ListUsage(self, request, context):
+        req = from_proto(request)
+        return await self._unary(context, "ListUsage", lambda p, r: self.svc.list_usage(p, req), pb.ListUsageResponse)
+
+    async def ListApiKeys(self, request, context):
+        return await self._unary(context, "ListApiKeys",
+                                 lambda p, r: self.svc.list_api_keys(p, request.include_revoked),
+                                 pb.ListApiKeysResponse)
+
+    async def CreateApiKey(self, request, context):
+        req = from_proto(request)
+        return await self._unary(context, "CreateApiKey", lambda p, r: self.svc.create_api_key(p, req, r),
+                                 pb.CreatedApiKey)
+
+    async def RevokeApiKey(self, request, context):
+        return await self._unary(context, "RevokeApiKey",
+                                 lambda p, r: self.svc.revoke_api_key(p, request.key_id, request.reason, r),
+                                 pb.ApiKeyInfo)
+
+    async def GetAccessPolicy(self, request, context):
+        return await self._unary(context, "GetAccessPolicy", lambda p, r: self.svc.access_policy(p), pb.AccessPolicy)
+
+    async def ListLogs(self, request, context):
+        req = from_proto(request)
+        return await self._unary(context, "ListLogs", lambda p, r: self.svc.list_logs(p, req), pb.ListLogsResponse)
+
+    async def ExportAudit(self, request, context):
+        req = {"after_seq": request.after_seq, "limit": request.limit or 500}
+        return await self._unary(context, "ExportAudit", lambda p, r: self.svc.export_audit(p, req, r),
+                                 pb.ExportAuditResponse)
+
 
     async def RegisterPlugin(self, request, context):
         req = from_proto(request)

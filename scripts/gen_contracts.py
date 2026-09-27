@@ -42,6 +42,17 @@ HTTP = {
     "ResolveRun": ("post", "/api/v1/runs/{run_id}/resolve", "ResolveRunRequest", "Run", False),
     "DryRun": ("post", "/api/v1/dry-run", "DryRunRequest", "DryRunReport", False),
     "DecideApproval": ("post", "/api/v1/approvals/{approval_id}/decision", "ApprovalDecision", "Approval", False),
+    "ListApprovals": ("get", "/api/v1/approvals", None, "ListApprovalsResponse", False),
+    "GetApproval": ("get", "/api/v1/approvals/{approval_id}", None, "Approval", False),
+    "VerifyAudit": ("get", "/api/v1/audit/verify", None, "AuditVerification", False),
+    "ExportAudit": ("get", "/api/v1/audit/export", None, "ExportAuditResponse", False),
+    "GetRuntimeInfo": ("get", "/api/v1/admin/info", None, "RuntimeInfo", False),
+    "ListUsage": ("get", "/api/v1/usage", None, "ListUsageResponse", False),
+    "ListApiKeys": ("get", "/api/v1/admin/keys", None, "ListApiKeysResponse", False),
+    "CreateApiKey": ("post", "/api/v1/admin/keys", "CreateApiKeyRequest", "CreatedApiKey", False),
+    "RevokeApiKey": ("post", "/api/v1/admin/keys/{key_id}/revoke", "RevokeApiKeyRequest", "ApiKeyInfo", False),
+    "GetAccessPolicy": ("get", "/api/v1/admin/access", None, "AccessPolicy", False),
+    "ListLogs": ("get", "/api/v1/admin/logs", None, "ListLogsResponse", False),
     "RegisterPlugin": ("post", "/api/v1/plugins", "RegisterPluginRequest", "PluginVersion", False),
     "ListPlugins": ("get", "/api/v1/plugins", None, "ListPluginsResponse", False),
     "ActivatePlugin": ("post", "/api/v1/plugins/{plugin_id}/activate", "ActivatePluginRequest", "PluginVersion", False),
@@ -146,6 +157,20 @@ def openapi(schema: dict) -> dict:
         if rpc == "WatchRun":
             op["parameters"] += [{"name": "after_seq", "in": "query", "schema": {"type": "integer"}},
                                  {"name": "Last-Event-ID", "in": "header", "schema": {"type": "string"}}]
+        if rpc == "ListApprovals":
+            op["parameters"] += [{"name": n, "in": "query", "schema": {"type": "string"}} for n in ("status", "run_id")]
+        if rpc == "ListUsage":
+            op["parameters"] += [{"name": n, "in": "query", "schema": {"type": t}} for n, t in
+                                 (("before_id", "integer"), ("limit", "integer"), ("subject", "string"),
+                                  ("model", "string"), ("since", "string"))]
+        if rpc == "ListApiKeys":
+            op["parameters"].append({"name": "include_revoked", "in": "query", "schema": {"type": "boolean"}})
+        if rpc == "ListLogs":
+            op["parameters"] += [{"name": n, "in": "query", "schema": {"type": t}} for n, t in
+                                 (("after_seq", "integer"), ("limit", "integer"), ("min_level", "string"))]
+        if rpc == "ExportAudit":
+            op["parameters"] += [{"name": "after_seq", "in": "query", "schema": {"type": "integer"}},
+                                 {"name": "limit", "in": "query", "schema": {"type": "integer", "maximum": 1000}}]
         if req:
             op["requestBody"] = {"required": True, "content": {"application/json": {
                 "schema": {"$ref": f"#/components/schemas/{req}"}}}}
