@@ -172,6 +172,36 @@ class RuntimeServicer(pbg.RuntimeServicer):
         req = from_proto(request)
         return await self._unary(context, "ListLogs", lambda p, r: self.svc.list_logs(p, req), pb.ListLogsResponse)
 
+    async def GetStsInfo(self, request, context):
+        return await self._unary(context, "GetStsInfo", lambda p, r: self.svc.sts_info(p), pb.StsInfo)
+
+    async def RotateSigningKey(self, request, context):
+        return await self._unary(context, "RotateSigningKey", lambda p, r: self.svc.rotate_signing_key(p, r), pb.StsInfo)
+
+    async def ListApps(self, request, context):
+        return await self._unary(context, "ListApps", lambda p, r: self.svc.list_apps(p, request.include_disabled),
+                                 pb.ListAppsResponse)
+
+    async def RegisterApp(self, request, context):
+        req = from_proto(request)   # an unset secret_expires_in_days means the default (365 days)
+        return await self._unary(context, "RegisterApp", lambda p, r: self.svc.register_app(p, req, r),
+                                 pb.AppCredentials)
+
+    async def CreateAppSecret(self, request, context):
+        return await self._unary(context, "CreateAppSecret",
+                                 lambda p, r: self.svc.create_app_secret(p, request.client_id, request.expires_in_days, r),
+                                 pb.AppCredentials)
+
+    async def RevokeAppSecret(self, request, context):
+        return await self._unary(context, "RevokeAppSecret",
+                                 lambda p, r: self.svc.revoke_app_secret(p, request.client_id, request.secret_id, r),
+                                 pb.AppRegistration)
+
+    async def DisableApp(self, request, context):
+        return await self._unary(context, "DisableApp",
+                                 lambda p, r: self.svc.disable_app(p, request.client_id, request.reason, r),
+                                 pb.AppRegistration)
+
     async def ExportAudit(self, request, context):
         req = {"after_seq": request.after_seq, "limit": request.limit or 500}
         return await self._unary(context, "ExportAudit", lambda p, r: self.svc.export_audit(p, req, r),

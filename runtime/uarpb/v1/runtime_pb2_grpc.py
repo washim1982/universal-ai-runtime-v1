@@ -154,6 +154,41 @@ class RuntimeStub:
                 request_serializer=uarpb_dot_v1_dot_runtime__pb2.ListLogsRequest.SerializeToString,
                 response_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListLogsResponse.FromString,
                 _registered_method=True)
+        self.GetStsInfo = channel.unary_unary(
+                '/uar.v1.Runtime/GetStsInfo',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.GetStsInfoRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.StsInfo.FromString,
+                _registered_method=True)
+        self.ListApps = channel.unary_unary(
+                '/uar.v1.Runtime/ListApps',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.ListAppsRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListAppsResponse.FromString,
+                _registered_method=True)
+        self.RegisterApp = channel.unary_unary(
+                '/uar.v1.Runtime/RegisterApp',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.RegisterAppRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.AppCredentials.FromString,
+                _registered_method=True)
+        self.CreateAppSecret = channel.unary_unary(
+                '/uar.v1.Runtime/CreateAppSecret',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.CreateAppSecretRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.AppCredentials.FromString,
+                _registered_method=True)
+        self.RevokeAppSecret = channel.unary_unary(
+                '/uar.v1.Runtime/RevokeAppSecret',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.RevokeAppSecretRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.AppRegistration.FromString,
+                _registered_method=True)
+        self.DisableApp = channel.unary_unary(
+                '/uar.v1.Runtime/DisableApp',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.DisableAppRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.AppRegistration.FromString,
+                _registered_method=True)
+        self.RotateSigningKey = channel.unary_unary(
+                '/uar.v1.Runtime/RotateSigningKey',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.RotateSigningKeyRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.StsInfo.FromString,
+                _registered_method=True)
         self.RegisterPlugin = channel.unary_unary(
                 '/uar.v1.Runtime/RegisterPlugin',
                 request_serializer=uarpb_dot_v1_dot_runtime__pb2.RegisterPluginRequest.SerializeToString,
@@ -342,6 +377,58 @@ class RuntimeServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetStsInfo(self, request, context):
+        """Application registration for the built-in token service (STS). Applications exchange their
+        client credentials for access tokens at POST /api/v1/oauth/token (OAuth 2.0 client_credentials,
+        RFC 6749 section 4.4; HTTP only) and call every other operation with "Authorization: Bearer".
+        apps:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListApps(self, request, context):
+        """apps:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RegisterApp(self, request, context):
+        """apps:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CreateAppSecret(self, request, context):
+        """apps:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RevokeAppSecret(self, request, context):
+        """apps:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DisableApp(self, request, context):
+        """apps:manage
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RotateSigningKey(self, request, context):
+        """platform administrators
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def RegisterPlugin(self, request, context):
         """Plugins (administrators only). Versions are immutable; activation validates and health-checks
         the version and affects new runs only (running runs keep the versions they started with).
@@ -490,6 +577,41 @@ def add_RuntimeServicer_to_server(servicer, server):
                     servicer.ListLogs,
                     request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListLogsRequest.FromString,
                     response_serializer=uarpb_dot_v1_dot_runtime__pb2.ListLogsResponse.SerializeToString,
+            ),
+            'GetStsInfo': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetStsInfo,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.GetStsInfoRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.StsInfo.SerializeToString,
+            ),
+            'ListApps': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListApps,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.ListAppsRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.ListAppsResponse.SerializeToString,
+            ),
+            'RegisterApp': grpc.unary_unary_rpc_method_handler(
+                    servicer.RegisterApp,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.RegisterAppRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.AppCredentials.SerializeToString,
+            ),
+            'CreateAppSecret': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateAppSecret,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.CreateAppSecretRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.AppCredentials.SerializeToString,
+            ),
+            'RevokeAppSecret': grpc.unary_unary_rpc_method_handler(
+                    servicer.RevokeAppSecret,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.RevokeAppSecretRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.AppRegistration.SerializeToString,
+            ),
+            'DisableApp': grpc.unary_unary_rpc_method_handler(
+                    servicer.DisableApp,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.DisableAppRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.AppRegistration.SerializeToString,
+            ),
+            'RotateSigningKey': grpc.unary_unary_rpc_method_handler(
+                    servicer.RotateSigningKey,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.RotateSigningKeyRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.StsInfo.SerializeToString,
             ),
             'RegisterPlugin': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterPlugin,
@@ -1160,6 +1282,195 @@ class Runtime:
             '/uar.v1.Runtime/ListLogs',
             uarpb_dot_v1_dot_runtime__pb2.ListLogsRequest.SerializeToString,
             uarpb_dot_v1_dot_runtime__pb2.ListLogsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetStsInfo(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/GetStsInfo',
+            uarpb_dot_v1_dot_runtime__pb2.GetStsInfoRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.StsInfo.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListApps(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/ListApps',
+            uarpb_dot_v1_dot_runtime__pb2.ListAppsRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.ListAppsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RegisterApp(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/RegisterApp',
+            uarpb_dot_v1_dot_runtime__pb2.RegisterAppRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.AppCredentials.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CreateAppSecret(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/CreateAppSecret',
+            uarpb_dot_v1_dot_runtime__pb2.CreateAppSecretRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.AppCredentials.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RevokeAppSecret(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/RevokeAppSecret',
+            uarpb_dot_v1_dot_runtime__pb2.RevokeAppSecretRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.AppRegistration.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DisableApp(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/DisableApp',
+            uarpb_dot_v1_dot_runtime__pb2.DisableAppRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.AppRegistration.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RotateSigningKey(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/RotateSigningKey',
+            uarpb_dot_v1_dot_runtime__pb2.RotateSigningKeyRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.StsInfo.FromString,
             options,
             channel_credentials,
             insecure,

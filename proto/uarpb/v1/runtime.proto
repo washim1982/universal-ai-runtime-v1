@@ -61,6 +61,17 @@ service Runtime {
   rpc GetAccessPolicy(GetAccessPolicyRequest) returns (AccessPolicy);     // keys:manage
   rpc ListLogs(ListLogsRequest) returns (ListLogsResponse);               // logs:read
 
+  // Application registration for the built-in token service (STS). Applications exchange their
+  // client credentials for access tokens at POST /api/v1/oauth/token (OAuth 2.0 client_credentials,
+  // RFC 6749 section 4.4; HTTP only) and call every other operation with "Authorization: Bearer".
+  rpc GetStsInfo(GetStsInfoRequest) returns (StsInfo);                     // apps:manage
+  rpc ListApps(ListAppsRequest) returns (ListAppsResponse);                // apps:manage
+  rpc RegisterApp(RegisterAppRequest) returns (AppCredentials);            // apps:manage
+  rpc CreateAppSecret(CreateAppSecretRequest) returns (AppCredentials);    // apps:manage
+  rpc RevokeAppSecret(RevokeAppSecretRequest) returns (AppRegistration);   // apps:manage
+  rpc DisableApp(DisableAppRequest) returns (AppRegistration);             // apps:manage
+  rpc RotateSigningKey(RotateSigningKeyRequest) returns (StsInfo);         // platform administrators
+
   // Plugins (administrators only). Versions are immutable; activation validates and health-checks
   // the version and affects new runs only (running runs keep the versions they started with).
   rpc RegisterPlugin(RegisterPluginRequest) returns (PluginVersion);
@@ -545,4 +556,76 @@ message LogRecord {
 
 message ListLogsRequest { int64 after_seq = 1; int32 limit = 2; string min_level = 3; }
 message ListLogsResponse { repeated LogRecord records = 1; int64 next_after_seq = 2; int32 capacity = 3; }
+
+// ---------- security token service ----------
+
+message GetStsInfoRequest {}
+message RotateSigningKeyRequest {}
+
+message SigningKeyInfo {
+  string kid = 1;
+  string alg = 2;
+  string created_at = 3;
+  string active_from = 4;
+  string retire_after = 5;
+  string status = 6;  // signing | next | verify-only | retired
+}
+
+message StsInfo {
+  bool enabled = 1;
+  string issuer = 2;
+  string audience = 3;
+  string token_url = 4;
+  string jwks_url = 5;
+  bool require_tokens = 6;          // API keys are refused; callers need access tokens
+  int32 default_token_ttl_s = 7;
+  int32 max_token_ttl_s = 8;
+  string key_storage = 9;           // encrypted | unencrypted
+  repeated SigningKeyInfo keys = 10;
+}
+
+message AppSecretInfo {
+  string secret_id = 1;
+  string hint = 2;        // last characters of the secret
+  string created_at = 3;
+  string expires_at = 4;
+  string status = 5;      // active | expired | revoked
+}
+
+message AppRegistration {
+  string client_id = 1;
+  string name = 2;
+  string description = 3;
+  repeated string roles = 4;     // the most a token of this application can carry
+  int32 token_ttl_s = 5;
+  string status = 6;             // active | disabled
+  string created_by = 7;
+  string created_at = 8;
+  string disabled_at = 9;
+  string last_token_at = 10;
+  repeated AppSecretInfo secrets = 11;
+}
+
+message ListAppsRequest { bool include_disabled = 1; }
+message ListAppsResponse { repeated AppRegistration apps = 1; }
+
+message RegisterAppRequest {
+  string name = 1;
+  string description = 2;
+  repeated string roles = 3;
+  int32 token_ttl_s = 4;              // 0 = sts.default_token_ttl_s
+  int32 secret_expires_in_days = 5;   // 0 = never; omitted = 365
+}
+
+// The client secret is returned once; the runtime stores only its SHA-256.
+message AppCredentials {
+  AppRegistration app = 1;
+  string client_id = 2;
+  string client_secret = 3;
+  string token_url = 4;
+}
+
+message CreateAppSecretRequest { string client_id = 1; int32 expires_in_days = 2; }
+message RevokeAppSecretRequest { string client_id = 1; string secret_id = 2; }
+message DisableAppRequest { string client_id = 1; string reason = 2; }
 

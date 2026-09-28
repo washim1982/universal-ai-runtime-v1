@@ -5,6 +5,7 @@
     uar migrate       apply database migrations
     uar check-config  validate configuration and exit
     uar new-key       print a new API key id, key and sha256 for configuration
+    uar register-app  register an application for the token service (prints client id + secret once)
 """
 from __future__ import annotations
 
@@ -81,11 +82,45 @@ async def migrate(config: str | None) -> None:
     print("applied: " + (", ".join(applied) or "nothing (up to date)"))
 
 
+async def register_app(config: str | None, tenant: str, name: str, roles: list[str], ttl: int) -> None:
+    """Bootstrap: register an application directly in the database (for runtimes with
+    sts.require_tokens, where no API key exists to call the admin API with)."""
+    from .governance import Principal
+    from .service import RuntimeService
+
+    s = load_settings(config)
+    if tenant not in {t.id for t in s.auth.tenants}:
+        sys.exit(f"unknown tenant {tenant}")
+    svc = RuntimeService(s, Store(s.database_url))
+    await svc.store.open()
+    await svc.store.migrate()
+    await svc.sts.start()
+    try:
+        p = Principal(tenant, "cli:register-app", ("admin",), "", svc.auth.permissions(("admin",)))
+        out = await svc.sts.register_app(p, {"name": name, "roles": roles, "token_ttl_s": ttl}, "", svc.public_url())
+    finally:
+        await svc.sts.stop()
+        await svc.store.close()
+    print(f"client_id:     {out['client_id']}\n"
+          f"client_secret: {out['client_secret']}\n"
+          f"token_url:     {out['token_url']}\n"
+          "The secret is shown only now; store it in your secret manager.")
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="uar")
-    ap.add_argument("command", choices=["serve", "worker", "migrate", "check-config", "new-key"])
+    ap.add_argument("command", choices=["serve", "worker", "migrate", "check-config", "new-key", "register-app"])
     ap.add_argument("--config", default=None, help="path to uar.yaml (default: $UAR_CONFIG or config/uar.yaml)")
+    ap.add_argument("--tenant", help="register-app: tenant id")
+    ap.add_argument("--name", help="register-app: application name")
+    ap.add_argument("--roles", default="", help="register-app: comma-separated roles, e.g. admin or developer,viewer")
+    ap.add_argument("--token-ttl", type=int, default=0, help="register-app: access token lifetime in seconds")
     a = ap.parse_args(argv)
+    if a.command == "register-app":
+        if not (a.tenant and a.name and a.roles):
+            ap.error("register-app needs --tenant, --name and --roles")
+        _run(register_app(a.config, a.tenant, a.name, [r.strip() for r in a.roles.split(",") if r.strip()], a.token_ttl))
+        return
     if a.command == "new-key":
         kid = secrets.token_hex(4)
         key = f"uar_{kid}_{secrets.token_urlsafe(24)}"

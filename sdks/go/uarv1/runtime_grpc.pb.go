@@ -27,34 +27,41 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Runtime_Infer_FullMethodName           = "/uar.v1.Runtime/Infer"
-	Runtime_InferStream_FullMethodName     = "/uar.v1.Runtime/InferStream"
-	Runtime_ExecuteTool_FullMethodName     = "/uar.v1.Runtime/ExecuteTool"
-	Runtime_ListTools_FullMethodName       = "/uar.v1.Runtime/ListTools"
-	Runtime_ListModels_FullMethodName      = "/uar.v1.Runtime/ListModels"
-	Runtime_RegisterAgent_FullMethodName   = "/uar.v1.Runtime/RegisterAgent"
-	Runtime_StartRun_FullMethodName        = "/uar.v1.Runtime/StartRun"
-	Runtime_GetRun_FullMethodName          = "/uar.v1.Runtime/GetRun"
-	Runtime_WatchRun_FullMethodName        = "/uar.v1.Runtime/WatchRun"
-	Runtime_CancelRun_FullMethodName       = "/uar.v1.Runtime/CancelRun"
-	Runtime_ResolveRun_FullMethodName      = "/uar.v1.Runtime/ResolveRun"
-	Runtime_DryRun_FullMethodName          = "/uar.v1.Runtime/DryRun"
-	Runtime_DecideApproval_FullMethodName  = "/uar.v1.Runtime/DecideApproval"
-	Runtime_ListApprovals_FullMethodName   = "/uar.v1.Runtime/ListApprovals"
-	Runtime_GetApproval_FullMethodName     = "/uar.v1.Runtime/GetApproval"
-	Runtime_VerifyAudit_FullMethodName     = "/uar.v1.Runtime/VerifyAudit"
-	Runtime_ExportAudit_FullMethodName     = "/uar.v1.Runtime/ExportAudit"
-	Runtime_GetRuntimeInfo_FullMethodName  = "/uar.v1.Runtime/GetRuntimeInfo"
-	Runtime_ListUsage_FullMethodName       = "/uar.v1.Runtime/ListUsage"
-	Runtime_ListApiKeys_FullMethodName     = "/uar.v1.Runtime/ListApiKeys"
-	Runtime_CreateApiKey_FullMethodName    = "/uar.v1.Runtime/CreateApiKey"
-	Runtime_RevokeApiKey_FullMethodName    = "/uar.v1.Runtime/RevokeApiKey"
-	Runtime_GetAccessPolicy_FullMethodName = "/uar.v1.Runtime/GetAccessPolicy"
-	Runtime_ListLogs_FullMethodName        = "/uar.v1.Runtime/ListLogs"
-	Runtime_RegisterPlugin_FullMethodName  = "/uar.v1.Runtime/RegisterPlugin"
-	Runtime_ListPlugins_FullMethodName     = "/uar.v1.Runtime/ListPlugins"
-	Runtime_ActivatePlugin_FullMethodName  = "/uar.v1.Runtime/ActivatePlugin"
-	Runtime_RollbackPlugin_FullMethodName  = "/uar.v1.Runtime/RollbackPlugin"
+	Runtime_Infer_FullMethodName            = "/uar.v1.Runtime/Infer"
+	Runtime_InferStream_FullMethodName      = "/uar.v1.Runtime/InferStream"
+	Runtime_ExecuteTool_FullMethodName      = "/uar.v1.Runtime/ExecuteTool"
+	Runtime_ListTools_FullMethodName        = "/uar.v1.Runtime/ListTools"
+	Runtime_ListModels_FullMethodName       = "/uar.v1.Runtime/ListModels"
+	Runtime_RegisterAgent_FullMethodName    = "/uar.v1.Runtime/RegisterAgent"
+	Runtime_StartRun_FullMethodName         = "/uar.v1.Runtime/StartRun"
+	Runtime_GetRun_FullMethodName           = "/uar.v1.Runtime/GetRun"
+	Runtime_WatchRun_FullMethodName         = "/uar.v1.Runtime/WatchRun"
+	Runtime_CancelRun_FullMethodName        = "/uar.v1.Runtime/CancelRun"
+	Runtime_ResolveRun_FullMethodName       = "/uar.v1.Runtime/ResolveRun"
+	Runtime_DryRun_FullMethodName           = "/uar.v1.Runtime/DryRun"
+	Runtime_DecideApproval_FullMethodName   = "/uar.v1.Runtime/DecideApproval"
+	Runtime_ListApprovals_FullMethodName    = "/uar.v1.Runtime/ListApprovals"
+	Runtime_GetApproval_FullMethodName      = "/uar.v1.Runtime/GetApproval"
+	Runtime_VerifyAudit_FullMethodName      = "/uar.v1.Runtime/VerifyAudit"
+	Runtime_ExportAudit_FullMethodName      = "/uar.v1.Runtime/ExportAudit"
+	Runtime_GetRuntimeInfo_FullMethodName   = "/uar.v1.Runtime/GetRuntimeInfo"
+	Runtime_ListUsage_FullMethodName        = "/uar.v1.Runtime/ListUsage"
+	Runtime_ListApiKeys_FullMethodName      = "/uar.v1.Runtime/ListApiKeys"
+	Runtime_CreateApiKey_FullMethodName     = "/uar.v1.Runtime/CreateApiKey"
+	Runtime_RevokeApiKey_FullMethodName     = "/uar.v1.Runtime/RevokeApiKey"
+	Runtime_GetAccessPolicy_FullMethodName  = "/uar.v1.Runtime/GetAccessPolicy"
+	Runtime_ListLogs_FullMethodName         = "/uar.v1.Runtime/ListLogs"
+	Runtime_GetStsInfo_FullMethodName       = "/uar.v1.Runtime/GetStsInfo"
+	Runtime_ListApps_FullMethodName         = "/uar.v1.Runtime/ListApps"
+	Runtime_RegisterApp_FullMethodName      = "/uar.v1.Runtime/RegisterApp"
+	Runtime_CreateAppSecret_FullMethodName  = "/uar.v1.Runtime/CreateAppSecret"
+	Runtime_RevokeAppSecret_FullMethodName  = "/uar.v1.Runtime/RevokeAppSecret"
+	Runtime_DisableApp_FullMethodName       = "/uar.v1.Runtime/DisableApp"
+	Runtime_RotateSigningKey_FullMethodName = "/uar.v1.Runtime/RotateSigningKey"
+	Runtime_RegisterPlugin_FullMethodName   = "/uar.v1.Runtime/RegisterPlugin"
+	Runtime_ListPlugins_FullMethodName      = "/uar.v1.Runtime/ListPlugins"
+	Runtime_ActivatePlugin_FullMethodName   = "/uar.v1.Runtime/ActivatePlugin"
+	Runtime_RollbackPlugin_FullMethodName   = "/uar.v1.Runtime/RollbackPlugin"
 )
 
 // RuntimeClient is the client API for Runtime service.
@@ -97,6 +104,16 @@ type RuntimeClient interface {
 	RevokeApiKey(ctx context.Context, in *RevokeApiKeyRequest, opts ...grpc.CallOption) (*ApiKeyInfo, error)
 	GetAccessPolicy(ctx context.Context, in *GetAccessPolicyRequest, opts ...grpc.CallOption) (*AccessPolicy, error)
 	ListLogs(ctx context.Context, in *ListLogsRequest, opts ...grpc.CallOption) (*ListLogsResponse, error)
+	// Application registration for the built-in token service (STS). Applications exchange their
+	// client credentials for access tokens at POST /api/v1/oauth/token (OAuth 2.0 client_credentials,
+	// RFC 6749 section 4.4; HTTP only) and call every other operation with "Authorization: Bearer".
+	GetStsInfo(ctx context.Context, in *GetStsInfoRequest, opts ...grpc.CallOption) (*StsInfo, error)
+	ListApps(ctx context.Context, in *ListAppsRequest, opts ...grpc.CallOption) (*ListAppsResponse, error)
+	RegisterApp(ctx context.Context, in *RegisterAppRequest, opts ...grpc.CallOption) (*AppCredentials, error)
+	CreateAppSecret(ctx context.Context, in *CreateAppSecretRequest, opts ...grpc.CallOption) (*AppCredentials, error)
+	RevokeAppSecret(ctx context.Context, in *RevokeAppSecretRequest, opts ...grpc.CallOption) (*AppRegistration, error)
+	DisableApp(ctx context.Context, in *DisableAppRequest, opts ...grpc.CallOption) (*AppRegistration, error)
+	RotateSigningKey(ctx context.Context, in *RotateSigningKeyRequest, opts ...grpc.CallOption) (*StsInfo, error)
 	// Plugins (administrators only). Versions are immutable; activation validates and health-checks
 	// the version and affects new runs only (running runs keep the versions they started with).
 	RegisterPlugin(ctx context.Context, in *RegisterPluginRequest, opts ...grpc.CallOption) (*PluginVersion, error)
@@ -371,6 +388,76 @@ func (c *runtimeClient) ListLogs(ctx context.Context, in *ListLogsRequest, opts 
 	return out, nil
 }
 
+func (c *runtimeClient) GetStsInfo(ctx context.Context, in *GetStsInfoRequest, opts ...grpc.CallOption) (*StsInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StsInfo)
+	err := c.cc.Invoke(ctx, Runtime_GetStsInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) ListApps(ctx context.Context, in *ListAppsRequest, opts ...grpc.CallOption) (*ListAppsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAppsResponse)
+	err := c.cc.Invoke(ctx, Runtime_ListApps_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) RegisterApp(ctx context.Context, in *RegisterAppRequest, opts ...grpc.CallOption) (*AppCredentials, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AppCredentials)
+	err := c.cc.Invoke(ctx, Runtime_RegisterApp_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) CreateAppSecret(ctx context.Context, in *CreateAppSecretRequest, opts ...grpc.CallOption) (*AppCredentials, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AppCredentials)
+	err := c.cc.Invoke(ctx, Runtime_CreateAppSecret_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) RevokeAppSecret(ctx context.Context, in *RevokeAppSecretRequest, opts ...grpc.CallOption) (*AppRegistration, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AppRegistration)
+	err := c.cc.Invoke(ctx, Runtime_RevokeAppSecret_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) DisableApp(ctx context.Context, in *DisableAppRequest, opts ...grpc.CallOption) (*AppRegistration, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AppRegistration)
+	err := c.cc.Invoke(ctx, Runtime_DisableApp_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runtimeClient) RotateSigningKey(ctx context.Context, in *RotateSigningKeyRequest, opts ...grpc.CallOption) (*StsInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StsInfo)
+	err := c.cc.Invoke(ctx, Runtime_RotateSigningKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *runtimeClient) RegisterPlugin(ctx context.Context, in *RegisterPluginRequest, opts ...grpc.CallOption) (*PluginVersion, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PluginVersion)
@@ -451,6 +538,16 @@ type RuntimeServer interface {
 	RevokeApiKey(context.Context, *RevokeApiKeyRequest) (*ApiKeyInfo, error)
 	GetAccessPolicy(context.Context, *GetAccessPolicyRequest) (*AccessPolicy, error)
 	ListLogs(context.Context, *ListLogsRequest) (*ListLogsResponse, error)
+	// Application registration for the built-in token service (STS). Applications exchange their
+	// client credentials for access tokens at POST /api/v1/oauth/token (OAuth 2.0 client_credentials,
+	// RFC 6749 section 4.4; HTTP only) and call every other operation with "Authorization: Bearer".
+	GetStsInfo(context.Context, *GetStsInfoRequest) (*StsInfo, error)
+	ListApps(context.Context, *ListAppsRequest) (*ListAppsResponse, error)
+	RegisterApp(context.Context, *RegisterAppRequest) (*AppCredentials, error)
+	CreateAppSecret(context.Context, *CreateAppSecretRequest) (*AppCredentials, error)
+	RevokeAppSecret(context.Context, *RevokeAppSecretRequest) (*AppRegistration, error)
+	DisableApp(context.Context, *DisableAppRequest) (*AppRegistration, error)
+	RotateSigningKey(context.Context, *RotateSigningKeyRequest) (*StsInfo, error)
 	// Plugins (administrators only). Versions are immutable; activation validates and health-checks
 	// the version and affects new runs only (running runs keep the versions they started with).
 	RegisterPlugin(context.Context, *RegisterPluginRequest) (*PluginVersion, error)
@@ -538,6 +635,27 @@ func (UnimplementedRuntimeServer) GetAccessPolicy(context.Context, *GetAccessPol
 }
 func (UnimplementedRuntimeServer) ListLogs(context.Context, *ListLogsRequest) (*ListLogsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListLogs not implemented")
+}
+func (UnimplementedRuntimeServer) GetStsInfo(context.Context, *GetStsInfoRequest) (*StsInfo, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetStsInfo not implemented")
+}
+func (UnimplementedRuntimeServer) ListApps(context.Context, *ListAppsRequest) (*ListAppsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListApps not implemented")
+}
+func (UnimplementedRuntimeServer) RegisterApp(context.Context, *RegisterAppRequest) (*AppCredentials, error) {
+	return nil, status.Error(codes.Unimplemented, "method RegisterApp not implemented")
+}
+func (UnimplementedRuntimeServer) CreateAppSecret(context.Context, *CreateAppSecretRequest) (*AppCredentials, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateAppSecret not implemented")
+}
+func (UnimplementedRuntimeServer) RevokeAppSecret(context.Context, *RevokeAppSecretRequest) (*AppRegistration, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeAppSecret not implemented")
+}
+func (UnimplementedRuntimeServer) DisableApp(context.Context, *DisableAppRequest) (*AppRegistration, error) {
+	return nil, status.Error(codes.Unimplemented, "method DisableApp not implemented")
+}
+func (UnimplementedRuntimeServer) RotateSigningKey(context.Context, *RotateSigningKeyRequest) (*StsInfo, error) {
+	return nil, status.Error(codes.Unimplemented, "method RotateSigningKey not implemented")
 }
 func (UnimplementedRuntimeServer) RegisterPlugin(context.Context, *RegisterPluginRequest) (*PluginVersion, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterPlugin not implemented")
@@ -990,6 +1108,132 @@ func _Runtime_ListLogs_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Runtime_GetStsInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStsInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).GetStsInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_GetStsInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).GetStsInfo(ctx, req.(*GetStsInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_ListApps_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAppsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).ListApps(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_ListApps_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).ListApps(ctx, req.(*ListAppsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_RegisterApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterAppRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).RegisterApp(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_RegisterApp_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).RegisterApp(ctx, req.(*RegisterAppRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_CreateAppSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAppSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).CreateAppSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_CreateAppSecret_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).CreateAppSecret(ctx, req.(*CreateAppSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_RevokeAppSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeAppSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).RevokeAppSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_RevokeAppSecret_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).RevokeAppSecret(ctx, req.(*RevokeAppSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_DisableApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisableAppRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).DisableApp(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_DisableApp_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).DisableApp(ctx, req.(*DisableAppRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Runtime_RotateSigningKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RotateSigningKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).RotateSigningKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_RotateSigningKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).RotateSigningKey(ctx, req.(*RotateSigningKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Runtime_RegisterPlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterPluginRequest)
 	if err := dec(in); err != nil {
@@ -1156,6 +1400,34 @@ var Runtime_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListLogs",
 			Handler:    _Runtime_ListLogs_Handler,
+		},
+		{
+			MethodName: "GetStsInfo",
+			Handler:    _Runtime_GetStsInfo_Handler,
+		},
+		{
+			MethodName: "ListApps",
+			Handler:    _Runtime_ListApps_Handler,
+		},
+		{
+			MethodName: "RegisterApp",
+			Handler:    _Runtime_RegisterApp_Handler,
+		},
+		{
+			MethodName: "CreateAppSecret",
+			Handler:    _Runtime_CreateAppSecret_Handler,
+		},
+		{
+			MethodName: "RevokeAppSecret",
+			Handler:    _Runtime_RevokeAppSecret_Handler,
+		},
+		{
+			MethodName: "DisableApp",
+			Handler:    _Runtime_DisableApp_Handler,
+		},
+		{
+			MethodName: "RotateSigningKey",
+			Handler:    _Runtime_RotateSigningKey_Handler,
 		},
 		{
 			MethodName: "RegisterPlugin",

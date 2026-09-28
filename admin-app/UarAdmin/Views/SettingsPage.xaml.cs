@@ -40,7 +40,18 @@ public partial class SettingsPage : UserControl, IPage
         PName.Text = "";
         PUrl.Text = $"http://127.0.0.1:{SettingsStore.LocalHttpPort(shell.Settings)}";
         PKey.Password = "";
+        PClientId.Text = "";
+        AuthKey.IsChecked = true;
         TestText.Text = "";
+    }
+
+    bool IsApp => AuthApp.IsChecked == true;
+
+    void Auth_Changed(object sender, RoutedEventArgs e)
+    {
+        if (ClientIdPanel == null) return;
+        ClientIdPanel.Visibility = IsApp ? Visibility.Visible : Visibility.Collapsed;
+        KeyLabel.Text = IsApp ? "Client secret (leave empty to keep the saved secret)" : "API key (leave empty to keep the saved key)";
     }
 
     void Profiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -49,6 +60,8 @@ public partial class SettingsPage : UserControl, IPage
         PName.Text = p.Name;
         PUrl.Text = p.BaseUrl;
         PKey.Password = "";
+        (p.IsApp ? AuthApp : AuthKey).IsChecked = true;
+        PClientId.Text = p.ClientId;
         TestText.Text = p.Name == shell.Settings.ActiveProfile ? "This is the active connection." : "";
     }
 
@@ -66,13 +79,21 @@ public partial class SettingsPage : UserControl, IPage
         if (name == "") { TestText.Text = "Enter a name."; return; }
         if (!ValidUrl(out var url)) { TestText.Text = "Enter a valid http(s) URL, e.g. http://127.0.0.1:9000"; return; }
         var existing = Profiles.SelectedItem as ConnectionProfile;
-        if (existing == null && PKey.Password == "") { TestText.Text = "Enter the API key."; return; }
+        if (IsApp && PClientId.Text.Trim() == "") { TestText.Text = "Enter the client ID."; return; }
+        var changedType = existing != null && existing.IsApp != IsApp;
+        if ((existing == null || changedType) && PKey.Password == "") { TestText.Text = IsApp ? "Enter the client secret." : "Enter the API key."; return; }
         if (existing != null && existing.Name != name && shell.Settings.Profiles.Any(p => p.Name == name)) { TestText.Text = "A connection with this name exists."; return; }
         var p = existing ?? new ConnectionProfile();
         var wasActive = existing != null && existing.Name == shell.Settings.ActiveProfile;
         p.Name = name;
         p.BaseUrl = url;
-        if (PKey.Password != "") p.ApiKey = PKey.Password.Trim();
+        p.AuthType = IsApp ? "app" : "apikey";
+        p.ClientId = IsApp ? PClientId.Text.Trim() : "";
+        if (PKey.Password != "")
+        {
+            if (IsApp) { p.ClientSecret = PKey.Password.Trim(); p.ProtectedKey = ""; }
+            else { p.ApiKey = PKey.Password.Trim(); p.ProtectedSecret = ""; }
+        }
         if (existing == null) shell.Settings.Profiles.Add(p);
         if (wasActive || shell.Settings.Profiles.Count == 1) shell.Settings.ActiveProfile = p.Name;
         shell.Save();
@@ -116,8 +137,9 @@ public partial class SettingsPage : UserControl, IPage
     async void Test_Click(object sender, RoutedEventArgs e)
     {
         if (!ValidUrl(out var url)) { TestText.Text = "Enter a valid URL."; return; }
-        var key = PKey.Password != "" ? PKey.Password.Trim() : (Profiles.SelectedItem as ConnectionProfile)?.ApiKey ?? "";
-        using var api = new ApiClient(url, key);
+        var saved = Profiles.SelectedItem as ConnectionProfile;
+        var cred = PKey.Password != "" ? PKey.Password.Trim() : (IsApp ? saved?.ClientSecret : saved?.ApiKey) ?? "";
+        using var api = IsApp ? new ApiClient(url, PClientId.Text.Trim(), cred) : new ApiClient(url, cred);
         TestText.Text = "Testing…";
         if (!await api.HealthyAsync()) { TestText.Text = $"✖ {url} is not reachable (is the runtime running?)."; return; }
         try
@@ -127,7 +149,8 @@ public partial class SettingsPage : UserControl, IPage
         }
         catch (ApiException ex)
         {
-            TestText.Text = ex.Status == 401 ? "✖ The runtime rejected this API key." :
+            TestText.Text = ex.Code == "invalid_client" ? "✖ The token service rejected the client ID or secret." :
+                            ex.Status == 401 ? "✖ The runtime rejected these credentials." :
                             ex.Status == 403 ? "⚠ The key works but is not an admin key: most pages will be read-only or denied." : $"✖ {ex.Message}";
         }
     }

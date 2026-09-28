@@ -8,7 +8,7 @@ deployments, hostile local processes racing the filesystem.
 
 | Threat | Component | Mitigation (MVP) | Verified by | Residual / later |
 |---|---|---|---|---|
-| **S**poofing a tenant | gateway | Tenant derived only from the credential (API key hash / JWT claim), never from request data | `test_jwt_bearer_and_tenant_binding`, cross-tenant tests | OIDC (M9) |
+| **S**poofing a tenant | gateway | Tenant derived only from the credential (API key hash / JWT claim), never from request data | `test_jwt_bearer_and_tenant_binding`, cross-tenant tests, `test_oidc_*`, `test_sts.py` (tenant taken from the application registration; forged, tampered and algorithm-confused tokens refused) | Individual STS tokens cannot be revoked before expiry except by disabling the application (keep lifetimes short) |
 | Key theft from DB/config | governance | Only SHA-256 of keys stored; keys in `.local/credentials.env` (git-ignored) | — | Key rotation runbook (M10) |
 | **T**ampering with run state by a stale worker | engine | Lease `lease_version` fencing on every checkpoint and event write | `test_stale_worker_cannot_commit` + mutation check | — |
 | Tampering with audit | store | No update/delete path in code | — | Hash chain + restricted DB role (M9) |

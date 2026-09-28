@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <!-- UAR inference sample (Java). First install the SDK once: mvn -f ../../sdks/java install -DskipTests
+       Then run: mvn -q compile exec:java, optionally with -Dexec.args="your question" -->
+  <groupId>dev.uar.samples</groupId>
+  <artifactId>uar-sample</artifactId>
+  <version>0.1.0</version>
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency><groupId>dev.uar</groupId><artifactId>uar-client</artifactId><version>0.8.0</version></dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration><mainClass>Inference</mainClass></configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

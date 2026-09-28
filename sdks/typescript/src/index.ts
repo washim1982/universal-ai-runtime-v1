@@ -19,6 +19,12 @@ export const VERSION = "0.6.0";
 export interface ClientOptions {
   apiKey?: string;
   token?: string;
+  /** A registered application: access tokens are fetched from the runtime's token service
+   *  (POST /api/v1/oauth/token) and renewed before they expire. Takes precedence over apiKey. */
+  clientId?: string;
+  clientSecret?: string;
+  /** Optional: request fewer roles than the application has (space-separated). */
+  scope?: string;
   timeoutMs?: number;
   maxRetries?: number;
   fetch?: typeof fetch;
@@ -105,15 +111,24 @@ const env = (name: string): string | undefined =>
 export class UAR {
   readonly baseUrl: string;
   private readonly apiKey?: string;
-  private readonly token?: string;
+  private token?: string;
+  private tokenExpires = 0;
+  private readonly clientId?: string;
+  private readonly clientSecret?: string;
+  private readonly scope?: string;
   private readonly timeoutMs: number;
   private readonly maxRetries: number;
   private readonly fetchImpl: typeof fetch;
 
   constructor(baseUrl = "http://localhost:9000", opts: ClientOptions = {}) {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
-    this.apiKey = opts.apiKey ?? env("UAR_API_KEY");
+    this.clientId = opts.clientId ?? (opts.apiKey === undefined && opts.token === undefined ? env("UAR_CLIENT_ID") : undefined);
+    this.clientSecret = opts.clientSecret ?? (this.clientId ? env("UAR_CLIENT_SECRET") : undefined);
+    if (this.clientId && !this.clientSecret) throw new Error("clientSecret is required with clientId");
+    this.scope = opts.scope;
+    this.apiKey = this.clientId ? undefined : opts.apiKey ?? env("UAR_API_KEY");
     this.token = opts.token;
+    this.tokenExpires = opts.token ? Number.POSITIVE_INFINITY : 0;
     this.timeoutMs = opts.timeoutMs ?? 120_000;
     this.maxRetries = opts.maxRetries ?? 2;
     this.fetchImpl = opts.fetch ?? fetch;
@@ -127,9 +142,31 @@ export class UAR {
     return h;
   }
 
+  /** Fetch or renew the access token of a registered application (a minute before it expires). */
+  private async ensureToken(force = false): Promise<void> {
+    if (!this.clientId || (!force && this.token && Date.now() < this.tokenExpires - 60_000)) return;
+    const form = new URLSearchParams({ grant_type: "client_credentials", client_id: this.clientId,
+                                       client_secret: this.clientSecret ?? "" });
+    if (this.scope) form.set("scope", this.scope);
+    const res = await this.fetchImpl(this.baseUrl + "/api/v1/oauth/token", {
+      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: form.toString(), signal: AbortSignal.timeout(this.timeoutMs),
+    });
+    const body = (await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number;
+                                                           error?: string; error_description?: string };
+    if (!res.ok || !body.access_token) {
+      throw toError(res.status, { error: { code: body.error ?? "unauthenticated",
+                                           message: body.error_description ?? "token request failed" } });
+    }
+    this.token = body.access_token;
+    this.tokenExpires = Date.now() + (body.expires_in ?? 300) * 1000;
+  }
+
   private async request<T>(method: string, path: string, body?: unknown, idempotencyKey?: string,
                            signal?: AbortSignal): Promise<T> {
     const retryable = method === "GET" || Boolean(idempotencyKey);
+    await this.ensureToken();
+    let renewed = false;
     for (let attempt = 0; ; attempt++) {
       let res: Response | undefined;
       try {
@@ -139,6 +176,12 @@ export class UAR {
         });
         const payload = await res.json().catch(() => ({}));
         if (res.ok) return payload as T;
+        if (res.status === 401 && this.clientId && !renewed) {   // token revoked or signing key rotated
+          renewed = true;
+          await this.ensureToken(true);
+          attempt--;
+          continue;
+        }
         if (!(res.status === 429 || res.status === 503) || !retryable || attempt >= this.maxRetries) {
           throw toError(res.status, payload);
         }
@@ -153,6 +196,7 @@ export class UAR {
   }
 
   private async *sse(method: string, path: string, body?: unknown, signal?: AbortSignal): AsyncGenerator<UAREvent> {
+    await this.ensureToken();
     const res = await this.fetchImpl(this.baseUrl + path, {
       method, headers: this.headers(undefined, "text/event-stream"),
       body: body === undefined ? undefined : JSON.stringify(body), signal,

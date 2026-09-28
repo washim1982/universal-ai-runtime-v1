@@ -965,3 +965,153 @@ class ListLogsResponse(_message.Message):
     next_after_seq: int
     capacity: int
     def __init__(self, records: _Optional[_Iterable[_Union[LogRecord, _Mapping]]] = ..., next_after_seq: _Optional[int] = ..., capacity: _Optional[int] = ...) -> None: ...
+
+class GetStsInfoRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class RotateSigningKeyRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class SigningKeyInfo(_message.Message):
+    __slots__ = ("kid", "alg", "created_at", "active_from", "retire_after", "status")
+    KID_FIELD_NUMBER: _ClassVar[int]
+    ALG_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    ACTIVE_FROM_FIELD_NUMBER: _ClassVar[int]
+    RETIRE_AFTER_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    kid: str
+    alg: str
+    created_at: str
+    active_from: str
+    retire_after: str
+    status: str
+    def __init__(self, kid: _Optional[str] = ..., alg: _Optional[str] = ..., created_at: _Optional[str] = ..., active_from: _Optional[str] = ..., retire_after: _Optional[str] = ..., status: _Optional[str] = ...) -> None: ...
+
+class StsInfo(_message.Message):
+    __slots__ = ("enabled", "issuer", "audience", "token_url", "jwks_url", "require_tokens", "default_token_ttl_s", "max_token_ttl_s", "key_storage", "keys")
+    ENABLED_FIELD_NUMBER: _ClassVar[int]
+    ISSUER_FIELD_NUMBER: _ClassVar[int]
+    AUDIENCE_FIELD_NUMBER: _ClassVar[int]
+    TOKEN_URL_FIELD_NUMBER: _ClassVar[int]
+    JWKS_URL_FIELD_NUMBER: _ClassVar[int]
+    REQUIRE_TOKENS_FIELD_NUMBER: _ClassVar[int]
+    DEFAULT_TOKEN_TTL_S_FIELD_NUMBER: _ClassVar[int]
+    MAX_TOKEN_TTL_S_FIELD_NUMBER: _ClassVar[int]
+    KEY_STORAGE_FIELD_NUMBER: _ClassVar[int]
+    KEYS_FIELD_NUMBER: _ClassVar[int]
+    enabled: bool
+    issuer: str
+    audience: str
+    token_url: str
+    jwks_url: str
+    require_tokens: bool
+    default_token_ttl_s: int
+    max_token_ttl_s: int
+    key_storage: str
+    keys: _containers.RepeatedCompositeFieldContainer[SigningKeyInfo]
+    def __init__(self, enabled: _Optional[bool] = ..., issuer: _Optional[str] = ..., audience: _Optional[str] = ..., token_url: _Optional[str] = ..., jwks_url: _Optional[str] = ..., require_tokens: _Optional[bool] = ..., default_token_ttl_s: _Optional[int] = ..., max_token_ttl_s: _Optional[int] = ..., key_storage: _Optional[str] = ..., keys: _Optional[_Iterable[_Union[SigningKeyInfo, _Mapping]]] = ...) -> None: ...
+
+class AppSecretInfo(_message.Message):
+    __slots__ = ("secret_id", "hint", "created_at", "expires_at", "status")
+    SECRET_ID_FIELD_NUMBER: _ClassVar[int]
+    HINT_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    EXPIRES_AT_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    secret_id: str
+    hint: str
+    created_at: str
+    expires_at: str
+    status: str
+    def __init__(self, secret_id: _Optional[str] = ..., hint: _Optional[str] = ..., created_at: _Optional[str] = ..., expires_at: _Optional[str] = ..., status: _Optional[str] = ...) -> None: ...
+
+class AppRegistration(_message.Message):
+    __slots__ = ("client_id", "name", "description", "roles", "token_ttl_s", "status", "created_by", "created_at", "disabled_at", "last_token_at", "secrets")
+    CLIENT_ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
+    ROLES_FIELD_NUMBER: _ClassVar[int]
+    TOKEN_TTL_S_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    CREATED_BY_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    DISABLED_AT_FIELD_NUMBER: _ClassVar[int]
+    LAST_TOKEN_AT_FIELD_NUMBER: _ClassVar[int]
+    SECRETS_FIELD_NUMBER: _ClassVar[int]
+    client_id: str
+    name: str
+    description: str
+    roles: _containers.RepeatedScalarFieldContainer[str]
+    token_ttl_s: int
+    status: str
+    created_by: str
+    created_at: str
+    disabled_at: str
+    last_token_at: str
+    secrets: _containers.RepeatedCompositeFieldContainer[AppSecretInfo]
+    def __init__(self, client_id: _Optional[str] = ..., name: _Optional[str] = ..., description: _Optional[str] = ..., roles: _Optional[_Iterable[str]] = ..., token_ttl_s: _Optional[int] = ..., status: _Optional[str] = ..., created_by: _Optional[str] = ..., created_at: _Optional[str] = ..., disabled_at: _Optional[str] = ..., last_token_at: _Optional[str] = ..., secrets: _Optional[_Iterable[_Union[AppSecretInfo, _Mapping]]] = ...) -> None: ...
+
+class ListAppsRequest(_message.Message):
+    __slots__ = ("include_disabled",)
+    INCLUDE_DISABLED_FIELD_NUMBER: _ClassVar[int]
+    include_disabled: bool
+    def __init__(self, include_disabled: _Optional[bool] = ...) -> None: ...
+
+class ListAppsResponse(_message.Message):
+    __slots__ = ("apps",)
+    APPS_FIELD_NUMBER: _ClassVar[int]
+    apps: _containers.RepeatedCompositeFieldContainer[AppRegistration]
+    def __init__(self, apps: _Optional[_Iterable[_Union[AppRegistration, _Mapping]]] = ...) -> None: ...
+
+class RegisterAppRequest(_message.Message):
+    __slots__ = ("name", "description", "roles", "token_ttl_s", "secret_expires_in_days")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
+    ROLES_FIELD_NUMBER: _ClassVar[int]
+    TOKEN_TTL_S_FIELD_NUMBER: _ClassVar[int]
+    SECRET_EXPIRES_IN_DAYS_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    description: str
+    roles: _containers.RepeatedScalarFieldContainer[str]
+    token_ttl_s: int
+    secret_expires_in_days: int
+    def __init__(self, name: _Optional[str] = ..., description: _Optional[str] = ..., roles: _Optional[_Iterable[str]] = ..., token_ttl_s: _Optional[int] = ..., secret_expires_in_days: _Optional[int] = ...) -> None: ...
+
+class AppCredentials(_message.Message):
+    __slots__ = ("app", "client_id", "client_secret", "token_url")
+    APP_FIELD_NUMBER: _ClassVar[int]
+    CLIENT_ID_FIELD_NUMBER: _ClassVar[int]
+    CLIENT_SECRET_FIELD_NUMBER: _ClassVar[int]
+    TOKEN_URL_FIELD_NUMBER: _ClassVar[int]
+    app: AppRegistration
+    client_id: str
+    client_secret: str
+    token_url: str
+    def __init__(self, app: _Optional[_Union[AppRegistration, _Mapping]] = ..., client_id: _Optional[str] = ..., client_secret: _Optional[str] = ..., token_url: _Optional[str] = ...) -> None: ...
+
+class CreateAppSecretRequest(_message.Message):
+    __slots__ = ("client_id", "expires_in_days")
+    CLIENT_ID_FIELD_NUMBER: _ClassVar[int]
+    EXPIRES_IN_DAYS_FIELD_NUMBER: _ClassVar[int]
+    client_id: str
+    expires_in_days: int
+    def __init__(self, client_id: _Optional[str] = ..., expires_in_days: _Optional[int] = ...) -> None: ...
+
+class RevokeAppSecretRequest(_message.Message):
+    __slots__ = ("client_id", "secret_id")
+    CLIENT_ID_FIELD_NUMBER: _ClassVar[int]
+    SECRET_ID_FIELD_NUMBER: _ClassVar[int]
+    client_id: str
+    secret_id: str
+    def __init__(self, client_id: _Optional[str] = ..., secret_id: _Optional[str] = ...) -> None: ...
+
+class DisableAppRequest(_message.Message):
+    __slots__ = ("client_id", "reason")
+    CLIENT_ID_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    client_id: str
+    reason: str
+    def __init__(self, client_id: _Optional[str] = ..., reason: _Optional[str] = ...) -> None: ...

@@ -27,7 +27,7 @@ public sealed class Shell
     {
         Api?.Dispose();
         var p = Settings.Active;
-        Api = p == null ? null : new ApiClient(p.BaseUrl, p.ApiKey);
+        Api = p == null ? null : ApiClient.For(p);
         ConnectionChanged?.Invoke();
     }
 

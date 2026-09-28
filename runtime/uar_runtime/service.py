@@ -31,6 +31,7 @@ from .plugins.host import PluginManager
 from .plugins.integrate import install as install_plugin_integrations
 from .redaction import Redactor
 from .retention import Retention
+from .sts import Sts
 from .router.adapters.base import ChatRequest, ChatResult, ToolSpec
 from .router.service import ModelRouter
 from .simulation.planner import SimInputs, preview_inference, simulate, static_plan
@@ -63,6 +64,8 @@ class RuntimeService:
         self.engine = Engine(settings, store, self.runs, self.router, self.orch, self.auth, self.approvals)
         self.approvals.on_enqueue = self.engine.wake
         self.retention = Retention(settings, store, self.audit)
+        self.sts = Sts(settings, store, self.audit, self.auth.permissions)
+        self.auth.sts = self.sts if settings.sts.enabled else None
         self.admin = AdminService(self)
         attach_log_buffer(settings.admin.log_buffer_records)
         self._jobs: list[asyncio.Task] = []
@@ -80,6 +83,7 @@ class RuntimeService:
         await self.store.open()
         self.startup_status["migrations"] = await self.store.migrate()
         await self.auth.start(self.store)
+        await self.sts.start()
         if self.auth.oidc:
             self.startup_status["oidc"] = {i: c.last_error or f"{len(c.keys)} keys" for i, c in self.auth.oidc.items()}
         if discover:
@@ -103,6 +107,7 @@ class RuntimeService:
                 t.cancel()
         await asyncio.gather(*[t for t in [self._worker, *self._jobs] if t], return_exceptions=True)
         await self.auth.stop()
+        await self.sts.stop()
         await self.orch.stop()
         await self.plugins.stop()
         await self.router.aclose()
@@ -522,6 +527,34 @@ class RuntimeService:
 
     async def list_logs(self, p: Principal, req: dict) -> dict:
         return await self.admin.logs(p, req)
+
+    # ------------------------------------------------------------ token service (STS)
+
+    def public_url(self) -> str:
+        srv = self.s.server
+        return srv.public_url or f"http://{'127.0.0.1' if srv.host in ('0.0.0.0', '::') else srv.host}:{srv.http_port}"
+
+    async def sts_info(self, p: Principal, base_url: str = "") -> dict:
+        return self.sts.info(p, base_url or self.public_url())
+
+    async def list_apps(self, p: Principal, include_disabled: bool) -> dict:
+        return await self.sts.list_apps(p, include_disabled)
+
+    async def register_app(self, p: Principal, req: dict, request_id: str, base_url: str = "") -> dict:
+        return await self.sts.register_app(p, req, request_id, base_url or self.public_url())
+
+    async def create_app_secret(self, p: Principal, client_id: str, days: int, request_id: str,
+                                base_url: str = "") -> dict:
+        return await self.sts.create_secret(p, client_id, days, request_id, base_url or self.public_url())
+
+    async def revoke_app_secret(self, p: Principal, client_id: str, secret_id: str, request_id: str) -> dict:
+        return await self.sts.revoke_secret(p, client_id, secret_id, request_id)
+
+    async def disable_app(self, p: Principal, client_id: str, reason: str, request_id: str) -> dict:
+        return await self.sts.disable_app(p, client_id, reason, request_id)
+
+    async def rotate_signing_key(self, p: Principal, request_id: str, base_url: str = "") -> dict:
+        return await self.sts.rotate_key(p, request_id, base_url or self.public_url(), self.admin._platform(p))
 
     async def export_audit(self, p: Principal, req: dict, request_id: str) -> dict:
         p.require("audit:read")

@@ -50,7 +50,7 @@ async def test_openapi_covers_every_http_route(env):
     from uar_runtime.gateway.http import create_app
     spec = json.loads((ROOT / "contracts/generated/openapi.json").read_text(encoding="utf-8"))
     served = {r.path for r in create_app(env.svc).routes
-              if r.path.startswith("/api/v1/") and r.path not in ("/api/v1/openapi.json", "/api/v1/ws")}
+              if r.path.startswith(("/api/v1/", "/.well-known/")) and r.path not in ("/api/v1/openapi.json", "/api/v1/ws")}
     assert set(spec["paths"]) == served
     ops = {op["operationId"] for p in spec["paths"].values() for op in p.values()}
     assert "Infer" in ops and "InferStream" not in ops  # both share /inference; "stream" selects SSE

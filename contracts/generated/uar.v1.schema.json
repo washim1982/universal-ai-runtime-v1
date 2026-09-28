@@ -2129,6 +2129,260 @@
         }
       },
       "additionalProperties": false
+    },
+    "GetStsInfoRequest": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "RotateSigningKeyRequest": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "SigningKeyInfo": {
+      "type": "object",
+      "properties": {
+        "kid": {
+          "type": "string"
+        },
+        "alg": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "active_from": {
+          "type": "string"
+        },
+        "retire_after": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "description": "signing | next | verify-only | retired"
+        }
+      },
+      "additionalProperties": false
+    },
+    "StsInfo": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "issuer": {
+          "type": "string"
+        },
+        "audience": {
+          "type": "string"
+        },
+        "token_url": {
+          "type": "string"
+        },
+        "jwks_url": {
+          "type": "string"
+        },
+        "require_tokens": {
+          "type": "boolean",
+          "description": "API keys are refused; callers need access tokens"
+        },
+        "default_token_ttl_s": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "max_token_ttl_s": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "key_storage": {
+          "type": "string",
+          "description": "encrypted | unencrypted"
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SigningKeyInfo"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "AppSecretInfo": {
+      "type": "object",
+      "properties": {
+        "secret_id": {
+          "type": "string"
+        },
+        "hint": {
+          "type": "string",
+          "description": "last characters of the secret"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "description": "active | expired | revoked"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AppRegistration": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "the most a token of this application can carry"
+        },
+        "token_ttl_s": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "status": {
+          "type": "string",
+          "description": "active | disabled"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "disabled_at": {
+          "type": "string"
+        },
+        "last_token_at": {
+          "type": "string"
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AppSecretInfo"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListAppsRequest": {
+      "type": "object",
+      "properties": {
+        "include_disabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ListAppsResponse": {
+      "type": "object",
+      "properties": {
+        "apps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AppRegistration"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "RegisterAppRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "token_ttl_s": {
+          "type": "integer",
+          "format": "int32",
+          "description": "0 = sts.default_token_ttl_s"
+        },
+        "secret_expires_in_days": {
+          "type": "integer",
+          "format": "int32",
+          "description": "0 = never; omitted = 365"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AppCredentials": {
+      "type": "object",
+      "properties": {
+        "app": {
+          "$ref": "#/$defs/AppRegistration"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "client_secret": {
+          "type": "string"
+        },
+        "token_url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "description": "The client secret is returned once; the runtime stores only its SHA-256."
+    },
+    "CreateAppSecretRequest": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string"
+        },
+        "expires_in_days": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RevokeAppSecretRequest": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string"
+        },
+        "secret_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DisableAppRequest": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

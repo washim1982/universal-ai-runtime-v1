@@ -5484,6 +5484,867 @@ func (x *ListLogsResponse) GetCapacity() int32 {
 	return 0
 }
 
+type GetStsInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetStsInfoRequest) Reset() {
+	*x = GetStsInfoRequest{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStsInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStsInfoRequest) ProtoMessage() {}
+
+func (x *GetStsInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStsInfoRequest.ProtoReflect.Descriptor instead.
+func (*GetStsInfoRequest) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{74}
+}
+
+type RotateSigningKeyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RotateSigningKeyRequest) Reset() {
+	*x = RotateSigningKeyRequest{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RotateSigningKeyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RotateSigningKeyRequest) ProtoMessage() {}
+
+func (x *RotateSigningKeyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[75]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RotateSigningKeyRequest.ProtoReflect.Descriptor instead.
+func (*RotateSigningKeyRequest) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{75}
+}
+
+type SigningKeyInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Kid           string                 `protobuf:"bytes,1,opt,name=kid,proto3" json:"kid,omitempty"`
+	Alg           string                 `protobuf:"bytes,2,opt,name=alg,proto3" json:"alg,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ActiveFrom    string                 `protobuf:"bytes,4,opt,name=active_from,json=activeFrom,proto3" json:"active_from,omitempty"`
+	RetireAfter   string                 `protobuf:"bytes,5,opt,name=retire_after,json=retireAfter,proto3" json:"retire_after,omitempty"`
+	Status        string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"` // signing | next | verify-only | retired
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SigningKeyInfo) Reset() {
+	*x = SigningKeyInfo{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[76]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SigningKeyInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SigningKeyInfo) ProtoMessage() {}
+
+func (x *SigningKeyInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[76]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SigningKeyInfo.ProtoReflect.Descriptor instead.
+func (*SigningKeyInfo) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{76}
+}
+
+func (x *SigningKeyInfo) GetKid() string {
+	if x != nil {
+		return x.Kid
+	}
+	return ""
+}
+
+func (x *SigningKeyInfo) GetAlg() string {
+	if x != nil {
+		return x.Alg
+	}
+	return ""
+}
+
+func (x *SigningKeyInfo) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *SigningKeyInfo) GetActiveFrom() string {
+	if x != nil {
+		return x.ActiveFrom
+	}
+	return ""
+}
+
+func (x *SigningKeyInfo) GetRetireAfter() string {
+	if x != nil {
+		return x.RetireAfter
+	}
+	return ""
+}
+
+func (x *SigningKeyInfo) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type StsInfo struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Enabled          bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Issuer           string                 `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Audience         string                 `protobuf:"bytes,3,opt,name=audience,proto3" json:"audience,omitempty"`
+	TokenUrl         string                 `protobuf:"bytes,4,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
+	JwksUrl          string                 `protobuf:"bytes,5,opt,name=jwks_url,json=jwksUrl,proto3" json:"jwks_url,omitempty"`
+	RequireTokens    bool                   `protobuf:"varint,6,opt,name=require_tokens,json=requireTokens,proto3" json:"require_tokens,omitempty"` // API keys are refused; callers need access tokens
+	DefaultTokenTtlS int32                  `protobuf:"varint,7,opt,name=default_token_ttl_s,json=defaultTokenTtlS,proto3" json:"default_token_ttl_s,omitempty"`
+	MaxTokenTtlS     int32                  `protobuf:"varint,8,opt,name=max_token_ttl_s,json=maxTokenTtlS,proto3" json:"max_token_ttl_s,omitempty"`
+	KeyStorage       string                 `protobuf:"bytes,9,opt,name=key_storage,json=keyStorage,proto3" json:"key_storage,omitempty"` // encrypted | unencrypted
+	Keys             []*SigningKeyInfo      `protobuf:"bytes,10,rep,name=keys,proto3" json:"keys,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *StsInfo) Reset() {
+	*x = StsInfo{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[77]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StsInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StsInfo) ProtoMessage() {}
+
+func (x *StsInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[77]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StsInfo.ProtoReflect.Descriptor instead.
+func (*StsInfo) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{77}
+}
+
+func (x *StsInfo) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *StsInfo) GetIssuer() string {
+	if x != nil {
+		return x.Issuer
+	}
+	return ""
+}
+
+func (x *StsInfo) GetAudience() string {
+	if x != nil {
+		return x.Audience
+	}
+	return ""
+}
+
+func (x *StsInfo) GetTokenUrl() string {
+	if x != nil {
+		return x.TokenUrl
+	}
+	return ""
+}
+
+func (x *StsInfo) GetJwksUrl() string {
+	if x != nil {
+		return x.JwksUrl
+	}
+	return ""
+}
+
+func (x *StsInfo) GetRequireTokens() bool {
+	if x != nil {
+		return x.RequireTokens
+	}
+	return false
+}
+
+func (x *StsInfo) GetDefaultTokenTtlS() int32 {
+	if x != nil {
+		return x.DefaultTokenTtlS
+	}
+	return 0
+}
+
+func (x *StsInfo) GetMaxTokenTtlS() int32 {
+	if x != nil {
+		return x.MaxTokenTtlS
+	}
+	return 0
+}
+
+func (x *StsInfo) GetKeyStorage() string {
+	if x != nil {
+		return x.KeyStorage
+	}
+	return ""
+}
+
+func (x *StsInfo) GetKeys() []*SigningKeyInfo {
+	if x != nil {
+		return x.Keys
+	}
+	return nil
+}
+
+type AppSecretInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SecretId      string                 `protobuf:"bytes,1,opt,name=secret_id,json=secretId,proto3" json:"secret_id,omitempty"`
+	Hint          string                 `protobuf:"bytes,2,opt,name=hint,proto3" json:"hint,omitempty"` // last characters of the secret
+	CreatedAt     string                 `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ExpiresAt     string                 `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"` // active | expired | revoked
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AppSecretInfo) Reset() {
+	*x = AppSecretInfo{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[78]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppSecretInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppSecretInfo) ProtoMessage() {}
+
+func (x *AppSecretInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[78]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppSecretInfo.ProtoReflect.Descriptor instead.
+func (*AppSecretInfo) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{78}
+}
+
+func (x *AppSecretInfo) GetSecretId() string {
+	if x != nil {
+		return x.SecretId
+	}
+	return ""
+}
+
+func (x *AppSecretInfo) GetHint() string {
+	if x != nil {
+		return x.Hint
+	}
+	return ""
+}
+
+func (x *AppSecretInfo) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *AppSecretInfo) GetExpiresAt() string {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return ""
+}
+
+func (x *AppSecretInfo) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type AppRegistration struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Roles         []string               `protobuf:"bytes,4,rep,name=roles,proto3" json:"roles,omitempty"` // the most a token of this application can carry
+	TokenTtlS     int32                  `protobuf:"varint,5,opt,name=token_ttl_s,json=tokenTtlS,proto3" json:"token_ttl_s,omitempty"`
+	Status        string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"` // active | disabled
+	CreatedBy     string                 `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	DisabledAt    string                 `protobuf:"bytes,9,opt,name=disabled_at,json=disabledAt,proto3" json:"disabled_at,omitempty"`
+	LastTokenAt   string                 `protobuf:"bytes,10,opt,name=last_token_at,json=lastTokenAt,proto3" json:"last_token_at,omitempty"`
+	Secrets       []*AppSecretInfo       `protobuf:"bytes,11,rep,name=secrets,proto3" json:"secrets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AppRegistration) Reset() {
+	*x = AppRegistration{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[79]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppRegistration) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppRegistration) ProtoMessage() {}
+
+func (x *AppRegistration) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[79]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppRegistration.ProtoReflect.Descriptor instead.
+func (*AppRegistration) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{79}
+}
+
+func (x *AppRegistration) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *AppRegistration) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *AppRegistration) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *AppRegistration) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *AppRegistration) GetTokenTtlS() int32 {
+	if x != nil {
+		return x.TokenTtlS
+	}
+	return 0
+}
+
+func (x *AppRegistration) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *AppRegistration) GetCreatedBy() string {
+	if x != nil {
+		return x.CreatedBy
+	}
+	return ""
+}
+
+func (x *AppRegistration) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *AppRegistration) GetDisabledAt() string {
+	if x != nil {
+		return x.DisabledAt
+	}
+	return ""
+}
+
+func (x *AppRegistration) GetLastTokenAt() string {
+	if x != nil {
+		return x.LastTokenAt
+	}
+	return ""
+}
+
+func (x *AppRegistration) GetSecrets() []*AppSecretInfo {
+	if x != nil {
+		return x.Secrets
+	}
+	return nil
+}
+
+type ListAppsRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	IncludeDisabled bool                   `protobuf:"varint,1,opt,name=include_disabled,json=includeDisabled,proto3" json:"include_disabled,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ListAppsRequest) Reset() {
+	*x = ListAppsRequest{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[80]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAppsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAppsRequest) ProtoMessage() {}
+
+func (x *ListAppsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[80]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAppsRequest.ProtoReflect.Descriptor instead.
+func (*ListAppsRequest) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{80}
+}
+
+func (x *ListAppsRequest) GetIncludeDisabled() bool {
+	if x != nil {
+		return x.IncludeDisabled
+	}
+	return false
+}
+
+type ListAppsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Apps          []*AppRegistration     `protobuf:"bytes,1,rep,name=apps,proto3" json:"apps,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAppsResponse) Reset() {
+	*x = ListAppsResponse{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[81]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAppsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAppsResponse) ProtoMessage() {}
+
+func (x *ListAppsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[81]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAppsResponse.ProtoReflect.Descriptor instead.
+func (*ListAppsResponse) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{81}
+}
+
+func (x *ListAppsResponse) GetApps() []*AppRegistration {
+	if x != nil {
+		return x.Apps
+	}
+	return nil
+}
+
+type RegisterAppRequest struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Name                string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description         string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Roles               []string               `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`
+	TokenTtlS           int32                  `protobuf:"varint,4,opt,name=token_ttl_s,json=tokenTtlS,proto3" json:"token_ttl_s,omitempty"`                                 // 0 = sts.default_token_ttl_s
+	SecretExpiresInDays int32                  `protobuf:"varint,5,opt,name=secret_expires_in_days,json=secretExpiresInDays,proto3" json:"secret_expires_in_days,omitempty"` // 0 = never; omitted = 365
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *RegisterAppRequest) Reset() {
+	*x = RegisterAppRequest{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[82]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterAppRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterAppRequest) ProtoMessage() {}
+
+func (x *RegisterAppRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[82]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterAppRequest.ProtoReflect.Descriptor instead.
+func (*RegisterAppRequest) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{82}
+}
+
+func (x *RegisterAppRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RegisterAppRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *RegisterAppRequest) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *RegisterAppRequest) GetTokenTtlS() int32 {
+	if x != nil {
+		return x.TokenTtlS
+	}
+	return 0
+}
+
+func (x *RegisterAppRequest) GetSecretExpiresInDays() int32 {
+	if x != nil {
+		return x.SecretExpiresInDays
+	}
+	return 0
+}
+
+// The client secret is returned once; the runtime stores only its SHA-256.
+type AppCredentials struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	App           *AppRegistration       `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
+	ClientId      string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ClientSecret  string                 `protobuf:"bytes,3,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
+	TokenUrl      string                 `protobuf:"bytes,4,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AppCredentials) Reset() {
+	*x = AppCredentials{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[83]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppCredentials) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppCredentials) ProtoMessage() {}
+
+func (x *AppCredentials) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[83]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppCredentials.ProtoReflect.Descriptor instead.
+func (*AppCredentials) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{83}
+}
+
+func (x *AppCredentials) GetApp() *AppRegistration {
+	if x != nil {
+		return x.App
+	}
+	return nil
+}
+
+func (x *AppCredentials) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *AppCredentials) GetClientSecret() string {
+	if x != nil {
+		return x.ClientSecret
+	}
+	return ""
+}
+
+func (x *AppCredentials) GetTokenUrl() string {
+	if x != nil {
+		return x.TokenUrl
+	}
+	return ""
+}
+
+type CreateAppSecretRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ExpiresInDays int32                  `protobuf:"varint,2,opt,name=expires_in_days,json=expiresInDays,proto3" json:"expires_in_days,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateAppSecretRequest) Reset() {
+	*x = CreateAppSecretRequest{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[84]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateAppSecretRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateAppSecretRequest) ProtoMessage() {}
+
+func (x *CreateAppSecretRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[84]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateAppSecretRequest.ProtoReflect.Descriptor instead.
+func (*CreateAppSecretRequest) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{84}
+}
+
+func (x *CreateAppSecretRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *CreateAppSecretRequest) GetExpiresInDays() int32 {
+	if x != nil {
+		return x.ExpiresInDays
+	}
+	return 0
+}
+
+type RevokeAppSecretRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	SecretId      string                 `protobuf:"bytes,2,opt,name=secret_id,json=secretId,proto3" json:"secret_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeAppSecretRequest) Reset() {
+	*x = RevokeAppSecretRequest{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[85]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeAppSecretRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeAppSecretRequest) ProtoMessage() {}
+
+func (x *RevokeAppSecretRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[85]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeAppSecretRequest.ProtoReflect.Descriptor instead.
+func (*RevokeAppSecretRequest) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{85}
+}
+
+func (x *RevokeAppSecretRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *RevokeAppSecretRequest) GetSecretId() string {
+	if x != nil {
+		return x.SecretId
+	}
+	return ""
+}
+
+type DisableAppRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DisableAppRequest) Reset() {
+	*x = DisableAppRequest{}
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[86]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DisableAppRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisableAppRequest) ProtoMessage() {}
+
+func (x *DisableAppRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uarpb_v1_runtime_proto_msgTypes[86]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisableAppRequest.ProtoReflect.Descriptor instead.
+func (*DisableAppRequest) Descriptor() ([]byte, []int) {
+	return file_uarpb_v1_runtime_proto_rawDescGZIP(), []int{86}
+}
+
+func (x *DisableAppRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *DisableAppRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
 var File_uarpb_v1_runtime_proto protoreflect.FileDescriptor
 
 const file_uarpb_v1_runtime_proto_rawDesc = "" +
@@ -5964,7 +6825,79 @@ const file_uarpb_v1_runtime_proto_rawDesc = "" +
 	"\x10ListLogsResponse\x12+\n" +
 	"\arecords\x18\x01 \x03(\v2\x11.uar.v1.LogRecordR\arecords\x12$\n" +
 	"\x0enext_after_seq\x18\x02 \x01(\x03R\fnextAfterSeq\x12\x1a\n" +
-	"\bcapacity\x18\x03 \x01(\x05R\bcapacity2\x8b\x0e\n" +
+	"\bcapacity\x18\x03 \x01(\x05R\bcapacity\"\x13\n" +
+	"\x11GetStsInfoRequest\"\x19\n" +
+	"\x17RotateSigningKeyRequest\"\xaf\x01\n" +
+	"\x0eSigningKeyInfo\x12\x10\n" +
+	"\x03kid\x18\x01 \x01(\tR\x03kid\x12\x10\n" +
+	"\x03alg\x18\x02 \x01(\tR\x03alg\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\tR\tcreatedAt\x12\x1f\n" +
+	"\vactive_from\x18\x04 \x01(\tR\n" +
+	"activeFrom\x12!\n" +
+	"\fretire_after\x18\x05 \x01(\tR\vretireAfter\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\tR\x06status\"\xd9\x02\n" +
+	"\aStsInfo\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x16\n" +
+	"\x06issuer\x18\x02 \x01(\tR\x06issuer\x12\x1a\n" +
+	"\baudience\x18\x03 \x01(\tR\baudience\x12\x1b\n" +
+	"\ttoken_url\x18\x04 \x01(\tR\btokenUrl\x12\x19\n" +
+	"\bjwks_url\x18\x05 \x01(\tR\ajwksUrl\x12%\n" +
+	"\x0erequire_tokens\x18\x06 \x01(\bR\rrequireTokens\x12-\n" +
+	"\x13default_token_ttl_s\x18\a \x01(\x05R\x10defaultTokenTtlS\x12%\n" +
+	"\x0fmax_token_ttl_s\x18\b \x01(\x05R\fmaxTokenTtlS\x12\x1f\n" +
+	"\vkey_storage\x18\t \x01(\tR\n" +
+	"keyStorage\x12*\n" +
+	"\x04keys\x18\n" +
+	" \x03(\v2\x16.uar.v1.SigningKeyInfoR\x04keys\"\x96\x01\n" +
+	"\rAppSecretInfo\x12\x1b\n" +
+	"\tsecret_id\x18\x01 \x01(\tR\bsecretId\x12\x12\n" +
+	"\x04hint\x18\x02 \x01(\tR\x04hint\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"expires_at\x18\x04 \x01(\tR\texpiresAt\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\"\xe6\x02\n" +
+	"\x0fAppRegistration\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x14\n" +
+	"\x05roles\x18\x04 \x03(\tR\x05roles\x12\x1e\n" +
+	"\vtoken_ttl_s\x18\x05 \x01(\x05R\ttokenTtlS\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\tR\x06status\x12\x1d\n" +
+	"\n" +
+	"created_by\x18\a \x01(\tR\tcreatedBy\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\b \x01(\tR\tcreatedAt\x12\x1f\n" +
+	"\vdisabled_at\x18\t \x01(\tR\n" +
+	"disabledAt\x12\"\n" +
+	"\rlast_token_at\x18\n" +
+	" \x01(\tR\vlastTokenAt\x12/\n" +
+	"\asecrets\x18\v \x03(\v2\x15.uar.v1.AppSecretInfoR\asecrets\"<\n" +
+	"\x0fListAppsRequest\x12)\n" +
+	"\x10include_disabled\x18\x01 \x01(\bR\x0fincludeDisabled\"?\n" +
+	"\x10ListAppsResponse\x12+\n" +
+	"\x04apps\x18\x01 \x03(\v2\x17.uar.v1.AppRegistrationR\x04apps\"\xb5\x01\n" +
+	"\x12RegisterAppRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x14\n" +
+	"\x05roles\x18\x03 \x03(\tR\x05roles\x12\x1e\n" +
+	"\vtoken_ttl_s\x18\x04 \x01(\x05R\ttokenTtlS\x123\n" +
+	"\x16secret_expires_in_days\x18\x05 \x01(\x05R\x13secretExpiresInDays\"\x9a\x01\n" +
+	"\x0eAppCredentials\x12)\n" +
+	"\x03app\x18\x01 \x01(\v2\x17.uar.v1.AppRegistrationR\x03app\x12\x1b\n" +
+	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12#\n" +
+	"\rclient_secret\x18\x03 \x01(\tR\fclientSecret\x12\x1b\n" +
+	"\ttoken_url\x18\x04 \x01(\tR\btokenUrl\"]\n" +
+	"\x16CreateAppSecretRequest\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12&\n" +
+	"\x0fexpires_in_days\x18\x02 \x01(\x05R\rexpiresInDays\"R\n" +
+	"\x16RevokeAppSecretRequest\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1b\n" +
+	"\tsecret_id\x18\x02 \x01(\tR\bsecretId\"H\n" +
+	"\x11DisableAppRequest\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason2\xe6\x11\n" +
 	"\aRuntime\x12<\n" +
 	"\x05Infer\x12\x18.uar.v1.InferenceRequest\x1a\x19.uar.v1.InferenceResponse\x128\n" +
 	"\vInferStream\x12\x18.uar.v1.InferenceRequest\x1a\r.uar.v1.Event0\x01\x126\n" +
@@ -5991,7 +6924,16 @@ const file_uarpb_v1_runtime_proto_rawDesc = "" +
 	"\fCreateApiKey\x12\x1b.uar.v1.CreateApiKeyRequest\x1a\x15.uar.v1.CreatedApiKey\x12?\n" +
 	"\fRevokeApiKey\x12\x1b.uar.v1.RevokeApiKeyRequest\x1a\x12.uar.v1.ApiKeyInfo\x12G\n" +
 	"\x0fGetAccessPolicy\x12\x1e.uar.v1.GetAccessPolicyRequest\x1a\x14.uar.v1.AccessPolicy\x12=\n" +
-	"\bListLogs\x12\x17.uar.v1.ListLogsRequest\x1a\x18.uar.v1.ListLogsResponse\x12F\n" +
+	"\bListLogs\x12\x17.uar.v1.ListLogsRequest\x1a\x18.uar.v1.ListLogsResponse\x128\n" +
+	"\n" +
+	"GetStsInfo\x12\x19.uar.v1.GetStsInfoRequest\x1a\x0f.uar.v1.StsInfo\x12=\n" +
+	"\bListApps\x12\x17.uar.v1.ListAppsRequest\x1a\x18.uar.v1.ListAppsResponse\x12A\n" +
+	"\vRegisterApp\x12\x1a.uar.v1.RegisterAppRequest\x1a\x16.uar.v1.AppCredentials\x12I\n" +
+	"\x0fCreateAppSecret\x12\x1e.uar.v1.CreateAppSecretRequest\x1a\x16.uar.v1.AppCredentials\x12J\n" +
+	"\x0fRevokeAppSecret\x12\x1e.uar.v1.RevokeAppSecretRequest\x1a\x17.uar.v1.AppRegistration\x12@\n" +
+	"\n" +
+	"DisableApp\x12\x19.uar.v1.DisableAppRequest\x1a\x17.uar.v1.AppRegistration\x12D\n" +
+	"\x10RotateSigningKey\x12\x1f.uar.v1.RotateSigningKeyRequest\x1a\x0f.uar.v1.StsInfo\x12F\n" +
 	"\x0eRegisterPlugin\x12\x1d.uar.v1.RegisterPluginRequest\x1a\x15.uar.v1.PluginVersion\x12F\n" +
 	"\vListPlugins\x12\x1a.uar.v1.ListPluginsRequest\x1a\x1b.uar.v1.ListPluginsResponse\x12F\n" +
 	"\x0eActivatePlugin\x12\x1d.uar.v1.ActivatePluginRequest\x1a\x15.uar.v1.PluginVersion\x12F\n" +
@@ -6011,213 +6953,244 @@ func file_uarpb_v1_runtime_proto_rawDescGZIP() []byte {
 	return file_uarpb_v1_runtime_proto_rawDescData
 }
 
-var file_uarpb_v1_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 74)
+var file_uarpb_v1_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 87)
 var file_uarpb_v1_runtime_proto_goTypes = []any{
-	(*Money)(nil),                  // 0: uar.v1.Money
-	(*Usage)(nil),                  // 1: uar.v1.Usage
-	(*Error)(nil),                  // 2: uar.v1.Error
-	(*ToolCallRequest)(nil),        // 3: uar.v1.ToolCallRequest
-	(*ChatMessage)(nil),            // 4: uar.v1.ChatMessage
-	(*GenerationParams)(nil),       // 5: uar.v1.GenerationParams
-	(*InferenceRequest)(nil),       // 6: uar.v1.InferenceRequest
-	(*InferenceResponse)(nil),      // 7: uar.v1.InferenceResponse
-	(*RouteDecision)(nil),          // 8: uar.v1.RouteDecision
-	(*ToolRequest)(nil),            // 9: uar.v1.ToolRequest
-	(*ContentBlock)(nil),           // 10: uar.v1.ContentBlock
-	(*ToolResult)(nil),             // 11: uar.v1.ToolResult
-	(*ToolInfo)(nil),               // 12: uar.v1.ToolInfo
-	(*ListToolsRequest)(nil),       // 13: uar.v1.ListToolsRequest
-	(*ListToolsResponse)(nil),      // 14: uar.v1.ListToolsResponse
-	(*ModelInfo)(nil),              // 15: uar.v1.ModelInfo
-	(*ListModelsRequest)(nil),      // 16: uar.v1.ListModelsRequest
-	(*ListModelsResponse)(nil),     // 17: uar.v1.ListModelsResponse
-	(*RegisterAgentRequest)(nil),   // 18: uar.v1.RegisterAgentRequest
-	(*AgentVersion)(nil),           // 19: uar.v1.AgentVersion
-	(*RunRequest)(nil),             // 20: uar.v1.RunRequest
-	(*Run)(nil),                    // 21: uar.v1.Run
-	(*GetRunRequest)(nil),          // 22: uar.v1.GetRunRequest
-	(*WatchRunRequest)(nil),        // 23: uar.v1.WatchRunRequest
-	(*CancelRunRequest)(nil),       // 24: uar.v1.CancelRunRequest
-	(*ResolveRunRequest)(nil),      // 25: uar.v1.ResolveRunRequest
-	(*Started)(nil),                // 26: uar.v1.Started
-	(*TokenDelta)(nil),             // 27: uar.v1.TokenDelta
-	(*ToolCallEvent)(nil),          // 28: uar.v1.ToolCallEvent
-	(*ToolResultEvent)(nil),        // 29: uar.v1.ToolResultEvent
-	(*NodeStarted)(nil),            // 30: uar.v1.NodeStarted
-	(*NodeCompleted)(nil),          // 31: uar.v1.NodeCompleted
-	(*ApprovalRequired)(nil),       // 32: uar.v1.ApprovalRequired
-	(*Completed)(nil),              // 33: uar.v1.Completed
-	(*Event)(nil),                  // 34: uar.v1.Event
-	(*DryRunRequest)(nil),          // 35: uar.v1.DryRunRequest
-	(*PlannedStep)(nil),            // 36: uar.v1.PlannedStep
-	(*DryRunReport)(nil),           // 37: uar.v1.DryRunReport
-	(*ApprovalDecision)(nil),       // 38: uar.v1.ApprovalDecision
-	(*Approval)(nil),               // 39: uar.v1.Approval
-	(*ListApprovalsRequest)(nil),   // 40: uar.v1.ListApprovalsRequest
-	(*ListApprovalsResponse)(nil),  // 41: uar.v1.ListApprovalsResponse
-	(*GetApprovalRequest)(nil),     // 42: uar.v1.GetApprovalRequest
-	(*VerifyAuditRequest)(nil),     // 43: uar.v1.VerifyAuditRequest
-	(*AuditVerification)(nil),      // 44: uar.v1.AuditVerification
-	(*AuditRecord)(nil),            // 45: uar.v1.AuditRecord
-	(*ExportAuditRequest)(nil),     // 46: uar.v1.ExportAuditRequest
-	(*ExportAuditResponse)(nil),    // 47: uar.v1.ExportAuditResponse
-	(*RegisterPluginRequest)(nil),  // 48: uar.v1.RegisterPluginRequest
-	(*PluginVersion)(nil),          // 49: uar.v1.PluginVersion
-	(*ListPluginsRequest)(nil),     // 50: uar.v1.ListPluginsRequest
-	(*ListPluginsResponse)(nil),    // 51: uar.v1.ListPluginsResponse
-	(*ActivatePluginRequest)(nil),  // 52: uar.v1.ActivatePluginRequest
-	(*RollbackPluginRequest)(nil),  // 53: uar.v1.RollbackPluginRequest
-	(*GetRuntimeInfoRequest)(nil),  // 54: uar.v1.GetRuntimeInfoRequest
-	(*ComponentStatus)(nil),        // 55: uar.v1.ComponentStatus
-	(*RuntimeInfo)(nil),            // 56: uar.v1.RuntimeInfo
-	(*UsageRecord)(nil),            // 57: uar.v1.UsageRecord
-	(*ListUsageRequest)(nil),       // 58: uar.v1.ListUsageRequest
-	(*ListUsageResponse)(nil),      // 59: uar.v1.ListUsageResponse
-	(*ApiKeyInfo)(nil),             // 60: uar.v1.ApiKeyInfo
-	(*ListApiKeysRequest)(nil),     // 61: uar.v1.ListApiKeysRequest
-	(*ListApiKeysResponse)(nil),    // 62: uar.v1.ListApiKeysResponse
-	(*CreateApiKeyRequest)(nil),    // 63: uar.v1.CreateApiKeyRequest
-	(*CreatedApiKey)(nil),          // 64: uar.v1.CreatedApiKey
-	(*RevokeApiKeyRequest)(nil),    // 65: uar.v1.RevokeApiKeyRequest
-	(*GetAccessPolicyRequest)(nil), // 66: uar.v1.GetAccessPolicyRequest
-	(*RoleInfo)(nil),               // 67: uar.v1.RoleInfo
-	(*RoleMapping)(nil),            // 68: uar.v1.RoleMapping
-	(*OidcIssuerInfo)(nil),         // 69: uar.v1.OidcIssuerInfo
-	(*AccessPolicy)(nil),           // 70: uar.v1.AccessPolicy
-	(*LogRecord)(nil),              // 71: uar.v1.LogRecord
-	(*ListLogsRequest)(nil),        // 72: uar.v1.ListLogsRequest
-	(*ListLogsResponse)(nil),       // 73: uar.v1.ListLogsResponse
-	(*structpb.Struct)(nil),        // 74: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil),  // 75: google.protobuf.Timestamp
+	(*Money)(nil),                   // 0: uar.v1.Money
+	(*Usage)(nil),                   // 1: uar.v1.Usage
+	(*Error)(nil),                   // 2: uar.v1.Error
+	(*ToolCallRequest)(nil),         // 3: uar.v1.ToolCallRequest
+	(*ChatMessage)(nil),             // 4: uar.v1.ChatMessage
+	(*GenerationParams)(nil),        // 5: uar.v1.GenerationParams
+	(*InferenceRequest)(nil),        // 6: uar.v1.InferenceRequest
+	(*InferenceResponse)(nil),       // 7: uar.v1.InferenceResponse
+	(*RouteDecision)(nil),           // 8: uar.v1.RouteDecision
+	(*ToolRequest)(nil),             // 9: uar.v1.ToolRequest
+	(*ContentBlock)(nil),            // 10: uar.v1.ContentBlock
+	(*ToolResult)(nil),              // 11: uar.v1.ToolResult
+	(*ToolInfo)(nil),                // 12: uar.v1.ToolInfo
+	(*ListToolsRequest)(nil),        // 13: uar.v1.ListToolsRequest
+	(*ListToolsResponse)(nil),       // 14: uar.v1.ListToolsResponse
+	(*ModelInfo)(nil),               // 15: uar.v1.ModelInfo
+	(*ListModelsRequest)(nil),       // 16: uar.v1.ListModelsRequest
+	(*ListModelsResponse)(nil),      // 17: uar.v1.ListModelsResponse
+	(*RegisterAgentRequest)(nil),    // 18: uar.v1.RegisterAgentRequest
+	(*AgentVersion)(nil),            // 19: uar.v1.AgentVersion
+	(*RunRequest)(nil),              // 20: uar.v1.RunRequest
+	(*Run)(nil),                     // 21: uar.v1.Run
+	(*GetRunRequest)(nil),           // 22: uar.v1.GetRunRequest
+	(*WatchRunRequest)(nil),         // 23: uar.v1.WatchRunRequest
+	(*CancelRunRequest)(nil),        // 24: uar.v1.CancelRunRequest
+	(*ResolveRunRequest)(nil),       // 25: uar.v1.ResolveRunRequest
+	(*Started)(nil),                 // 26: uar.v1.Started
+	(*TokenDelta)(nil),              // 27: uar.v1.TokenDelta
+	(*ToolCallEvent)(nil),           // 28: uar.v1.ToolCallEvent
+	(*ToolResultEvent)(nil),         // 29: uar.v1.ToolResultEvent
+	(*NodeStarted)(nil),             // 30: uar.v1.NodeStarted
+	(*NodeCompleted)(nil),           // 31: uar.v1.NodeCompleted
+	(*ApprovalRequired)(nil),        // 32: uar.v1.ApprovalRequired
+	(*Completed)(nil),               // 33: uar.v1.Completed
+	(*Event)(nil),                   // 34: uar.v1.Event
+	(*DryRunRequest)(nil),           // 35: uar.v1.DryRunRequest
+	(*PlannedStep)(nil),             // 36: uar.v1.PlannedStep
+	(*DryRunReport)(nil),            // 37: uar.v1.DryRunReport
+	(*ApprovalDecision)(nil),        // 38: uar.v1.ApprovalDecision
+	(*Approval)(nil),                // 39: uar.v1.Approval
+	(*ListApprovalsRequest)(nil),    // 40: uar.v1.ListApprovalsRequest
+	(*ListApprovalsResponse)(nil),   // 41: uar.v1.ListApprovalsResponse
+	(*GetApprovalRequest)(nil),      // 42: uar.v1.GetApprovalRequest
+	(*VerifyAuditRequest)(nil),      // 43: uar.v1.VerifyAuditRequest
+	(*AuditVerification)(nil),       // 44: uar.v1.AuditVerification
+	(*AuditRecord)(nil),             // 45: uar.v1.AuditRecord
+	(*ExportAuditRequest)(nil),      // 46: uar.v1.ExportAuditRequest
+	(*ExportAuditResponse)(nil),     // 47: uar.v1.ExportAuditResponse
+	(*RegisterPluginRequest)(nil),   // 48: uar.v1.RegisterPluginRequest
+	(*PluginVersion)(nil),           // 49: uar.v1.PluginVersion
+	(*ListPluginsRequest)(nil),      // 50: uar.v1.ListPluginsRequest
+	(*ListPluginsResponse)(nil),     // 51: uar.v1.ListPluginsResponse
+	(*ActivatePluginRequest)(nil),   // 52: uar.v1.ActivatePluginRequest
+	(*RollbackPluginRequest)(nil),   // 53: uar.v1.RollbackPluginRequest
+	(*GetRuntimeInfoRequest)(nil),   // 54: uar.v1.GetRuntimeInfoRequest
+	(*ComponentStatus)(nil),         // 55: uar.v1.ComponentStatus
+	(*RuntimeInfo)(nil),             // 56: uar.v1.RuntimeInfo
+	(*UsageRecord)(nil),             // 57: uar.v1.UsageRecord
+	(*ListUsageRequest)(nil),        // 58: uar.v1.ListUsageRequest
+	(*ListUsageResponse)(nil),       // 59: uar.v1.ListUsageResponse
+	(*ApiKeyInfo)(nil),              // 60: uar.v1.ApiKeyInfo
+	(*ListApiKeysRequest)(nil),      // 61: uar.v1.ListApiKeysRequest
+	(*ListApiKeysResponse)(nil),     // 62: uar.v1.ListApiKeysResponse
+	(*CreateApiKeyRequest)(nil),     // 63: uar.v1.CreateApiKeyRequest
+	(*CreatedApiKey)(nil),           // 64: uar.v1.CreatedApiKey
+	(*RevokeApiKeyRequest)(nil),     // 65: uar.v1.RevokeApiKeyRequest
+	(*GetAccessPolicyRequest)(nil),  // 66: uar.v1.GetAccessPolicyRequest
+	(*RoleInfo)(nil),                // 67: uar.v1.RoleInfo
+	(*RoleMapping)(nil),             // 68: uar.v1.RoleMapping
+	(*OidcIssuerInfo)(nil),          // 69: uar.v1.OidcIssuerInfo
+	(*AccessPolicy)(nil),            // 70: uar.v1.AccessPolicy
+	(*LogRecord)(nil),               // 71: uar.v1.LogRecord
+	(*ListLogsRequest)(nil),         // 72: uar.v1.ListLogsRequest
+	(*ListLogsResponse)(nil),        // 73: uar.v1.ListLogsResponse
+	(*GetStsInfoRequest)(nil),       // 74: uar.v1.GetStsInfoRequest
+	(*RotateSigningKeyRequest)(nil), // 75: uar.v1.RotateSigningKeyRequest
+	(*SigningKeyInfo)(nil),          // 76: uar.v1.SigningKeyInfo
+	(*StsInfo)(nil),                 // 77: uar.v1.StsInfo
+	(*AppSecretInfo)(nil),           // 78: uar.v1.AppSecretInfo
+	(*AppRegistration)(nil),         // 79: uar.v1.AppRegistration
+	(*ListAppsRequest)(nil),         // 80: uar.v1.ListAppsRequest
+	(*ListAppsResponse)(nil),        // 81: uar.v1.ListAppsResponse
+	(*RegisterAppRequest)(nil),      // 82: uar.v1.RegisterAppRequest
+	(*AppCredentials)(nil),          // 83: uar.v1.AppCredentials
+	(*CreateAppSecretRequest)(nil),  // 84: uar.v1.CreateAppSecretRequest
+	(*RevokeAppSecretRequest)(nil),  // 85: uar.v1.RevokeAppSecretRequest
+	(*DisableAppRequest)(nil),       // 86: uar.v1.DisableAppRequest
+	(*structpb.Struct)(nil),         // 87: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil),   // 88: google.protobuf.Timestamp
 }
 var file_uarpb_v1_runtime_proto_depIdxs = []int32{
-	0,  // 0: uar.v1.Usage.cost:type_name -> uar.v1.Money
-	74, // 1: uar.v1.Error.details:type_name -> google.protobuf.Struct
-	74, // 2: uar.v1.ToolCallRequest.args:type_name -> google.protobuf.Struct
-	3,  // 3: uar.v1.ChatMessage.tool_calls:type_name -> uar.v1.ToolCallRequest
-	74, // 4: uar.v1.GenerationParams.response_schema:type_name -> google.protobuf.Struct
-	4,  // 5: uar.v1.InferenceRequest.messages:type_name -> uar.v1.ChatMessage
-	5,  // 6: uar.v1.InferenceRequest.params:type_name -> uar.v1.GenerationParams
-	74, // 7: uar.v1.InferenceRequest.extensions:type_name -> google.protobuf.Struct
-	3,  // 8: uar.v1.InferenceResponse.tool_calls:type_name -> uar.v1.ToolCallRequest
-	1,  // 9: uar.v1.InferenceResponse.usage:type_name -> uar.v1.Usage
-	74, // 10: uar.v1.InferenceResponse.output:type_name -> google.protobuf.Struct
-	8,  // 11: uar.v1.InferenceResponse.route:type_name -> uar.v1.RouteDecision
-	74, // 12: uar.v1.ToolRequest.args:type_name -> google.protobuf.Struct
-	74, // 13: uar.v1.ContentBlock.json:type_name -> google.protobuf.Struct
-	10, // 14: uar.v1.ToolResult.content:type_name -> uar.v1.ContentBlock
-	74, // 15: uar.v1.ToolResult.structured:type_name -> google.protobuf.Struct
-	74, // 16: uar.v1.ToolInfo.input_schema:type_name -> google.protobuf.Struct
-	12, // 17: uar.v1.ListToolsResponse.tools:type_name -> uar.v1.ToolInfo
-	15, // 18: uar.v1.ListModelsResponse.models:type_name -> uar.v1.ModelInfo
-	74, // 19: uar.v1.RegisterAgentRequest.definition:type_name -> google.protobuf.Struct
-	75, // 20: uar.v1.AgentVersion.created_at:type_name -> google.protobuf.Timestamp
-	74, // 21: uar.v1.RunRequest.input:type_name -> google.protobuf.Struct
-	74, // 22: uar.v1.Run.output:type_name -> google.protobuf.Struct
-	2,  // 23: uar.v1.Run.error:type_name -> uar.v1.Error
-	1,  // 24: uar.v1.Run.usage:type_name -> uar.v1.Usage
-	75, // 25: uar.v1.Run.created_at:type_name -> google.protobuf.Timestamp
-	75, // 26: uar.v1.Run.updated_at:type_name -> google.protobuf.Timestamp
-	74, // 27: uar.v1.ToolCallEvent.args:type_name -> google.protobuf.Struct
-	74, // 28: uar.v1.Completed.output:type_name -> google.protobuf.Struct
-	75, // 29: uar.v1.Event.ts:type_name -> google.protobuf.Timestamp
-	26, // 30: uar.v1.Event.started:type_name -> uar.v1.Started
-	27, // 31: uar.v1.Event.token:type_name -> uar.v1.TokenDelta
-	28, // 32: uar.v1.Event.tool_call:type_name -> uar.v1.ToolCallEvent
-	29, // 33: uar.v1.Event.tool_result:type_name -> uar.v1.ToolResultEvent
-	30, // 34: uar.v1.Event.node_started:type_name -> uar.v1.NodeStarted
-	31, // 35: uar.v1.Event.node_completed:type_name -> uar.v1.NodeCompleted
-	1,  // 36: uar.v1.Event.usage:type_name -> uar.v1.Usage
-	32, // 37: uar.v1.Event.approval_required:type_name -> uar.v1.ApprovalRequired
-	2,  // 38: uar.v1.Event.error:type_name -> uar.v1.Error
-	33, // 39: uar.v1.Event.completed:type_name -> uar.v1.Completed
-	74, // 40: uar.v1.DryRunRequest.definition:type_name -> google.protobuf.Struct
-	6,  // 41: uar.v1.DryRunRequest.inference:type_name -> uar.v1.InferenceRequest
-	74, // 42: uar.v1.DryRunRequest.input:type_name -> google.protobuf.Struct
-	74, // 43: uar.v1.DryRunRequest.fixtures:type_name -> google.protobuf.Struct
-	74, // 44: uar.v1.PlannedStep.output:type_name -> google.protobuf.Struct
-	36, // 45: uar.v1.DryRunReport.steps:type_name -> uar.v1.PlannedStep
-	8,  // 46: uar.v1.DryRunReport.routes:type_name -> uar.v1.RouteDecision
-	0,  // 47: uar.v1.DryRunReport.estimated_cost_max:type_name -> uar.v1.Money
-	74, // 48: uar.v1.Approval.summary:type_name -> google.protobuf.Struct
-	39, // 49: uar.v1.ListApprovalsResponse.approvals:type_name -> uar.v1.Approval
-	74, // 50: uar.v1.AuditRecord.details:type_name -> google.protobuf.Struct
-	45, // 51: uar.v1.ExportAuditResponse.records:type_name -> uar.v1.AuditRecord
-	74, // 52: uar.v1.RegisterPluginRequest.manifest:type_name -> google.protobuf.Struct
-	75, // 53: uar.v1.PluginVersion.created_at:type_name -> google.protobuf.Timestamp
-	49, // 54: uar.v1.ListPluginsResponse.plugins:type_name -> uar.v1.PluginVersion
-	55, // 55: uar.v1.RuntimeInfo.components:type_name -> uar.v1.ComponentStatus
-	0,  // 56: uar.v1.UsageRecord.cost:type_name -> uar.v1.Money
-	57, // 57: uar.v1.ListUsageResponse.records:type_name -> uar.v1.UsageRecord
-	0,  // 58: uar.v1.ListUsageResponse.total_cost:type_name -> uar.v1.Money
-	60, // 59: uar.v1.ListApiKeysResponse.keys:type_name -> uar.v1.ApiKeyInfo
-	60, // 60: uar.v1.CreatedApiKey.key:type_name -> uar.v1.ApiKeyInfo
-	68, // 61: uar.v1.OidcIssuerInfo.mappings:type_name -> uar.v1.RoleMapping
-	67, // 62: uar.v1.AccessPolicy.roles:type_name -> uar.v1.RoleInfo
-	69, // 63: uar.v1.AccessPolicy.oidc:type_name -> uar.v1.OidcIssuerInfo
-	74, // 64: uar.v1.LogRecord.fields:type_name -> google.protobuf.Struct
-	71, // 65: uar.v1.ListLogsResponse.records:type_name -> uar.v1.LogRecord
-	6,  // 66: uar.v1.Runtime.Infer:input_type -> uar.v1.InferenceRequest
-	6,  // 67: uar.v1.Runtime.InferStream:input_type -> uar.v1.InferenceRequest
-	9,  // 68: uar.v1.Runtime.ExecuteTool:input_type -> uar.v1.ToolRequest
-	13, // 69: uar.v1.Runtime.ListTools:input_type -> uar.v1.ListToolsRequest
-	16, // 70: uar.v1.Runtime.ListModels:input_type -> uar.v1.ListModelsRequest
-	18, // 71: uar.v1.Runtime.RegisterAgent:input_type -> uar.v1.RegisterAgentRequest
-	20, // 72: uar.v1.Runtime.StartRun:input_type -> uar.v1.RunRequest
-	22, // 73: uar.v1.Runtime.GetRun:input_type -> uar.v1.GetRunRequest
-	23, // 74: uar.v1.Runtime.WatchRun:input_type -> uar.v1.WatchRunRequest
-	24, // 75: uar.v1.Runtime.CancelRun:input_type -> uar.v1.CancelRunRequest
-	25, // 76: uar.v1.Runtime.ResolveRun:input_type -> uar.v1.ResolveRunRequest
-	35, // 77: uar.v1.Runtime.DryRun:input_type -> uar.v1.DryRunRequest
-	38, // 78: uar.v1.Runtime.DecideApproval:input_type -> uar.v1.ApprovalDecision
-	40, // 79: uar.v1.Runtime.ListApprovals:input_type -> uar.v1.ListApprovalsRequest
-	42, // 80: uar.v1.Runtime.GetApproval:input_type -> uar.v1.GetApprovalRequest
-	43, // 81: uar.v1.Runtime.VerifyAudit:input_type -> uar.v1.VerifyAuditRequest
-	46, // 82: uar.v1.Runtime.ExportAudit:input_type -> uar.v1.ExportAuditRequest
-	54, // 83: uar.v1.Runtime.GetRuntimeInfo:input_type -> uar.v1.GetRuntimeInfoRequest
-	58, // 84: uar.v1.Runtime.ListUsage:input_type -> uar.v1.ListUsageRequest
-	61, // 85: uar.v1.Runtime.ListApiKeys:input_type -> uar.v1.ListApiKeysRequest
-	63, // 86: uar.v1.Runtime.CreateApiKey:input_type -> uar.v1.CreateApiKeyRequest
-	65, // 87: uar.v1.Runtime.RevokeApiKey:input_type -> uar.v1.RevokeApiKeyRequest
-	66, // 88: uar.v1.Runtime.GetAccessPolicy:input_type -> uar.v1.GetAccessPolicyRequest
-	72, // 89: uar.v1.Runtime.ListLogs:input_type -> uar.v1.ListLogsRequest
-	48, // 90: uar.v1.Runtime.RegisterPlugin:input_type -> uar.v1.RegisterPluginRequest
-	50, // 91: uar.v1.Runtime.ListPlugins:input_type -> uar.v1.ListPluginsRequest
-	52, // 92: uar.v1.Runtime.ActivatePlugin:input_type -> uar.v1.ActivatePluginRequest
-	53, // 93: uar.v1.Runtime.RollbackPlugin:input_type -> uar.v1.RollbackPluginRequest
-	7,  // 94: uar.v1.Runtime.Infer:output_type -> uar.v1.InferenceResponse
-	34, // 95: uar.v1.Runtime.InferStream:output_type -> uar.v1.Event
-	11, // 96: uar.v1.Runtime.ExecuteTool:output_type -> uar.v1.ToolResult
-	14, // 97: uar.v1.Runtime.ListTools:output_type -> uar.v1.ListToolsResponse
-	17, // 98: uar.v1.Runtime.ListModels:output_type -> uar.v1.ListModelsResponse
-	19, // 99: uar.v1.Runtime.RegisterAgent:output_type -> uar.v1.AgentVersion
-	21, // 100: uar.v1.Runtime.StartRun:output_type -> uar.v1.Run
-	21, // 101: uar.v1.Runtime.GetRun:output_type -> uar.v1.Run
-	34, // 102: uar.v1.Runtime.WatchRun:output_type -> uar.v1.Event
-	21, // 103: uar.v1.Runtime.CancelRun:output_type -> uar.v1.Run
-	21, // 104: uar.v1.Runtime.ResolveRun:output_type -> uar.v1.Run
-	37, // 105: uar.v1.Runtime.DryRun:output_type -> uar.v1.DryRunReport
-	39, // 106: uar.v1.Runtime.DecideApproval:output_type -> uar.v1.Approval
-	41, // 107: uar.v1.Runtime.ListApprovals:output_type -> uar.v1.ListApprovalsResponse
-	39, // 108: uar.v1.Runtime.GetApproval:output_type -> uar.v1.Approval
-	44, // 109: uar.v1.Runtime.VerifyAudit:output_type -> uar.v1.AuditVerification
-	47, // 110: uar.v1.Runtime.ExportAudit:output_type -> uar.v1.ExportAuditResponse
-	56, // 111: uar.v1.Runtime.GetRuntimeInfo:output_type -> uar.v1.RuntimeInfo
-	59, // 112: uar.v1.Runtime.ListUsage:output_type -> uar.v1.ListUsageResponse
-	62, // 113: uar.v1.Runtime.ListApiKeys:output_type -> uar.v1.ListApiKeysResponse
-	64, // 114: uar.v1.Runtime.CreateApiKey:output_type -> uar.v1.CreatedApiKey
-	60, // 115: uar.v1.Runtime.RevokeApiKey:output_type -> uar.v1.ApiKeyInfo
-	70, // 116: uar.v1.Runtime.GetAccessPolicy:output_type -> uar.v1.AccessPolicy
-	73, // 117: uar.v1.Runtime.ListLogs:output_type -> uar.v1.ListLogsResponse
-	49, // 118: uar.v1.Runtime.RegisterPlugin:output_type -> uar.v1.PluginVersion
-	51, // 119: uar.v1.Runtime.ListPlugins:output_type -> uar.v1.ListPluginsResponse
-	49, // 120: uar.v1.Runtime.ActivatePlugin:output_type -> uar.v1.PluginVersion
-	49, // 121: uar.v1.Runtime.RollbackPlugin:output_type -> uar.v1.PluginVersion
-	94, // [94:122] is the sub-list for method output_type
-	66, // [66:94] is the sub-list for method input_type
-	66, // [66:66] is the sub-list for extension type_name
-	66, // [66:66] is the sub-list for extension extendee
-	0,  // [0:66] is the sub-list for field type_name
+	0,   // 0: uar.v1.Usage.cost:type_name -> uar.v1.Money
+	87,  // 1: uar.v1.Error.details:type_name -> google.protobuf.Struct
+	87,  // 2: uar.v1.ToolCallRequest.args:type_name -> google.protobuf.Struct
+	3,   // 3: uar.v1.ChatMessage.tool_calls:type_name -> uar.v1.ToolCallRequest
+	87,  // 4: uar.v1.GenerationParams.response_schema:type_name -> google.protobuf.Struct
+	4,   // 5: uar.v1.InferenceRequest.messages:type_name -> uar.v1.ChatMessage
+	5,   // 6: uar.v1.InferenceRequest.params:type_name -> uar.v1.GenerationParams
+	87,  // 7: uar.v1.InferenceRequest.extensions:type_name -> google.protobuf.Struct
+	3,   // 8: uar.v1.InferenceResponse.tool_calls:type_name -> uar.v1.ToolCallRequest
+	1,   // 9: uar.v1.InferenceResponse.usage:type_name -> uar.v1.Usage
+	87,  // 10: uar.v1.InferenceResponse.output:type_name -> google.protobuf.Struct
+	8,   // 11: uar.v1.InferenceResponse.route:type_name -> uar.v1.RouteDecision
+	87,  // 12: uar.v1.ToolRequest.args:type_name -> google.protobuf.Struct
+	87,  // 13: uar.v1.ContentBlock.json:type_name -> google.protobuf.Struct
+	10,  // 14: uar.v1.ToolResult.content:type_name -> uar.v1.ContentBlock
+	87,  // 15: uar.v1.ToolResult.structured:type_name -> google.protobuf.Struct
+	87,  // 16: uar.v1.ToolInfo.input_schema:type_name -> google.protobuf.Struct
+	12,  // 17: uar.v1.ListToolsResponse.tools:type_name -> uar.v1.ToolInfo
+	15,  // 18: uar.v1.ListModelsResponse.models:type_name -> uar.v1.ModelInfo
+	87,  // 19: uar.v1.RegisterAgentRequest.definition:type_name -> google.protobuf.Struct
+	88,  // 20: uar.v1.AgentVersion.created_at:type_name -> google.protobuf.Timestamp
+	87,  // 21: uar.v1.RunRequest.input:type_name -> google.protobuf.Struct
+	87,  // 22: uar.v1.Run.output:type_name -> google.protobuf.Struct
+	2,   // 23: uar.v1.Run.error:type_name -> uar.v1.Error
+	1,   // 24: uar.v1.Run.usage:type_name -> uar.v1.Usage
+	88,  // 25: uar.v1.Run.created_at:type_name -> google.protobuf.Timestamp
+	88,  // 26: uar.v1.Run.updated_at:type_name -> google.protobuf.Timestamp
+	87,  // 27: uar.v1.ToolCallEvent.args:type_name -> google.protobuf.Struct
+	87,  // 28: uar.v1.Completed.output:type_name -> google.protobuf.Struct
+	88,  // 29: uar.v1.Event.ts:type_name -> google.protobuf.Timestamp
+	26,  // 30: uar.v1.Event.started:type_name -> uar.v1.Started
+	27,  // 31: uar.v1.Event.token:type_name -> uar.v1.TokenDelta
+	28,  // 32: uar.v1.Event.tool_call:type_name -> uar.v1.ToolCallEvent
+	29,  // 33: uar.v1.Event.tool_result:type_name -> uar.v1.ToolResultEvent
+	30,  // 34: uar.v1.Event.node_started:type_name -> uar.v1.NodeStarted
+	31,  // 35: uar.v1.Event.node_completed:type_name -> uar.v1.NodeCompleted
+	1,   // 36: uar.v1.Event.usage:type_name -> uar.v1.Usage
+	32,  // 37: uar.v1.Event.approval_required:type_name -> uar.v1.ApprovalRequired
+	2,   // 38: uar.v1.Event.error:type_name -> uar.v1.Error
+	33,  // 39: uar.v1.Event.completed:type_name -> uar.v1.Completed
+	87,  // 40: uar.v1.DryRunRequest.definition:type_name -> google.protobuf.Struct
+	6,   // 41: uar.v1.DryRunRequest.inference:type_name -> uar.v1.InferenceRequest
+	87,  // 42: uar.v1.DryRunRequest.input:type_name -> google.protobuf.Struct
+	87,  // 43: uar.v1.DryRunRequest.fixtures:type_name -> google.protobuf.Struct
+	87,  // 44: uar.v1.PlannedStep.output:type_name -> google.protobuf.Struct
+	36,  // 45: uar.v1.DryRunReport.steps:type_name -> uar.v1.PlannedStep
+	8,   // 46: uar.v1.DryRunReport.routes:type_name -> uar.v1.RouteDecision
+	0,   // 47: uar.v1.DryRunReport.estimated_cost_max:type_name -> uar.v1.Money
+	87,  // 48: uar.v1.Approval.summary:type_name -> google.protobuf.Struct
+	39,  // 49: uar.v1.ListApprovalsResponse.approvals:type_name -> uar.v1.Approval
+	87,  // 50: uar.v1.AuditRecord.details:type_name -> google.protobuf.Struct
+	45,  // 51: uar.v1.ExportAuditResponse.records:type_name -> uar.v1.AuditRecord
+	87,  // 52: uar.v1.RegisterPluginRequest.manifest:type_name -> google.protobuf.Struct
+	88,  // 53: uar.v1.PluginVersion.created_at:type_name -> google.protobuf.Timestamp
+	49,  // 54: uar.v1.ListPluginsResponse.plugins:type_name -> uar.v1.PluginVersion
+	55,  // 55: uar.v1.RuntimeInfo.components:type_name -> uar.v1.ComponentStatus
+	0,   // 56: uar.v1.UsageRecord.cost:type_name -> uar.v1.Money
+	57,  // 57: uar.v1.ListUsageResponse.records:type_name -> uar.v1.UsageRecord
+	0,   // 58: uar.v1.ListUsageResponse.total_cost:type_name -> uar.v1.Money
+	60,  // 59: uar.v1.ListApiKeysResponse.keys:type_name -> uar.v1.ApiKeyInfo
+	60,  // 60: uar.v1.CreatedApiKey.key:type_name -> uar.v1.ApiKeyInfo
+	68,  // 61: uar.v1.OidcIssuerInfo.mappings:type_name -> uar.v1.RoleMapping
+	67,  // 62: uar.v1.AccessPolicy.roles:type_name -> uar.v1.RoleInfo
+	69,  // 63: uar.v1.AccessPolicy.oidc:type_name -> uar.v1.OidcIssuerInfo
+	87,  // 64: uar.v1.LogRecord.fields:type_name -> google.protobuf.Struct
+	71,  // 65: uar.v1.ListLogsResponse.records:type_name -> uar.v1.LogRecord
+	76,  // 66: uar.v1.StsInfo.keys:type_name -> uar.v1.SigningKeyInfo
+	78,  // 67: uar.v1.AppRegistration.secrets:type_name -> uar.v1.AppSecretInfo
+	79,  // 68: uar.v1.ListAppsResponse.apps:type_name -> uar.v1.AppRegistration
+	79,  // 69: uar.v1.AppCredentials.app:type_name -> uar.v1.AppRegistration
+	6,   // 70: uar.v1.Runtime.Infer:input_type -> uar.v1.InferenceRequest
+	6,   // 71: uar.v1.Runtime.InferStream:input_type -> uar.v1.InferenceRequest
+	9,   // 72: uar.v1.Runtime.ExecuteTool:input_type -> uar.v1.ToolRequest
+	13,  // 73: uar.v1.Runtime.ListTools:input_type -> uar.v1.ListToolsRequest
+	16,  // 74: uar.v1.Runtime.ListModels:input_type -> uar.v1.ListModelsRequest
+	18,  // 75: uar.v1.Runtime.RegisterAgent:input_type -> uar.v1.RegisterAgentRequest
+	20,  // 76: uar.v1.Runtime.StartRun:input_type -> uar.v1.RunRequest
+	22,  // 77: uar.v1.Runtime.GetRun:input_type -> uar.v1.GetRunRequest
+	23,  // 78: uar.v1.Runtime.WatchRun:input_type -> uar.v1.WatchRunRequest
+	24,  // 79: uar.v1.Runtime.CancelRun:input_type -> uar.v1.CancelRunRequest
+	25,  // 80: uar.v1.Runtime.ResolveRun:input_type -> uar.v1.ResolveRunRequest
+	35,  // 81: uar.v1.Runtime.DryRun:input_type -> uar.v1.DryRunRequest
+	38,  // 82: uar.v1.Runtime.DecideApproval:input_type -> uar.v1.ApprovalDecision
+	40,  // 83: uar.v1.Runtime.ListApprovals:input_type -> uar.v1.ListApprovalsRequest
+	42,  // 84: uar.v1.Runtime.GetApproval:input_type -> uar.v1.GetApprovalRequest
+	43,  // 85: uar.v1.Runtime.VerifyAudit:input_type -> uar.v1.VerifyAuditRequest
+	46,  // 86: uar.v1.Runtime.ExportAudit:input_type -> uar.v1.ExportAuditRequest
+	54,  // 87: uar.v1.Runtime.GetRuntimeInfo:input_type -> uar.v1.GetRuntimeInfoRequest
+	58,  // 88: uar.v1.Runtime.ListUsage:input_type -> uar.v1.ListUsageRequest
+	61,  // 89: uar.v1.Runtime.ListApiKeys:input_type -> uar.v1.ListApiKeysRequest
+	63,  // 90: uar.v1.Runtime.CreateApiKey:input_type -> uar.v1.CreateApiKeyRequest
+	65,  // 91: uar.v1.Runtime.RevokeApiKey:input_type -> uar.v1.RevokeApiKeyRequest
+	66,  // 92: uar.v1.Runtime.GetAccessPolicy:input_type -> uar.v1.GetAccessPolicyRequest
+	72,  // 93: uar.v1.Runtime.ListLogs:input_type -> uar.v1.ListLogsRequest
+	74,  // 94: uar.v1.Runtime.GetStsInfo:input_type -> uar.v1.GetStsInfoRequest
+	80,  // 95: uar.v1.Runtime.ListApps:input_type -> uar.v1.ListAppsRequest
+	82,  // 96: uar.v1.Runtime.RegisterApp:input_type -> uar.v1.RegisterAppRequest
+	84,  // 97: uar.v1.Runtime.CreateAppSecret:input_type -> uar.v1.CreateAppSecretRequest
+	85,  // 98: uar.v1.Runtime.RevokeAppSecret:input_type -> uar.v1.RevokeAppSecretRequest
+	86,  // 99: uar.v1.Runtime.DisableApp:input_type -> uar.v1.DisableAppRequest
+	75,  // 100: uar.v1.Runtime.RotateSigningKey:input_type -> uar.v1.RotateSigningKeyRequest
+	48,  // 101: uar.v1.Runtime.RegisterPlugin:input_type -> uar.v1.RegisterPluginRequest
+	50,  // 102: uar.v1.Runtime.ListPlugins:input_type -> uar.v1.ListPluginsRequest
+	52,  // 103: uar.v1.Runtime.ActivatePlugin:input_type -> uar.v1.ActivatePluginRequest
+	53,  // 104: uar.v1.Runtime.RollbackPlugin:input_type -> uar.v1.RollbackPluginRequest
+	7,   // 105: uar.v1.Runtime.Infer:output_type -> uar.v1.InferenceResponse
+	34,  // 106: uar.v1.Runtime.InferStream:output_type -> uar.v1.Event
+	11,  // 107: uar.v1.Runtime.ExecuteTool:output_type -> uar.v1.ToolResult
+	14,  // 108: uar.v1.Runtime.ListTools:output_type -> uar.v1.ListToolsResponse
+	17,  // 109: uar.v1.Runtime.ListModels:output_type -> uar.v1.ListModelsResponse
+	19,  // 110: uar.v1.Runtime.RegisterAgent:output_type -> uar.v1.AgentVersion
+	21,  // 111: uar.v1.Runtime.StartRun:output_type -> uar.v1.Run
+	21,  // 112: uar.v1.Runtime.GetRun:output_type -> uar.v1.Run
+	34,  // 113: uar.v1.Runtime.WatchRun:output_type -> uar.v1.Event
+	21,  // 114: uar.v1.Runtime.CancelRun:output_type -> uar.v1.Run
+	21,  // 115: uar.v1.Runtime.ResolveRun:output_type -> uar.v1.Run
+	37,  // 116: uar.v1.Runtime.DryRun:output_type -> uar.v1.DryRunReport
+	39,  // 117: uar.v1.Runtime.DecideApproval:output_type -> uar.v1.Approval
+	41,  // 118: uar.v1.Runtime.ListApprovals:output_type -> uar.v1.ListApprovalsResponse
+	39,  // 119: uar.v1.Runtime.GetApproval:output_type -> uar.v1.Approval
+	44,  // 120: uar.v1.Runtime.VerifyAudit:output_type -> uar.v1.AuditVerification
+	47,  // 121: uar.v1.Runtime.ExportAudit:output_type -> uar.v1.ExportAuditResponse
+	56,  // 122: uar.v1.Runtime.GetRuntimeInfo:output_type -> uar.v1.RuntimeInfo
+	59,  // 123: uar.v1.Runtime.ListUsage:output_type -> uar.v1.ListUsageResponse
+	62,  // 124: uar.v1.Runtime.ListApiKeys:output_type -> uar.v1.ListApiKeysResponse
+	64,  // 125: uar.v1.Runtime.CreateApiKey:output_type -> uar.v1.CreatedApiKey
+	60,  // 126: uar.v1.Runtime.RevokeApiKey:output_type -> uar.v1.ApiKeyInfo
+	70,  // 127: uar.v1.Runtime.GetAccessPolicy:output_type -> uar.v1.AccessPolicy
+	73,  // 128: uar.v1.Runtime.ListLogs:output_type -> uar.v1.ListLogsResponse
+	77,  // 129: uar.v1.Runtime.GetStsInfo:output_type -> uar.v1.StsInfo
+	81,  // 130: uar.v1.Runtime.ListApps:output_type -> uar.v1.ListAppsResponse
+	83,  // 131: uar.v1.Runtime.RegisterApp:output_type -> uar.v1.AppCredentials
+	83,  // 132: uar.v1.Runtime.CreateAppSecret:output_type -> uar.v1.AppCredentials
+	79,  // 133: uar.v1.Runtime.RevokeAppSecret:output_type -> uar.v1.AppRegistration
+	79,  // 134: uar.v1.Runtime.DisableApp:output_type -> uar.v1.AppRegistration
+	77,  // 135: uar.v1.Runtime.RotateSigningKey:output_type -> uar.v1.StsInfo
+	49,  // 136: uar.v1.Runtime.RegisterPlugin:output_type -> uar.v1.PluginVersion
+	51,  // 137: uar.v1.Runtime.ListPlugins:output_type -> uar.v1.ListPluginsResponse
+	49,  // 138: uar.v1.Runtime.ActivatePlugin:output_type -> uar.v1.PluginVersion
+	49,  // 139: uar.v1.Runtime.RollbackPlugin:output_type -> uar.v1.PluginVersion
+	105, // [105:140] is the sub-list for method output_type
+	70,  // [70:105] is the sub-list for method input_type
+	70,  // [70:70] is the sub-list for extension type_name
+	70,  // [70:70] is the sub-list for extension extendee
+	0,   // [0:70] is the sub-list for field type_name
 }
 
 func init() { file_uarpb_v1_runtime_proto_init() }
@@ -6249,7 +7222,7 @@ func file_uarpb_v1_runtime_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_uarpb_v1_runtime_proto_rawDesc), len(file_uarpb_v1_runtime_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   74,
+			NumMessages:   87,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

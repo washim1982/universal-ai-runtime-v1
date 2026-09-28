@@ -114,6 +114,12 @@ redaction: {builtin: [email, card_number, us_ssn], egress_classes: [cloud]}
 # Delete old data automatically (days). The audit hash chain stays verifiable after pruning.
 retention: {enabled: false, runs_days: 90, usage_days: 400, audit_days: 400}
 
+# Built-in token service: registered applications exchange client_id + client_secret for short-lived
+# access tokens at POST /api/v1/oauth/token (OAuth 2.0 client_credentials). require_tokens: true
+# refuses API keys, so every call needs a token. key_encryption_env encrypts the signing keys at rest.
+sts: {enabled: true, default_token_ttl_s: 900, max_token_ttl_s: 3600, require_tokens: false}
+#      key_encryption_env: UAR_STS_KEK
+
 # Administration API (used by UAR Admin, admin-app/). Tenants whose admins may read process-wide
 # service logs; list only the operator's tenant when several organisations share a runtime.
 admin: {platform_tenants: [acme]}

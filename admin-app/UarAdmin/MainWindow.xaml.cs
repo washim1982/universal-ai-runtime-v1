@@ -74,6 +74,7 @@ public partial class MainWindow : Window
             {
                 "overview" => new OverviewPage(shell),
                 "keys" => new KeysPage(shell),
+                "apps" => new AppsPage(shell),
                 "api" => new ApiReferencePage(shell),
                 "usage" => new UsagePage(shell),
                 "approvals" => new ApprovalsPage(shell),

@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import re
 import secrets
 import time
+import urllib.parse
 from pathlib import Path
 from typing import Any, AsyncIterator, Awaitable, Callable
 
@@ -21,6 +23,7 @@ from ..errors import UARError
 from ..governance import Principal
 from ..observability import REGISTRY, REQUEST_SECONDS, REQUESTS, get_tracer
 from ..service import RuntimeService
+from ..sts import OAuthError
 from .codec import check_response, event_json, validate_request
 
 log = logging.getLogger("uar.http")
@@ -289,6 +292,93 @@ def create_app(svc: RuntimeService) -> FastAPI:
     @app.get("/api/v1/admin/access")
     async def access_policy(request: Request):
         return await call(request, lambda p, r: svc.access_policy(p), pb.AccessPolicy)
+
+    # ---------------------------------------------------------------- token service (STS)
+
+    def base_url(request: Request) -> str:
+        return s.server.public_url or str(request.base_url).rstrip("/")
+
+    @app.post("/api/v1/oauth/token")
+    async def oauth_token(request: Request):
+        """OAuth 2.0 client_credentials (RFC 6749 4.4). Errors use the RFC format, not UAR's."""
+        raw = await request.body()
+        if len(raw) > 16_384:
+            raise UARError("payload_too_large", "token request too large")
+        ctype = request.headers.get("content-type", "")
+        form: dict[str, str] = {}
+        try:
+            if "json" in ctype:
+                data = json.loads(raw or b"{}")
+                form = {k: str(v) for k, v in data.items() if isinstance(v, (str, int))} if isinstance(data, dict) else {}
+            else:
+                form = {k: v[0] for k, v in urllib.parse.parse_qs(raw.decode("utf-8"), keep_blank_values=True).items()}
+        except (ValueError, UnicodeDecodeError):
+            return oauth_error(OAuthError("invalid_request", "body must be form-encoded or JSON"))
+        cid, secret = form.get("client_id", ""), form.get("client_secret", "")
+        auth = request.headers.get("authorization", "")
+        if auth.lower().startswith("basic "):
+            try:
+                user, _, pw = base64.b64decode(auth[6:].strip()).decode("utf-8").partition(":")
+                cid, secret = urllib.parse.unquote_plus(user), urllib.parse.unquote_plus(pw)
+            except (ValueError, UnicodeDecodeError):
+                return oauth_error(OAuthError("invalid_client", "malformed Basic credentials", 401))
+        try:
+            tok = await svc.sts.issue(cid, secret, form.get("scope", ""), form.get("grant_type", ""))
+        except OAuthError as e:
+            return oauth_error(e)
+        return JSONResponse(tok, headers={"Cache-Control": "no-store", "Pragma": "no-cache"})
+
+    def oauth_error(e: OAuthError) -> JSONResponse:
+        headers = {"Cache-Control": "no-store", "Pragma": "no-cache"}
+        if e.status == 401:
+            headers["WWW-Authenticate"] = 'Basic realm="uar"'
+        return JSONResponse({"error": e.error, "error_description": e.description}, status_code=e.status,
+                            headers=headers)
+
+    @app.get("/.well-known/jwks.json")
+    async def jwks():
+        return JSONResponse(svc.sts.jwks(), headers={"Cache-Control": "public, max-age=300"})
+
+    @app.get("/.well-known/openid-configuration")
+    async def sts_discovery(request: Request):
+        return svc.sts.discovery(base_url(request))
+
+    @app.get("/api/v1/admin/sts")
+    async def sts_info(request: Request):
+        return await call(request, lambda p, r: svc.sts_info(p, base_url(request)), pb.StsInfo)
+
+    @app.post("/api/v1/admin/sts/rotate-key")
+    async def rotate_key(request: Request):
+        await body(request, pb.RotateSigningKeyRequest)
+        return await call(request, lambda p, r: svc.rotate_signing_key(p, r, base_url(request)), pb.StsInfo)
+
+    @app.get("/api/v1/admin/apps")
+    async def list_apps(request: Request):
+        inc = request.query_params.get("include_disabled", "false").lower() in ("1", "true", "yes")
+        return await call(request, lambda p, r: svc.list_apps(p, inc), pb.ListAppsResponse)
+
+    @app.post("/api/v1/admin/apps")
+    async def register_app(request: Request):
+        req = await body(request, pb.RegisterAppRequest)
+        return await call(request, lambda p, r: svc.register_app(p, req, r, base_url(request)), pb.AppCredentials)
+
+    @app.post("/api/v1/admin/apps/{client_id}/secrets")
+    async def create_app_secret(request: Request, client_id: str):
+        req = await body(request, pb.CreateAppSecretRequest)
+        days = int(req["expires_in_days"]) if "expires_in_days" in req else 365
+        return await call(request, lambda p, r: svc.create_app_secret(p, client_id, days, r, base_url(request)),
+                          pb.AppCredentials)
+
+    @app.post("/api/v1/admin/apps/{client_id}/secrets/{secret_id}/revoke")
+    async def revoke_app_secret(request: Request, client_id: str, secret_id: str):
+        await body(request, pb.RevokeAppSecretRequest)
+        return await call(request, lambda p, r: svc.revoke_app_secret(p, client_id, secret_id, r), pb.AppRegistration)
+
+    @app.post("/api/v1/admin/apps/{client_id}/disable")
+    async def disable_app(request: Request, client_id: str):
+        req = await body(request, pb.DisableAppRequest)
+        return await call(request, lambda p, r: svc.disable_app(p, client_id, req.get("reason", ""), r),
+                          pb.AppRegistration)
 
     @app.get("/api/v1/admin/logs")
     async def list_logs(request: Request):

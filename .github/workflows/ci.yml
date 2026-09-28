@@ -60,6 +60,14 @@ jobs:
         run: npm ci || npm install && npm run build && npm test
       - name: Python SDK against uar-mock
         run: python -m pytest -q -o addopts="" sdks/python/tests
+      - name: Language samples compile (samples/)
+        run: |
+          python -m py_compile samples/python/inference.py
+          (cd samples/typescript && npm install --no-audit --no-fund && node --check inference.ts)
+          (cd samples/go && go vet .)
+          (cd samples/rust && cargo build --quiet)
+          dotnet build samples/dotnet
+          mvn -q -B -f sdks/java install -DskipTests && mvn -q -B -f samples/java compile
       - name: Runtime (unit, contract, integration, recovery, security, dry-run, live-SDK conformance)
         run: python -m pytest -q
       - name: Container image and sandbox

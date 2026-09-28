@@ -21,7 +21,7 @@ PERMISSIONS = {
     "inference:local", "inference:cloud", "inference:enterprise",
     "agents:register", "agents:read", "runs:start", "runs:read", "runs:cancel", "runs:resolve",
     "dryrun", "approvals:read", "approvals:decide", "plugins:manage", "audit:read", "usage:read",
-    "keys:manage", "logs:read", "admin",
+    "keys:manage", "apps:manage", "logs:read", "admin",
 }
 DEFAULT_ROLES: dict[str, list[str]] = {
     "viewer": ["models:list", "tools:list", "agents:read", "runs:read"],
@@ -47,6 +47,7 @@ class ServerCfg(Strict):
     max_body_bytes: int = 1_048_576
     public_metrics: bool = True
     cors_origins: list[str] = []
+    public_url: str | None = None   # how clients reach this runtime (token URL shown to apps); default from host/port
 
 
 class WorkerCfg(Strict):
@@ -312,6 +313,30 @@ class LimitsCfg(Strict):
     auto_tool_max_steps: int = 6
 
 
+class StsCfg(Strict):
+    """Built-in security token service: registered applications exchange their client credentials
+    for short-lived signed access tokens (OAuth 2.0 client_credentials grant)."""
+    enabled: bool = True
+    issuer: str = "urn:uar:sts"
+    audience: str = "uar"
+    default_token_ttl_s: int = 900
+    max_token_ttl_s: int = 3600
+    # Environment variable holding a secret that encrypts the signing keys stored in the database.
+    key_encryption_env: str | None = None
+    # true: API keys are refused everywhere; callers need an STS (or OIDC) access token.
+    require_tokens: bool = False
+    # A rotated-in signing key is used for signing only after this delay, so every replica already
+    # knows its public key when the first token signed with it arrives.
+    key_activation_delay_s: float = 15.0
+    max_failed_attempts: int = 10     # per client id per minute, then the client is throttled
+
+    @model_validator(mode="after")
+    def _check(self) -> "StsCfg":
+        if not 60 <= self.default_token_ttl_s <= self.max_token_ttl_s <= 86_400:
+            raise ValueError("sts: need 60 <= default_token_ttl_s <= max_token_ttl_s <= 86400")
+        return self
+
+
 class AdminCfg(Strict):
     # Tenants whose administrators may read process-wide data (service logs, runtime components).
     # Empty = any tenant's admins: suitable only when one organisation runs the runtime.
@@ -372,6 +397,7 @@ class Settings(Strict):
     limits: LimitsCfg = LimitsCfg()
     approvals: ApprovalsCfg = ApprovalsCfg()
     admin: AdminCfg = AdminCfg()
+    sts: StsCfg = StsCfg()
     redaction: RedactionCfg = RedactionCfg()
     retention: RetentionCfg = RetentionCfg()
     agents_dir: str | None = None  # register *.yaml agents at startup for every tenant

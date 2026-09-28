@@ -55,4 +55,5 @@ Only **live-tested** and **fixture-tested** entries may be claimed as supported.
 | Content redaction (audit, event log, approval summaries, prompts to chosen model classes) | fixture-tested (pattern-based detectors) |
 | Retention and deletion jobs (runs, usage, idempotency, audit with chain anchor) | fixture-tested |
 | Administration API: runtime info, inference history, API keys (create/revoke, hot reload), access policy, service logs | fixture-tested (`test_admin_api.py`) |
+| Built-in token service (STS): application registration, OAuth 2.0 client credentials, ES256 access tokens on every endpoint, secret rotation, instant disable, signing-key rotation, encrypted keys, API-keys-off mode; SDK support (Python, TypeScript) | fixture-tested (`test_sts.py`, 14 tests) + live-tested on the Docker runtime (register, token, inference) |
 | Windows admin app (UAR Admin, WPF) | built and exercised against a live 0.9 runtime: page snapshots and a harness driving start / stop / restart, approvals, keys, audit and logs |

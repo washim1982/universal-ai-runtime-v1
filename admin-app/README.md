@@ -6,12 +6,13 @@ A native Windows app (WPF, .NET 8) for everyday administration of a Universal AI
 |---|---|
 | **Overview** | See if the runtime is up, its version, uptime and schema; **Start**, **Stop**, **Restart**; health of every component (database, model providers, MCP tool servers, plugins, SSO, worker); approvals waiting and the last 24 hours of model calls, tokens and cost |
 | **Access & keys** | List the tenant's API keys (config-file keys read-only); **create** a key with chosen roles and expiry (the secret is shown once); **revoke** a key (effective at once); roles and their permissions; SSO group and service-account mappings |
+| **Applications** | Register programs for the built-in token service: each gets a client ID and secret (shown once) and exchanges them for short-lived access tokens; **Get a token and test it**, ready-made PowerShell / curl / Python / TypeScript examples, rotate or revoke client secrets, disable an application (its tokens stop at once), rotate the token signing key. See [docs/sts.md](../docs/sts.md) |
 | **API reference** | Every HTTP endpoint from the live `openapi.json`, with request and response shapes, a **Try it** panel that calls the runtime with your connection's key, and a ready-made `curl` command |
 | **Inference history** | Every model call of the tenant (who, provider, model, tokens, cost, run), filters, totals, CSV export. Prompts and outputs are never stored or shown |
 | **Approvals** | Runs paused for a human decision, with the exact action and arguments; **Approve** or **Reject** with a comment. The decision is bound to the arguments you saw |
 | **Audit trail** | The tenant's tamper-evident audit log, filter, entry details with hashes, **Verify chain**, export as JSON Lines or CSV |
 | **Service logs** | Live runtime logs (via the API), the console output of a runtime started by the app, or the Docker container's log; level filter, search, pause, save |
-| **Settings** | Connections (runtime URL + API key, one per tenant), the runtime folder for Start/Restart, refresh interval |
+| **Settings** | Connections (runtime URL plus an API key **or** a registered application's client ID and secret, one per tenant), the runtime folder for Start/Restart, refresh interval |
 
 ## Run it
 
@@ -47,7 +48,9 @@ after updating the project: `docker build -f deploy/docker/Dockerfile -t uar-run
 
 - The app only uses the runtime's authenticated API; it has no database access. What a connection
   can do is exactly what its API key's roles allow in that tenant.
-- Keys are saved in `%APPDATA%\UAR\Admin\settings.json` encrypted with Windows DPAPI for your
+- A connection can sign in as a registered application (client credentials): UAR Admin gets and
+  renews access tokens itself, so it also works on runtimes with `sts.require_tokens: true`.
+- Keys and client secrets are saved in `%APPDATA%\UAR\Admin\settings.json` encrypted with Windows DPAPI for your
   Windows account; copying the file to another account or PC does not reveal them.
 - Created keys are shown once. The runtime stores only their SHA-256.
 - Service logs and component details are process-wide, so the runtime shows them only to admins of

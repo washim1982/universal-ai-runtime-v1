@@ -17,6 +17,7 @@ public partial class ApiReferencePage : UserControl, IPage
     JsonNode? spec;
     string rawSpec = "";
     List<Op> ops = new();
+    string exampleModel = "local:ollama/granite4";
 
     public sealed record Op(string Method, string Path, string OperationId, string Description, JsonNode Node)
     {
@@ -48,6 +49,13 @@ public partial class ApiReferencePage : UserControl, IPage
                 foreach (var (method, op) in item!.AsObject())
                     ops.Add(new Op(method.ToUpperInvariant(), path, op.S("operationId"), op.S("description"), op!));
             ops = ops.OrderBy(o => o.Path).ThenBy(o => o.Method).ToList();
+            try
+            {
+                var models = (await shell.Api.GetAsync("api/v1/models")).Arr("models").ToList();
+                var pick = models.FirstOrDefault(m => m.B("available") && m.S("model_class") == "local") ?? models.FirstOrDefault(m => m.B("available"));
+                if (pick != null) exampleModel = pick.S("name");
+            }
+            catch (ApiException) { }
             Subtitle.Text = $"{spec["info"].S("title")} {spec["info"].S("version")} · {ops.Count} operations · generated from the canonical proto contract; gRPC offers the same operations.";
             ApplyFilter();
             if (ops.Count > 0) Ops.SelectedIndex = 0;
@@ -81,14 +89,18 @@ public partial class ApiReferencePage : UserControl, IPage
         RequestSchema.Text = reqRef == null ? "(no request body)" : Describe(reqRef);
         ResponseSchema.Text = respRef == null ? "(no body)" : $"// {media}\n" + Describe(respRef);
         TryPath.Text = op.Path;
-        TryBody.Text = reqRef == null ? "" : Json.Pretty(Example(reqRef, 0));
+        TryBody.Text = reqRef == null ? "" : Json.Pretty(Sample(op.OperationId) ?? Example(reqRef, 0));
         TryBody.IsEnabled = reqRef != null;
-        TryStatus.Text = op.Method == "GET" ? "Fill in the path parameters, then Send." : "POST changes state: Send asks for confirmation.";
+        TryStatus.Foreground = (Brush)FindResource("Muted");
+        TryStatus.Text = (op.Method == "GET" ? "Replace any {placeholders} in the path, then Send." :
+                          Sample(op.OperationId) != null ? "A working example body is filled in. POST changes state: Send asks for confirmation." :
+                          "Edit the body (the template lists every field; remove what you don't need). POST asks for confirmation.") +
+                         $"  Authentication is automatic: the key of connection \"{shell.Profile?.Name}\" is sent.";
         TryResult.Text = "";
         var baseUrl = shell.Api?.BaseUrl ?? "http://127.0.0.1:9000";
         CurlText.Text = op.Method == "GET"
             ? $"curl -H \"X-API-Key: $UAR_KEY\" \"{baseUrl}{op.Path}\""
-            : $"curl -X POST -H \"X-API-Key: $UAR_KEY\" -H \"Content-Type: application/json\" \\\n  -d '{(reqRef == null ? "{}" : Example(reqRef, 0)!.ToJsonString())}' \\\n  \"{baseUrl}{op.Path}\"";
+            : $"curl -X POST -H \"X-API-Key: $UAR_KEY\" -H \"Content-Type: application/json\" \\\n  -d '{(reqRef == null ? "{}" : (Sample(op.OperationId) ?? Example(reqRef, 0))!.ToJsonString())}' \\\n  \"{baseUrl}{op.Path}\"";
     }
 
     string Describe(JsonNode schema)
@@ -112,6 +124,30 @@ public partial class ApiReferencePage : UserControl, IPage
         }
         return sb.ToString();
     }
+
+    /// <summary>A minimal request that works against the example setup, for the common operations.</summary>
+    JsonNode? Sample(string operationId) => operationId switch
+    {
+        "Infer" or "InferStream" => new JsonObject { ["model"] = exampleModel, ["input"] = "Say hello in one sentence." },
+        "ExecuteTool" => JsonNode.Parse("""{"tool": "fs.read_text", "args": {"path": "docs/product-faq.md"}}"""),
+        "StartRun" => JsonNode.Parse("""{"agent_id": "in_app_assistant", "input": {"prompt": "How long do I have to return a product?"}}"""),
+        "DryRun" => JsonNode.Parse("""{"agent_id": "report_generator", "input": {"report_name": "sales_q3", "quarter": "2026-Q3"}}"""),
+        "RegisterAgent" => JsonNode.Parse("""
+            {"definition": {"apiVersion": "uar/v1", "kind": "Agent", "metadata": {"id": "hello_agent", "version": "1.0.0"},
+             "spec": {"start": "ask", "permissions": {"models": ["local:*"], "tools": [], "agents": []},
+                      "nodes": [{"id": "ask", "type": "llm", "model": "__MODEL__", "prompt": "Greet ${input.name} in one sentence."},
+                                {"id": "done", "type": "return", "value": {"text": "${nodes.ask.output.text}"}}],
+                      "edges": [{"from": "ask", "to": "done"}]}}}
+            """.Replace("__MODEL__", exampleModel)),
+        "CreateApiKey" => JsonNode.Parse("""{"subject": "demo-app@acme", "roles": ["viewer"], "description": "created from API reference", "expires_in_days": 7}"""),
+        "RevokeApiKey" => JsonNode.Parse("""{"reason": "rotated"}"""),
+        "DecideApproval" => JsonNode.Parse("""{"approve": true, "comment": "looks right"}"""),
+        "CancelRun" => JsonNode.Parse("""{"reason": "no longer needed"}"""),
+        "ResolveRun" => JsonNode.Parse("""{"action": "retry_node", "note": "checked the target system"}"""),
+        "ActivatePlugin" => JsonNode.Parse("""{"version": "1.0.0"}"""),
+        "RollbackPlugin" => new JsonObject(),
+        _ => null,
+    };
 
     JsonNode Resolve(JsonNode schema)
     {

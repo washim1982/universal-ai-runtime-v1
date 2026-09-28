@@ -32,7 +32,16 @@
               <TextBox x:Name="PName" Margin="0,4,0,10"/>
               <TextBlock Text="Runtime URL" FontWeight="SemiBold"/>
               <TextBox x:Name="PUrl" Margin="0,4,0,10" FontFamily="{StaticResource Mono}"/>
-              <TextBlock Text="API key (leave empty to keep the saved key)" FontWeight="SemiBold"/>
+              <TextBlock Text="Sign in with" FontWeight="SemiBold"/>
+              <StackPanel Orientation="Horizontal" Margin="0,6,0,10">
+                <RadioButton x:Name="AuthKey" Content="API key" IsChecked="True" Checked="Auth_Changed" Margin="0,0,18,0"/>
+                <RadioButton x:Name="AuthApp" Content="Registered application (client ID + secret, access tokens)" Checked="Auth_Changed"/>
+              </StackPanel>
+              <StackPanel x:Name="ClientIdPanel" Visibility="Collapsed">
+                <TextBlock Text="Client ID" FontWeight="SemiBold"/>
+                <TextBox x:Name="PClientId" Margin="0,4,0,10" FontFamily="{StaticResource Mono}"/>
+              </StackPanel>
+              <TextBlock x:Name="KeyLabel" Text="API key (leave empty to keep the saved key)" FontWeight="SemiBold"/>
               <PasswordBox x:Name="PKey" Margin="0,4,0,12"/>
               <StackPanel Orientation="Horizontal">
                 <Button Content="Save connection" Style="{StaticResource Primary}" Click="SaveProfile_Click"/>

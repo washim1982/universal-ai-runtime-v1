@@ -632,3 +632,101 @@ export interface ListLogsResponse {
   next_after_seq?: number | string;
   capacity?: number;
 }
+
+export interface GetStsInfoRequest {
+}
+
+export interface RotateSigningKeyRequest {
+}
+
+export interface SigningKeyInfo {
+  kid?: string;
+  alg?: string;
+  created_at?: string;
+  active_from?: string;
+  retire_after?: string;
+  /** signing | next | verify-only | retired */
+  status?: string;
+}
+
+export interface StsInfo {
+  enabled?: boolean;
+  issuer?: string;
+  audience?: string;
+  token_url?: string;
+  jwks_url?: string;
+  /** API keys are refused; callers need access tokens */
+  require_tokens?: boolean;
+  default_token_ttl_s?: number;
+  max_token_ttl_s?: number;
+  /** encrypted | unencrypted */
+  key_storage?: string;
+  keys?: SigningKeyInfo[];
+}
+
+export interface AppSecretInfo {
+  secret_id?: string;
+  /** last characters of the secret */
+  hint?: string;
+  created_at?: string;
+  expires_at?: string;
+  /** active | expired | revoked */
+  status?: string;
+}
+
+export interface AppRegistration {
+  client_id?: string;
+  name?: string;
+  description?: string;
+  /** the most a token of this application can carry */
+  roles?: string[];
+  token_ttl_s?: number;
+  /** active | disabled */
+  status?: string;
+  created_by?: string;
+  created_at?: string;
+  disabled_at?: string;
+  last_token_at?: string;
+  secrets?: AppSecretInfo[];
+}
+
+export interface ListAppsRequest {
+  include_disabled?: boolean;
+}
+
+export interface ListAppsResponse {
+  apps?: AppRegistration[];
+}
+
+export interface RegisterAppRequest {
+  name?: string;
+  description?: string;
+  roles?: string[];
+  /** 0 = sts.default_token_ttl_s */
+  token_ttl_s?: number;
+  /** 0 = never; omitted = 365 */
+  secret_expires_in_days?: number;
+}
+
+/** The client secret is returned once; the runtime stores only its SHA-256. */
+export interface AppCredentials {
+  app?: AppRegistration;
+  client_id?: string;
+  client_secret?: string;
+  token_url?: string;
+}
+
+export interface CreateAppSecretRequest {
+  client_id?: string;
+  expires_in_days?: number;
+}
+
+export interface RevokeAppSecretRequest {
+  client_id?: string;
+  secret_id?: string;
+}
+
+export interface DisableAppRequest {
+  client_id?: string;
+  reason?: string;
+}

@@ -12,12 +12,24 @@ public sealed class ConnectionProfile
     public string Name { get; set; } = "";
     public string BaseUrl { get; set; } = "http://127.0.0.1:9000";
     public string ProtectedKey { get; set; } = "";
+    /// <summary>"apikey" (X-API-Key) or "app" (registered application: client credentials -> access tokens).</summary>
+    public string AuthType { get; set; } = "apikey";
+    public string ClientId { get; set; } = "";
+    public string ProtectedSecret { get; set; } = "";
 
     public string ApiKey
     {
         get => Unprotect(ProtectedKey);
         set => ProtectedKey = Protect(value);
     }
+
+    public string ClientSecret
+    {
+        get => Unprotect(ProtectedSecret);
+        set => ProtectedSecret = Protect(value);
+    }
+
+    public bool IsApp => AuthType == "app";
 
     public override string ToString() => Name;
 

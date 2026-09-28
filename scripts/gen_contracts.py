@@ -53,6 +53,14 @@ HTTP = {
     "RevokeApiKey": ("post", "/api/v1/admin/keys/{key_id}/revoke", "RevokeApiKeyRequest", "ApiKeyInfo", False),
     "GetAccessPolicy": ("get", "/api/v1/admin/access", None, "AccessPolicy", False),
     "ListLogs": ("get", "/api/v1/admin/logs", None, "ListLogsResponse", False),
+    "GetStsInfo": ("get", "/api/v1/admin/sts", None, "StsInfo", False),
+    "RotateSigningKey": ("post", "/api/v1/admin/sts/rotate-key", "RotateSigningKeyRequest", "StsInfo", False),
+    "ListApps": ("get", "/api/v1/admin/apps", None, "ListAppsResponse", False),
+    "RegisterApp": ("post", "/api/v1/admin/apps", "RegisterAppRequest", "AppCredentials", False),
+    "CreateAppSecret": ("post", "/api/v1/admin/apps/{client_id}/secrets", "CreateAppSecretRequest", "AppCredentials", False),
+    "RevokeAppSecret": ("post", "/api/v1/admin/apps/{client_id}/secrets/{secret_id}/revoke", "RevokeAppSecretRequest",
+                        "AppRegistration", False),
+    "DisableApp": ("post", "/api/v1/admin/apps/{client_id}/disable", "DisableAppRequest", "AppRegistration", False),
     "RegisterPlugin": ("post", "/api/v1/plugins", "RegisterPluginRequest", "PluginVersion", False),
     "ListPlugins": ("get", "/api/v1/plugins", None, "ListPluginsResponse", False),
     "ActivatePlugin": ("post", "/api/v1/plugins/{plugin_id}/activate", "ActivatePluginRequest", "PluginVersion", False),
@@ -165,6 +173,8 @@ def openapi(schema: dict) -> dict:
                                   ("model", "string"), ("since", "string"))]
         if rpc == "ListApiKeys":
             op["parameters"].append({"name": "include_revoked", "in": "query", "schema": {"type": "boolean"}})
+        if rpc == "ListApps":
+            op["parameters"].append({"name": "include_disabled", "in": "query", "schema": {"type": "boolean"}})
         if rpc == "ListLogs":
             op["parameters"] += [{"name": n, "in": "query", "schema": {"type": t}} for n, t in
                                  (("after_seq", "integer"), ("limit", "integer"), ("min_level", "string"))]
@@ -177,13 +187,39 @@ def openapi(schema: dict) -> dict:
         if method == "post":
             op["parameters"].append({"name": "Idempotency-Key", "in": "header", "schema": {"type": "string"}})
         paths[path][method] = op
+    # Standard OAuth 2.0 / OpenID endpoints of the built-in token service (not proto RPCs).
+    oauth_err = {"description": "RFC 6749 error", "content": {"application/json": {"schema": {
+        "type": "object", "properties": {"error": {"type": "string"}, "error_description": {"type": "string"}}}}}}
+    paths["/api/v1/oauth/token"] = {"post": {
+        "operationId": "IssueToken", "summary": "OAuth 2.0 token endpoint (client_credentials)",
+        "description": "Exchange a registered application's client_id and client_secret for an access token "
+                       "(client_secret_basic or client_secret_post; form-encoded or JSON). Optional scope: "
+                       "space-separated roles, a subset of the application's roles.",
+        "security": [],
+        "requestBody": {"required": True, "content": {m: {"schema": {
+            "type": "object", "required": ["grant_type"], "properties": {
+                "grant_type": {"type": "string", "enum": ["client_credentials"]},
+                "client_id": {"type": "string"}, "client_secret": {"type": "string"},
+                "scope": {"type": "string"}}}} for m in ("application/x-www-form-urlencoded", "application/json")}},
+        "responses": {"200": {"description": "Access token", "content": {"application/json": {"schema": {
+            "type": "object", "properties": {"access_token": {"type": "string"}, "token_type": {"type": "string"},
+                                             "expires_in": {"type": "integer"}, "scope": {"type": "string"}}}}}},
+                      "400": oauth_err, "401": oauth_err, "429": oauth_err, "503": oauth_err}}}
+    paths["/.well-known/jwks.json"] = {"get": {
+        "operationId": "Jwks", "summary": "Public keys that verify UAR access tokens (JWKS)", "security": [],
+        "responses": {"200": {"description": "JSON Web Key Set"}}}}
+    paths["/.well-known/openid-configuration"] = {"get": {
+        "operationId": "StsDiscovery", "summary": "Token service metadata (issuer, token endpoint, JWKS)",
+        "security": [], "responses": {"200": {"description": "Discovery document"}}}}
     return {"openapi": "3.1.0",
             "info": {"title": "Universal AI Runtime", "version": "1.0.0",
                      "description": "Generated from proto/uar/v1/runtime.proto. Do not edit."},
             "paths": paths,
             "components": {"schemas": comps, "securitySchemes": {
                 "apiKey": {"type": "apiKey", "in": "header", "name": "X-API-Key"},
-                "bearer": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}}}}
+                "bearer": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"},
+                "sts": {"type": "oauth2", "flows": {"clientCredentials": {
+                    "tokenUrl": "/api/v1/oauth/token", "scopes": {}}}}}}}
 
 
 def generate(out_root: Path) -> None:

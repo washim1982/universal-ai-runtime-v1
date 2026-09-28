@@ -6,6 +6,10 @@
     resp = client.inference(model="local:default", prompt="Explain quantum computing")
     print(resp.text)
 
+    # A registered application (token service): access tokens are fetched and renewed automatically.
+    client = Client("http://localhost:9000", client_id="billing-service-1a2b3c4d",
+                    client_secret=os.environ["UAR_CLIENT_SECRET"])
+
 Retries: only GET requests and POSTs that carry an idempotency key are retried (on 429, 503 and
 connection errors). Inference and tool calls without a key are never retried automatically.
 """
@@ -132,14 +136,45 @@ def _sse_lines_to_events(lines: Iterator[str]) -> Iterator[Event]:
 TERMINAL = ("completed", "error")
 
 
+TOKEN_PATH = "/api/v1/oauth/token"
+
+
 class _Base:
     def __init__(self, base_url: str = "http://localhost:9000", api_key: str | None = None, *,
-                 token: str | None = None, timeout: float = 120.0, max_retries: int = 2):
+                 token: str | None = None, client_id: str | None = None, client_secret: str | None = None,
+                 scope: str | None = None, timeout: float = 120.0, max_retries: int = 2):
+        """Credentials, first match wins: client_id + client_secret (a registered application; access
+        tokens are fetched from the runtime's token service and renewed before they expire), api_key
+        (or UAR_API_KEY), token (a bearer token you obtained yourself). UAR_CLIENT_ID and
+        UAR_CLIENT_SECRET are used when no credential is passed."""
         self.base_url = base_url.rstrip("/")
-        self.api_key = api_key if api_key is not None else os.environ.get("UAR_API_KEY")
+        self.client_id = client_id or (os.environ.get("UAR_CLIENT_ID") if api_key is None and token is None else None)
+        self.client_secret = client_secret or (os.environ.get("UAR_CLIENT_SECRET") if self.client_id else None)
+        if self.client_id and not self.client_secret:
+            raise ValueError("client_secret is required with client_id")
+        self.scope = scope
+        self.api_key = None if self.client_id else (api_key if api_key is not None else os.environ.get("UAR_API_KEY"))
         self.token = token
+        self._token_expires = float("inf") if token else 0.0
         self.timeout = timeout
         self.max_retries = max_retries
+
+    def _token_form(self) -> dict[str, str]:
+        f = {"grant_type": "client_credentials", "client_id": self.client_id or "", "client_secret": self.client_secret or ""}
+        if self.scope:
+            f["scope"] = self.scope
+        return f
+
+    def _accept_token(self, resp: httpx.Response) -> None:
+        body = _json(resp)
+        if resp.status_code >= 400:
+            raise _error(resp.status_code, {"error": {"code": body.get("error", "unauthenticated"),
+                                                      "message": body.get("error_description", "token request failed")}})
+        self.token = body["access_token"]
+        self._token_expires = time.time() + float(body.get("expires_in", 300))
+
+    def _token_stale(self) -> bool:
+        return bool(self.client_id) and (not self.token or time.time() > self._token_expires - 60)
 
     def _headers(self, idempotency_key: str | None = None) -> dict[str, str]:
         h = {"User-Agent": f"uar-python/{__version__}", "Accept": "application/json"}
@@ -178,16 +213,26 @@ class Client(_Base):
     def __exit__(self, *exc: Any) -> None:
         self.close()
 
+    def _ensure_token(self) -> None:
+        if self._token_stale():
+            self._accept_token(self._http.post(TOKEN_PATH, data=self._token_form()))
+
     def _request(self, method: str, path: str, body: dict | None = None, idempotency_key: str | None = None,
                  params: dict | None = None) -> Any:
+        self._ensure_token()
         headers = self._headers(idempotency_key)
-        attempt = 0
+        attempt, renewed = 0, False
         while True:
             resp = None
             try:
                 resp = self._http.request(method, path, json=body, headers=headers, params=params)
                 if resp.status_code < 400:
                     return resp.json()
+                if resp.status_code == 401 and self.client_id and not renewed:   # token revoked or rotated
+                    self.token, renewed = None, True
+                    self._ensure_token()
+                    headers = self._headers(idempotency_key)
+                    continue
                 if resp.status_code not in (429, 503) or not self._retryable(method, headers) \
                         or attempt >= self.max_retries:
                     raise _error(resp.status_code, _json(resp))
@@ -199,6 +244,7 @@ class Client(_Base):
 
     def _stream(self, method: str, path: str, body: dict | None = None, params: dict | None = None
                 ) -> Iterator[Event]:
+        self._ensure_token()
         headers = {**self._headers(), "Accept": "text/event-stream"}
         with self._http.stream(method, path, json=body, headers=headers, params=params,
                                timeout=httpx.Timeout(self.timeout, read=None)) as resp:
@@ -307,16 +353,26 @@ class AsyncClient(_Base):
     async def __aexit__(self, *exc: Any) -> None:
         await self.aclose()
 
+    async def _ensure_token(self) -> None:
+        if self._token_stale():
+            self._accept_token(await self._http.post(TOKEN_PATH, data=self._token_form()))
+
     async def _request(self, method: str, path: str, body: dict | None = None, idempotency_key: str | None = None,
                        params: dict | None = None) -> Any:
+        await self._ensure_token()
         headers = self._headers(idempotency_key)
-        attempt = 0
+        attempt, renewed = 0, False
         while True:
             resp = None
             try:
                 resp = await self._http.request(method, path, json=body, headers=headers, params=params)
                 if resp.status_code < 400:
                     return resp.json()
+                if resp.status_code == 401 and self.client_id and not renewed:
+                    self.token, renewed = None, True
+                    await self._ensure_token()
+                    headers = self._headers(idempotency_key)
+                    continue
                 if resp.status_code not in (429, 503) or not self._retryable(method, headers) \
                         or attempt >= self.max_retries:
                     raise _error(resp.status_code, _json(resp))
@@ -328,6 +384,7 @@ class AsyncClient(_Base):
 
     async def _stream(self, method: str, path: str, body: dict | None = None, params: dict | None = None
                       ) -> AsyncIterator[Event]:
+        await self._ensure_token()
         headers = {**self._headers(), "Accept": "text/event-stream"}
         async with self._http.stream(method, path, json=body, headers=headers, params=params,
                                      timeout=httpx.Timeout(self.timeout, read=None)) as resp:

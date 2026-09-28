@@ -1,0 +1,58 @@
+<Window x:Class="UarAdmin.Dialogs.RegisterAppDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Register application" Width="500" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" Background="White" ShowInTaskbar="False">
+  <StackPanel Margin="22">
+    <TextBlock Text="Register application" Style="{StaticResource H1}" FontSize="19"/>
+    <TextBlock Style="{StaticResource Sub}" Margin="0,4,0,16"
+               Text="The application gets a client ID and secret, and exchanges them for short-lived access tokens. Give it only the roles it needs."/>
+
+    <TextBlock Text="Application name" FontWeight="SemiBold"/>
+    <TextBox x:Name="NameBox" Margin="0,4,0,12" ToolTip="e.g. Billing Service"/>
+
+    <TextBlock Text="Description (optional)" FontWeight="SemiBold"/>
+    <TextBox x:Name="DescriptionBox" Margin="0,4,0,12"/>
+
+    <TextBlock Text="Roles its tokens may carry" FontWeight="SemiBold"/>
+    <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,4,0,12" MaxHeight="170">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <ItemsControl x:Name="RoleList">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate><CheckBox Content="{Binding Name}" IsChecked="{Binding Selected}" Width="135" Margin="0,3"/></DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Border>
+
+    <Grid Margin="0,0,0,8">
+      <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
+      <StackPanel>
+        <TextBlock Text="Access token lifetime" FontWeight="SemiBold"/>
+        <ComboBox x:Name="TtlBox" Margin="0,4,0,0" SelectedIndex="1">
+          <ComboBoxItem Content="5 minutes" Tag="300"/>
+          <ComboBoxItem Content="15 minutes" Tag="900"/>
+          <ComboBoxItem Content="30 minutes" Tag="1800"/>
+          <ComboBoxItem Content="1 hour" Tag="3600"/>
+        </ComboBox>
+      </StackPanel>
+      <StackPanel Grid.Column="2">
+        <TextBlock Text="Client secret expires" FontWeight="SemiBold"/>
+        <ComboBox x:Name="SecretBox" Margin="0,4,0,0" SelectedIndex="2">
+          <ComboBoxItem Content="In 90 days" Tag="90"/>
+          <ComboBoxItem Content="In 6 months" Tag="180"/>
+          <ComboBoxItem Content="In 1 year" Tag="365"/>
+          <ComboBoxItem Content="In 2 years" Tag="730"/>
+          <ComboBoxItem Content="Never" Tag="0"/>
+        </ComboBox>
+      </StackPanel>
+    </Grid>
+
+    <TextBlock x:Name="ErrorText" Foreground="{StaticResource Danger}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+      <Button Content="Cancel" IsCancel="True"/>
+      <Button Content="Register" Style="{StaticResource Primary}" IsDefault="True" Click="Register_Click" Margin="0"/>
+    </StackPanel>
+  </StackPanel>
+</Window>

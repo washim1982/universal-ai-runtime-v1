@@ -120,6 +120,7 @@ class Authenticator:
         # Keys created through the admin API: key id -> row (tenant, sha256, subject, roles, expires_at).
         self.db_keys: dict[str, dict] = {}
         self.store: Store | None = None
+        self.sts = None   # built-in token service (set by the service)
 
     async def start(self, store: Store | None = None) -> None:
         self.store = store
@@ -145,6 +146,8 @@ class Authenticator:
                 log.error("api key refresh failed: %s", type(e).__name__)
 
     def key_active(self, key_id: str) -> bool:
+        if key_id.startswith("app:"):
+            return self.sts is not None and self.sts.app_active(key_id[4:])
         if key_id in self.keys:
             return True
         row = self.db_keys.get(key_id)
@@ -171,6 +174,9 @@ class Authenticator:
         raise UARError("unauthenticated", "missing credentials (X-API-Key or Authorization: Bearer)")
 
     def _from_key(self, key: str) -> Principal:
+        if self.sts is not None and self.s.sts.require_tokens:
+            raise UARError("unauthenticated", "API keys are disabled on this runtime: register an application and use "
+                           "an access token from POST /api/v1/oauth/token", details={"reason": "tokens_required"})
         m = _KEY_RE.fullmatch(key.strip())
         if m and m.group(1) in self.db_keys and m.group(1) not in self.keys:
             row = self.db_keys[m.group(1)]
@@ -189,12 +195,15 @@ class Authenticator:
         return Principal(tenant.id, kc.subject, roles, kc.id, self.permissions(roles))
 
     def _from_jwt(self, token: str) -> Principal:
-        if self.oidc:
+        if self.oidc or self.sts is not None:
             try:
                 iss = jwt.decode(token, options={"verify_signature": False}).get("iss")
             except jwt.PyJWTError as e:
                 raise UARError("unauthenticated", "invalid bearer token", details={"reason": type(e).__name__}) from e
-            if iss in self.oidc:   # the issuer only selects the verifier; verification pins it again
+            # The issuer only selects the verifier; verification pins it again.
+            if self.sts is not None and self.sts.owns(iss):
+                return self.sts.verify(token)
+            if iss in self.oidc:
                 return self._from_oidc(self.oidc[iss], token)
         cfg = self.s.auth.jwt
         if not cfg or not self._jwt_secret:

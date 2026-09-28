@@ -40,6 +40,9 @@
         <RadioButton Style="{StaticResource Nav}" Tag="keys" Checked="Nav_Checked">
           <StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8D7;" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Margin="0,2,12,0"/><TextBlock Text="Access &amp; keys" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></StackPanel>
         </RadioButton>
+        <RadioButton Style="{StaticResource Nav}" Tag="apps" Checked="Nav_Checked">
+          <StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE71D;" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Margin="0,2,12,0"/><TextBlock Text="Applications" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></StackPanel>
+        </RadioButton>
         <RadioButton Style="{StaticResource Nav}" Tag="api" Checked="Nav_Checked">
           <StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE943;" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Margin="0,2,12,0"/><TextBlock Text="API reference" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></StackPanel>
         </RadioButton>

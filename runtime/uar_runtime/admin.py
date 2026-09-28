@@ -78,6 +78,11 @@ class AdminService:
             if pv.get("active"):
                 comps.append({"name": f"{pv['plugin_id']}@{pv['version']}", "kind": "plugin",
                               "status": pv.get("status", ""), "ok": pv.get("status") == "active"})
+        if self.s.sts.enabled:
+            signing = svc.sts._signing_key()
+            comps.append({"name": "token service (STS)", "kind": "sts", "ok": signing is not None,
+                          "status": (f"signing with {signing[0]}" if signing else "no usable signing key")
+                                    + (" · API keys disabled" if self.s.sts.require_tokens else "")})
         for iss, cache in svc.auth.oidc.items():
             comps.append({"name": iss, "kind": "oidc", "ok": bool(cache.keys) and not cache.last_error,
                           "status": cache.last_error or f"{len(cache.keys)} signing keys"})

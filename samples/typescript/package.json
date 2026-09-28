@@ -1,0 +1,8 @@
+{
+  "name": "uar-sample-typescript",
+  "private": true,
+  "type": "module",
+  "description": "UAR inference sample (TypeScript). Node 22.18+ runs .ts files directly.",
+  "scripts": { "start": "node inference.ts" },
+  "dependencies": { "@uar/client": "file:../../sdks/typescript" }
+}
