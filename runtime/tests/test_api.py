@@ -35,7 +35,9 @@ async def test_unauthenticated_rejected_on_all_transports(env):
     async with httpx.AsyncClient(base_url=env.http) as c:
         r = await c.get("/api/v1/models")
         assert r.status_code == 401 and r.json()["error"]["code"] == "unauthenticated"
-        r = await c.get("/api/v1/models", headers={"X-API-Key": "***REMOVED***"})
+        # A well-formed key that was never issued must be rejected just like no
+        # key at all. The value is deliberately fake.
+        r = await c.get("/api/v1/models", headers={"X-API-Key": "uar_not_a_real_key_000000000000"})  # secret-scan:ignore
         assert r.status_code == 401
         assert r.headers["x-request-id"]
     async with grpc.aio.insecure_channel(env.grpc) as ch:
