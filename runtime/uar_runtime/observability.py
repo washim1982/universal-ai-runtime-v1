@@ -45,6 +45,8 @@ RUN_QUEUE_SECONDS = Histogram("uar_run_queue_delay_seconds", "Delay between run 
 NODE_SECONDS = Histogram("uar_node_duration_seconds", "Agent node duration", ["node_type", "outcome"],
                          registry=REGISTRY, buckets=(.001, .01, .05, .1, .5, 1, 2, 5, 10, 30, 60))
 POLICY_DENIALS = Counter("uar_policy_denials_total", "Policy denials", ["kind"], registry=REGISTRY)
+GUARDRAIL_FINDINGS = Counter("uar_guardrail_findings_total", "Guardrail checks that fired",
+                             ["stage", "check", "action"], registry=REGISTRY)
 
 
 def setup_tracing(service_name: str, otlp_endpoint: str | None, exporter: SpanExporter | None = None) -> TracerProvider:

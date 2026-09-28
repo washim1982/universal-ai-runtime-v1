@@ -107,7 +107,7 @@ class InferenceRequest(_message.Message):
     def __init__(self, model: _Optional[str] = ..., messages: _Optional[_Iterable[_Union[ChatMessage, _Mapping]]] = ..., input: _Optional[str] = ..., tools: _Optional[_Iterable[str]] = ..., tool_mode: _Optional[str] = ..., agent: _Optional[str] = ..., stream: _Optional[bool] = ..., params: _Optional[_Union[GenerationParams, _Mapping]] = ..., data_class: _Optional[str] = ..., extensions: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
 
 class InferenceResponse(_message.Message):
-    __slots__ = ("request_id", "provider", "model", "content", "finish_reason", "tool_calls", "usage", "run_id", "output", "route")
+    __slots__ = ("request_id", "provider", "model", "content", "finish_reason", "tool_calls", "usage", "run_id", "output", "route", "guardrails")
     REQUEST_ID_FIELD_NUMBER: _ClassVar[int]
     PROVIDER_FIELD_NUMBER: _ClassVar[int]
     MODEL_FIELD_NUMBER: _ClassVar[int]
@@ -118,6 +118,7 @@ class InferenceResponse(_message.Message):
     RUN_ID_FIELD_NUMBER: _ClassVar[int]
     OUTPUT_FIELD_NUMBER: _ClassVar[int]
     ROUTE_FIELD_NUMBER: _ClassVar[int]
+    GUARDRAILS_FIELD_NUMBER: _ClassVar[int]
     request_id: str
     provider: str
     model: str
@@ -128,7 +129,8 @@ class InferenceResponse(_message.Message):
     run_id: str
     output: _struct_pb2.Struct
     route: RouteDecision
-    def __init__(self, request_id: _Optional[str] = ..., provider: _Optional[str] = ..., model: _Optional[str] = ..., content: _Optional[str] = ..., finish_reason: _Optional[str] = ..., tool_calls: _Optional[_Iterable[_Union[ToolCallRequest, _Mapping]]] = ..., usage: _Optional[_Union[Usage, _Mapping]] = ..., run_id: _Optional[str] = ..., output: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., route: _Optional[_Union[RouteDecision, _Mapping]] = ...) -> None: ...
+    guardrails: _containers.RepeatedCompositeFieldContainer[GuardrailFinding]
+    def __init__(self, request_id: _Optional[str] = ..., provider: _Optional[str] = ..., model: _Optional[str] = ..., content: _Optional[str] = ..., finish_reason: _Optional[str] = ..., tool_calls: _Optional[_Iterable[_Union[ToolCallRequest, _Mapping]]] = ..., usage: _Optional[_Union[Usage, _Mapping]] = ..., run_id: _Optional[str] = ..., output: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., route: _Optional[_Union[RouteDecision, _Mapping]] = ..., guardrails: _Optional[_Iterable[_Union[GuardrailFinding, _Mapping]]] = ...) -> None: ...
 
 class RouteDecision(_message.Message):
     __slots__ = ("requested", "model_class", "provider", "model", "reasons", "fallback_used")
@@ -409,16 +411,18 @@ class ApprovalRequired(_message.Message):
     def __init__(self, approval_id: _Optional[str] = ..., action: _Optional[str] = ..., args_hash: _Optional[str] = ..., node_id: _Optional[str] = ..., expires_at: _Optional[str] = ...) -> None: ...
 
 class Completed(_message.Message):
-    __slots__ = ("status", "content", "output", "finish_reason")
+    __slots__ = ("status", "content", "output", "finish_reason", "guardrails")
     STATUS_FIELD_NUMBER: _ClassVar[int]
     CONTENT_FIELD_NUMBER: _ClassVar[int]
     OUTPUT_FIELD_NUMBER: _ClassVar[int]
     FINISH_REASON_FIELD_NUMBER: _ClassVar[int]
+    GUARDRAILS_FIELD_NUMBER: _ClassVar[int]
     status: str
     content: str
     output: _struct_pb2.Struct
     finish_reason: str
-    def __init__(self, status: _Optional[str] = ..., content: _Optional[str] = ..., output: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., finish_reason: _Optional[str] = ...) -> None: ...
+    guardrails: _containers.RepeatedCompositeFieldContainer[GuardrailFinding]
+    def __init__(self, status: _Optional[str] = ..., content: _Optional[str] = ..., output: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., finish_reason: _Optional[str] = ..., guardrails: _Optional[_Iterable[_Union[GuardrailFinding, _Mapping]]] = ...) -> None: ...
 
 class Event(_message.Message):
     __slots__ = ("run_id", "seq", "ts", "trace_id", "request_id", "started", "token", "tool_call", "tool_result", "node_started", "node_completed", "usage", "approval_required", "error", "completed")
@@ -1115,3 +1119,43 @@ class DisableAppRequest(_message.Message):
     client_id: str
     reason: str
     def __init__(self, client_id: _Optional[str] = ..., reason: _Optional[str] = ...) -> None: ...
+
+class GuardrailFinding(_message.Message):
+    __slots__ = ("stage", "check", "type", "action", "count", "score")
+    STAGE_FIELD_NUMBER: _ClassVar[int]
+    CHECK_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    ACTION_FIELD_NUMBER: _ClassVar[int]
+    COUNT_FIELD_NUMBER: _ClassVar[int]
+    SCORE_FIELD_NUMBER: _ClassVar[int]
+    stage: str
+    check: str
+    type: str
+    action: str
+    count: int
+    score: float
+    def __init__(self, stage: _Optional[str] = ..., check: _Optional[str] = ..., type: _Optional[str] = ..., action: _Optional[str] = ..., count: _Optional[int] = ..., score: _Optional[float] = ...) -> None: ...
+
+class CheckContentRequest(_message.Message):
+    __slots__ = ("text", "stage")
+    TEXT_FIELD_NUMBER: _ClassVar[int]
+    STAGE_FIELD_NUMBER: _ClassVar[int]
+    text: str
+    stage: str
+    def __init__(self, text: _Optional[str] = ..., stage: _Optional[str] = ...) -> None: ...
+
+class CheckContentResult(_message.Message):
+    __slots__ = ("allowed", "action", "findings", "redacted_text", "enabled", "policy")
+    ALLOWED_FIELD_NUMBER: _ClassVar[int]
+    ACTION_FIELD_NUMBER: _ClassVar[int]
+    FINDINGS_FIELD_NUMBER: _ClassVar[int]
+    REDACTED_TEXT_FIELD_NUMBER: _ClassVar[int]
+    ENABLED_FIELD_NUMBER: _ClassVar[int]
+    POLICY_FIELD_NUMBER: _ClassVar[int]
+    allowed: bool
+    action: str
+    findings: _containers.RepeatedCompositeFieldContainer[GuardrailFinding]
+    redacted_text: str
+    enabled: bool
+    policy: _struct_pb2.Struct
+    def __init__(self, allowed: _Optional[bool] = ..., action: _Optional[str] = ..., findings: _Optional[_Iterable[_Union[GuardrailFinding, _Mapping]]] = ..., redacted_text: _Optional[str] = ..., enabled: _Optional[bool] = ..., policy: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...

@@ -24,6 +24,7 @@ only GETs and requests carrying an idempotency key.
 | `payload_too_large` | 413 | INVALID_ARGUMENT | no |
 | `rate_limited` | 429 | RESOURCE_EXHAUSTED | yes |
 | `budget_exceeded` | 429 | RESOURCE_EXHAUSTED | no |
+| `guardrail_blocked` | 422 | INVALID_ARGUMENT | no |
 | `limit_exceeded` | 422 | RESOURCE_EXHAUSTED | no |
 | `invalid_model_output` | 502 | INTERNAL | yes |
 | `tool_error` | 502 | INTERNAL | no |
@@ -34,3 +35,7 @@ only GETs and requests carrying an idempotency key.
 | `cancelled` | 499 | CANCELLED | no |
 | `unimplemented` | 501 | UNIMPLEMENTED | no |
 | `internal` | 500 | INTERNAL | no |
+
+`guardrail_blocked`: an inference guardrail (input, tool result or output) blocked the call.
+`details.stage` and `details.findings` name the checks that fired (check, type, count); the matched
+text is never returned. Retrying the same content fails again. See `docs/guardrails.md`.

@@ -64,6 +64,9 @@ class AdminService:
             known = svc.router.catalog.get(pc.id)
             if pc.model_class not in self.s.egress.allowed_classes:
                 st, ok = "egress disabled", False
+            elif pc.model_class == "cloud" and pc.api_key_env and not os.environ.get(pc.api_key_env):
+                st, ok = f"API key not set ({pc.api_key_env})" + (f"; {len(known)} models listed in configuration"
+                                                                   if known else ""), False
             elif pc.id in opened:
                 st, ok = "circuit open", False
             elif known is None:

@@ -18,6 +18,7 @@ CODES: dict[str, tuple[int, grpc.StatusCode, bool]] = {
     "permission_denied": (403, grpc.StatusCode.PERMISSION_DENIED, False),
     "policy_denied": (403, grpc.StatusCode.PERMISSION_DENIED, False),
     "egress_denied": (403, grpc.StatusCode.PERMISSION_DENIED, False),
+    "guardrail_blocked": (422, grpc.StatusCode.INVALID_ARGUMENT, False),
     "not_found": (404, grpc.StatusCode.NOT_FOUND, False),
     "conflict": (409, grpc.StatusCode.ALREADY_EXISTS, False),
     "idempotency_mismatch": (409, grpc.StatusCode.FAILED_PRECONDITION, False),

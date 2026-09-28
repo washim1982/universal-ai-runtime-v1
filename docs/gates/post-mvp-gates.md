@@ -70,6 +70,7 @@ Recorded 2026-09-27. Default suite: **157 passed** (adds `test_governance.py` 27
 | Redaction policies | `test_prompts_to_cloud_models_are_redacted`, `test_event_log_and_audit_are_redacted` |
 | Retention/deletion jobs | `test_retention_prunes_and_audit_chain_still_verifies` (chain anchored after pruning) |
 | Cross-tenant suite incl. approvals, audit, keys, usage | `test_other_tenant_cannot_see_or_decide_approvals`, `test_api_key_lifecycle`, `test_inference_history_is_tenant_scoped_and_paged` |
+| Inference guardrails | `test_guardrails.py` (30): attack and benign corpora, detectors, obfuscation, stream chunk boundaries, input/tool-result/output stages, agents, classifier model, tenant policies, exempt roles, check endpoint |
 | Application registration + STS tokens | `test_sts.py` (14): register, client credentials, token, inference; scope narrowing; forged, tampered, expired, `none`/HS256 tokens refused; secret rotation; instant disable; key rotation without downtime; encrypted keys; `require_tokens`; gRPC; Python and TypeScript SDKs; `uar register-app` |
 | Administration API + Windows admin app | `test_admin_api.py`; UAR Admin (`admin-app/`) exercised against a live runtime (see its README) |
 

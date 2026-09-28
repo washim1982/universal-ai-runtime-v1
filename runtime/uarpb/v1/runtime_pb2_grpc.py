@@ -189,6 +189,11 @@ class RuntimeStub:
                 request_serializer=uarpb_dot_v1_dot_runtime__pb2.RotateSigningKeyRequest.SerializeToString,
                 response_deserializer=uarpb_dot_v1_dot_runtime__pb2.StsInfo.FromString,
                 _registered_method=True)
+        self.CheckContent = channel.unary_unary(
+                '/uar.v1.Runtime/CheckContent',
+                request_serializer=uarpb_dot_v1_dot_runtime__pb2.CheckContentRequest.SerializeToString,
+                response_deserializer=uarpb_dot_v1_dot_runtime__pb2.CheckContentResult.FromString,
+                _registered_method=True)
         self.RegisterPlugin = channel.unary_unary(
                 '/uar.v1.Runtime/RegisterPlugin',
                 request_serializer=uarpb_dot_v1_dot_runtime__pb2.RegisterPluginRequest.SerializeToString,
@@ -429,6 +434,14 @@ class RuntimeServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def CheckContent(self, request, context):
+        """Guardrails: run the caller's tenant policy over a text without calling a model
+        (pre-validate content, test a policy). Permission guardrails:check.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def RegisterPlugin(self, request, context):
         """Plugins (administrators only). Versions are immutable; activation validates and health-checks
         the version and affects new runs only (running runs keep the versions they started with).
@@ -612,6 +625,11 @@ def add_RuntimeServicer_to_server(servicer, server):
                     servicer.RotateSigningKey,
                     request_deserializer=uarpb_dot_v1_dot_runtime__pb2.RotateSigningKeyRequest.FromString,
                     response_serializer=uarpb_dot_v1_dot_runtime__pb2.StsInfo.SerializeToString,
+            ),
+            'CheckContent': grpc.unary_unary_rpc_method_handler(
+                    servicer.CheckContent,
+                    request_deserializer=uarpb_dot_v1_dot_runtime__pb2.CheckContentRequest.FromString,
+                    response_serializer=uarpb_dot_v1_dot_runtime__pb2.CheckContentResult.SerializeToString,
             ),
             'RegisterPlugin': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterPlugin,
@@ -1471,6 +1489,33 @@ class Runtime:
             '/uar.v1.Runtime/RotateSigningKey',
             uarpb_dot_v1_dot_runtime__pb2.RotateSigningKeyRequest.SerializeToString,
             uarpb_dot_v1_dot_runtime__pb2.StsInfo.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CheckContent(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/uar.v1.Runtime/CheckContent',
+            uarpb_dot_v1_dot_runtime__pb2.CheckContentRequest.SerializeToString,
+            uarpb_dot_v1_dot_runtime__pb2.CheckContentResult.FromString,
             options,
             channel_credentials,
             insecure,

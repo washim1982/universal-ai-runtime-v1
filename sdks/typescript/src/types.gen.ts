@@ -89,6 +89,8 @@ export interface InferenceResponse {
   /** agent structured output, if any */
   output?: Record<string, unknown>;
   route?: RouteDecision;
+  /** checks that fired (flagged or redacted content) */
+  guardrails?: GuardrailFinding[];
 }
 
 export interface RouteDecision {
@@ -273,6 +275,7 @@ export interface Completed {
   content?: string;
   output?: Record<string, unknown>;
   finish_reason?: string;
+  guardrails?: GuardrailFinding[];
 }
 
 export interface Event {
@@ -729,4 +732,39 @@ export interface RevokeAppSecretRequest {
 export interface DisableAppRequest {
   client_id?: string;
   reason?: string;
+}
+
+/** One guardrail check that fired. Never contains the matched text. */
+export interface GuardrailFinding {
+  /** input | tool_results | output */
+  stage?: string;
+  /** prompt_injection | pii | pci | secrets | denied_terms | max_chars */
+  check?: string;
+  /** detector, e.g. email, card_number, aws_access_key; signals for prompt_injection */
+  type?: string;
+  /** flag | redact | block */
+  action?: string;
+  count?: number;
+  /** prompt_injection only (0..1) */
+  score?: number;
+}
+
+export interface CheckContentRequest {
+  text?: string;
+  /** input (default) | tool_results | output */
+  stage?: string;
+}
+
+export interface CheckContentResult {
+  /** false when a blocking check fired */
+  allowed?: boolean;
+  /** allow | flag | redact | block */
+  action?: string;
+  findings?: GuardrailFinding[];
+  /** the text as it would be sent (when allowed) */
+  redacted_text?: string;
+  /** guardrails are enabled for the caller */
+  enabled?: boolean;
+  /** the caller's effective policy (stage -> check -> settings) */
+  policy?: Record<string, unknown>;
 }

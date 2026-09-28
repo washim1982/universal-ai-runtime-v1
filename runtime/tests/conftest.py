@@ -103,7 +103,7 @@ def settings_dict(db_url: str, tenants: list[dict], ws: Path, base: Path, **over
                  "roles": {"viewer": ["models:list", "tools:list", "agents:read", "runs:read"],
                            "developer": ["models:list", "tools:list", "tools:execute", "inference:local",
                                          "inference:enterprise", "agents:register", "agents:read", "runs:start",
-                                         "runs:read", "runs:cancel", "dryrun"],
+                                         "runs:read", "runs:cancel", "dryrun", "guardrails:check"],
                            "cloud_user": ["inference:cloud"],
                            "operator": ["models:list", "tools:list", "agents:read", "runs:read", "runs:cancel",
                                         "runs:resolve", "dryrun"],

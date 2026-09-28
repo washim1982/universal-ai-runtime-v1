@@ -29,6 +29,7 @@ from .mcp.orchestrator import CallContext, Orchestrator, args_hash
 from .observability import attach_log_buffer, current_trace_id, get_tracer
 from .plugins.host import PluginManager
 from .plugins.integrate import install as install_plugin_integrations
+from .guardrails import Guardrails
 from .redaction import Redactor
 from .retention import Retention
 from .sts import Sts
@@ -39,6 +40,18 @@ from .store import Store, dumps, jsonb
 
 log = logging.getLogger("uar.service")
 ROLES = {"system", "user", "assistant", "tool"}
+
+
+def _merge_findings(findings: list[dict]) -> list[dict]:
+    """One entry per (stage, check, type, action); counts added up (tool loops check the prompt each step)."""
+    out: dict[tuple, dict] = {}
+    for f in findings:
+        k = (f["stage"], f["check"], f["type"], f["action"])
+        if k in out:
+            out[k]["count"] = max(out[k]["count"], f.get("count", 1))
+        else:
+            out[k] = dict(f)
+    return list(out.values())
 
 
 def now_iso() -> str:
@@ -56,6 +69,8 @@ class RuntimeService:
         self.limiter = RateLimiter()
         self.router = ModelRouter(settings, store, self.audit, self.budget)
         self.router.redactor = self.redactor
+        self.guardrails = Guardrails(settings.guardrails)
+        self.router.guardrails = self.guardrails
         self.orch = Orchestrator(settings, store, self.audit)
         self.runs = RunService(settings, store, self.audit)
         self.runs.redactor = self.redactor
@@ -200,8 +215,10 @@ class RuntimeService:
             total_in = total_out = 0
             cost, estimated, unknown = 0, False, False
             steps = 0
+            findings: list[dict] = []
             while True:
                 res, route, u = await self.router.chat(p, tenant, route, cr, ctx, request_id)
+                findings += res.guardrails
                 total_in += u.input_tokens
                 total_out += u.output_tokens
                 estimated |= u.estimated
@@ -221,7 +238,7 @@ class RuntimeService:
             usage["cost"] = {"amount": f"{cost:.8f}".rstrip("0").rstrip(".") or "0", "currency": self.s.pricing.currency}
         return {"request_id": request_id, "provider": route.provider, "model": route.model, "content": res.content,
                 "finish_reason": res.finish_reason, "tool_calls": res.tool_calls, "usage": usage,
-                "route": route.to_dict()}
+                "route": route.to_dict(), **({"guardrails": _merge_findings(findings)} if findings else {})}
 
     async def _run_tool_calls(self, p: Principal, cr: ChatRequest, res: ChatResult, request_id: str,
                               emit=None) -> None:
@@ -269,6 +286,7 @@ class RuntimeService:
                 pending.append(body)
 
             first = True
+            findings: list[dict] = []
             while True:
                 route, it = await self.router.stream(p, tenant, route, cr, ctx, request_id)
                 if first:
@@ -282,6 +300,7 @@ class RuntimeService:
                     else:
                         yield ev({"token": {"text": item}})
                 assert final is not None and usage is not None
+                findings += final.guardrails
                 yield ev({"usage": usage.to_dict()})
                 if not (auto and final.finish_reason == "tool_calls" and final.tool_calls):
                     break
@@ -292,7 +311,8 @@ class RuntimeService:
                 for body in pending:
                     yield ev(body)
                 pending.clear()
-            done = {"status": "succeeded", "content": final.content, "finish_reason": final.finish_reason}
+            done = {"status": "succeeded", "content": final.content, "finish_reason": final.finish_reason,
+                    **({"guardrails": _merge_findings(findings)} if findings else {})}
             yield ev({"completed": done})
         except UARError as e:
             yield ev({"error": e.to_dict(request_id)})
@@ -555,6 +575,26 @@ class RuntimeService:
 
     async def rotate_signing_key(self, p: Principal, request_id: str, base_url: str = "") -> dict:
         return await self.sts.rotate_key(p, request_id, base_url or self.public_url(), self.admin._platform(p))
+
+    async def check_content(self, p: Principal, req: dict) -> dict:
+        p.require("guardrails:check")
+        stage = req.get("stage") or "input"
+        if stage not in ("input", "tool_results", "output"):
+            raise invalid("stage must be input, tool_results or output")
+        text = req.get("text") or ""
+        if len(text) > self.s.server.max_body_bytes:
+            raise UARError("payload_too_large", "text too large")
+        pol = self.guardrails.policy(p.tenant, p.roles)
+        if pol is None:
+            return {"allowed": True, "action": "allow", "findings": [], "redacted_text": text,
+                    "enabled": False}
+        r = self.guardrails.check(pol, stage, text) if text else None
+        policy = pol.model_dump(exclude_none=True)
+        if r is None:
+            return {"allowed": True, "action": "allow", "findings": [], "redacted_text": "", "enabled": True,
+                    "policy": policy}
+        return {"allowed": not r.blocked, "action": r.action, "findings": r.findings,
+                "redacted_text": "" if r.blocked else r.text, "enabled": True, "policy": policy}
 
     async def export_audit(self, p: Principal, req: dict, request_id: str) -> dict:
         p.require("audit:read")

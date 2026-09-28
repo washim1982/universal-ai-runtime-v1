@@ -72,6 +72,10 @@ service Runtime {
   rpc DisableApp(DisableAppRequest) returns (AppRegistration);             // apps:manage
   rpc RotateSigningKey(RotateSigningKeyRequest) returns (StsInfo);         // platform administrators
 
+  // Guardrails: run the caller's tenant policy over a text without calling a model
+  // (pre-validate content, test a policy). Permission guardrails:check.
+  rpc CheckContent(CheckContentRequest) returns (CheckContentResult);
+
   // Plugins (administrators only). Versions are immutable; activation validates and health-checks
   // the version and affects new runs only (running runs keep the versions they started with).
   rpc RegisterPlugin(RegisterPluginRequest) returns (PluginVersion);
@@ -158,6 +162,7 @@ message InferenceResponse {
   string run_id = 8;  // set when the call ran an agent or the auto tool loop
   google.protobuf.Struct output = 9;  // agent structured output, if any
   RouteDecision route = 10;
+  repeated GuardrailFinding guardrails = 11;  // checks that fired (flagged or redacted content)
 }
 
 message RouteDecision {
@@ -289,6 +294,7 @@ message Completed {
   string content = 2;
   google.protobuf.Struct output = 3;
   string finish_reason = 4;
+  repeated GuardrailFinding guardrails = 5;
 }
 
 message Event {
@@ -628,4 +634,30 @@ message AppCredentials {
 message CreateAppSecretRequest { string client_id = 1; int32 expires_in_days = 2; }
 message RevokeAppSecretRequest { string client_id = 1; string secret_id = 2; }
 message DisableAppRequest { string client_id = 1; string reason = 2; }
+
+// ---------- guardrails ----------
+
+// One guardrail check that fired. Never contains the matched text.
+message GuardrailFinding {
+  string stage = 1;   // input | tool_results | output
+  string check = 2;   // prompt_injection | pii | pci | secrets | denied_terms | max_chars
+  string type = 3;    // detector, e.g. email, card_number, aws_access_key; signals for prompt_injection
+  string action = 4;  // flag | redact | block
+  int32 count = 5;
+  double score = 6;   // prompt_injection only (0..1)
+}
+
+message CheckContentRequest {
+  string text = 1;
+  string stage = 2;   // input (default) | tool_results | output
+}
+
+message CheckContentResult {
+  bool allowed = 1;                     // false when a blocking check fired
+  string action = 2;                    // allow | flag | redact | block
+  repeated GuardrailFinding findings = 3;
+  string redacted_text = 4;             // the text as it would be sent (when allowed)
+  bool enabled = 5;                     // guardrails are enabled for the caller
+  google.protobuf.Struct policy = 6;    // the caller's effective policy (stage -> check -> settings)
+}
 

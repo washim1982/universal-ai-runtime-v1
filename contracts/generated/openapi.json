@@ -4453,6 +4453,202 @@
         ]
       }
     },
+    "/api/v1/guardrails/check": {
+      "post": {
+        "operationId": "CheckContent",
+        "summary": "uar.v1.Runtime/CheckContent",
+        "description": "gRPC: uar.v1.Runtime/CheckContent.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckContentResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckContentRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/sts": {
       "get": {
         "operationId": "GetStsInfo",
@@ -7012,6 +7208,13 @@
           },
           "route": {
             "$ref": "#/components/schemas/RouteDecision"
+          },
+          "guardrails": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuardrailFinding"
+            },
+            "description": "checks that fired (flagged or redacted content)"
           }
         },
         "additionalProperties": false
@@ -7483,6 +7686,12 @@
           },
           "finish_reason": {
             "type": "string"
+          },
+          "guardrails": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuardrailFinding"
+            }
           }
         },
         "additionalProperties": false
@@ -9173,6 +9382,82 @@
           },
           "reason": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GuardrailFinding": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "description": "input | tool_results | output"
+          },
+          "check": {
+            "type": "string",
+            "description": "prompt_injection | pii | pci | secrets | denied_terms | max_chars"
+          },
+          "type": {
+            "type": "string",
+            "description": "detector, e.g. email, card_number, aws_access_key; signals for prompt_injection"
+          },
+          "action": {
+            "type": "string",
+            "description": "flag | redact | block"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "score": {
+            "type": "number",
+            "description": "prompt_injection only (0..1)"
+          }
+        },
+        "additionalProperties": false,
+        "description": "One guardrail check that fired. Never contains the matched text."
+      },
+      "CheckContentRequest": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string",
+            "description": "input (default) | tool_results | output"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CheckContentResult": {
+        "type": "object",
+        "properties": {
+          "allowed": {
+            "type": "boolean",
+            "description": "false when a blocking check fired"
+          },
+          "action": {
+            "type": "string",
+            "description": "allow | flag | redact | block"
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuardrailFinding"
+            }
+          },
+          "redacted_text": {
+            "type": "string",
+            "description": "the text as it would be sent (when allowed)"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "guardrails are enabled for the caller"
+          },
+          "policy": {
+            "type": "object",
+            "description": "the caller's effective policy (stage -> check -> settings)"
           }
         },
         "additionalProperties": false

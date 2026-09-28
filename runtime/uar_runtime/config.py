@@ -21,12 +21,13 @@ PERMISSIONS = {
     "inference:local", "inference:cloud", "inference:enterprise",
     "agents:register", "agents:read", "runs:start", "runs:read", "runs:cancel", "runs:resolve",
     "dryrun", "approvals:read", "approvals:decide", "plugins:manage", "audit:read", "usage:read",
-    "keys:manage", "apps:manage", "logs:read", "admin",
+    "keys:manage", "apps:manage", "logs:read", "guardrails:check", "admin",
 }
 DEFAULT_ROLES: dict[str, list[str]] = {
     "viewer": ["models:list", "tools:list", "agents:read", "runs:read"],
     "developer": ["models:list", "tools:list", "tools:execute", "inference:local", "inference:enterprise",
-                  "agents:register", "agents:read", "runs:start", "runs:read", "runs:cancel", "dryrun"],
+                  "agents:register", "agents:read", "runs:start", "runs:read", "runs:cancel", "dryrun",
+                  "guardrails:check"],
     "operator": ["models:list", "tools:list", "agents:read", "runs:read", "runs:cancel", "runs:resolve", "dryrun",
                  "approvals:read"],
     "approver": ["runs:read", "approvals:read", "approvals:decide"],
@@ -313,6 +314,83 @@ class LimitsCfg(Strict):
     auto_tool_max_steps: int = 6
 
 
+GuardAction = Literal["off", "flag", "redact", "block"]
+
+
+class GuardCheckCfg(Strict):
+    action: GuardAction = "flag"
+    types: list[str] = []            # detector names to use; empty = all of this check
+
+
+class InjectionCheckCfg(Strict):
+    action: Literal["off", "flag", "block"] = "block"
+    threshold: float = 0.7           # heuristic score (0..1) at which the check fires
+    # Optional classifier model (e.g. local:ollama/granite4) asked for a second opinion on text the
+    # heuristics find suspicious (score >= classifier_min_score). Its confidence can raise the score.
+    model: str | None = None
+    classifier_min_score: float = 0.3
+
+    @field_validator("threshold")
+    @classmethod
+    def _range(cls, v: float) -> float:
+        if not 0 < v <= 1:
+            raise ValueError("threshold must be in (0, 1]")
+        return v
+
+
+class DeniedTermsCfg(Strict):
+    action: GuardAction = "block"
+    terms: list[str] = []            # whole words or phrases, case-insensitive
+    patterns: list[str] = []         # regular expressions
+
+    @field_validator("patterns")
+    @classmethod
+    def _compile(cls, v: list[str]) -> list[str]:
+        for pat in v:
+            re.compile(pat)
+        return v
+
+
+class StageCfg(Strict):
+    prompt_injection: InjectionCheckCfg | None = None
+    pii: GuardCheckCfg | None = None
+    pci: GuardCheckCfg | None = None
+    secrets: GuardCheckCfg | None = None
+    denied_terms: DeniedTermsCfg | None = None
+    max_chars: int | None = None
+
+    @model_validator(mode="after")
+    def _types(self) -> "StageCfg":
+        known = {"pii": {"email", "phone", "us_ssn", "iban", "ipv4"},
+                 "pci": {"card_number", "cvv", "track_data"},
+                 "secrets": {"private_key", "aws_access_key", "github_token", "slack_token", "anthropic_key",
+                             "openai_key", "google_api_key", "uar_key", "jwt", "connection_string",
+                             "password_assignment", "generic_api_key"}}
+        for check, names in known.items():
+            cfg = getattr(self, check)
+            if cfg and set(cfg.types) - names:
+                raise ValueError(f"guardrails {check}: unknown types {sorted(set(cfg.types) - names)}")
+        return self
+
+
+class GuardrailPolicyCfg(Strict):
+    input: StageCfg = StageCfg(prompt_injection=InjectionCheckCfg(), pii=GuardCheckCfg(action="flag"),
+                               pci=GuardCheckCfg(action="block"), secrets=GuardCheckCfg(action="block"),
+                               max_chars=100_000)
+    tool_results: StageCfg = StageCfg(prompt_injection=InjectionCheckCfg(action="flag"),
+                                      secrets=GuardCheckCfg(action="redact"))
+    output: StageCfg = StageCfg(pii=GuardCheckCfg(action="flag"), pci=GuardCheckCfg(action="redact"),
+                                secrets=GuardCheckCfg(action="redact"))
+    exempt_roles: list[str] = []     # principals with one of these roles skip the checks (e.g. red teams)
+
+
+class GuardrailsCfg(Strict):
+    """Inference guardrails (see runtime/uar_runtime/guardrails.py and docs/guardrails.md)."""
+    enabled: bool = False
+    policy: GuardrailPolicyCfg = GuardrailPolicyCfg()
+    tenants: dict[str, GuardrailPolicyCfg] = {}   # a tenant's policy replaces the default one
+
+
 class StsCfg(Strict):
     """Built-in security token service: registered applications exchange their client credentials
     for short-lived signed access tokens (OAuth 2.0 client_credentials grant)."""
@@ -398,6 +476,7 @@ class Settings(Strict):
     approvals: ApprovalsCfg = ApprovalsCfg()
     admin: AdminCfg = AdminCfg()
     sts: StsCfg = StsCfg()
+    guardrails: GuardrailsCfg = GuardrailsCfg()
     redaction: RedactionCfg = RedactionCfg()
     retention: RetentionCfg = RetentionCfg()
     agents_dir: str | None = None  # register *.yaml agents at startup for every tenant

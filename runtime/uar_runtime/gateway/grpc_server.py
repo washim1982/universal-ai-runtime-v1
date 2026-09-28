@@ -172,6 +172,11 @@ class RuntimeServicer(pbg.RuntimeServicer):
         req = from_proto(request)
         return await self._unary(context, "ListLogs", lambda p, r: self.svc.list_logs(p, req), pb.ListLogsResponse)
 
+    async def CheckContent(self, request, context):
+        req = from_proto(request)
+        return await self._unary(context, "CheckContent", lambda p, r: self.svc.check_content(p, req),
+                                 pb.CheckContentResult)
+
     async def GetStsInfo(self, request, context):
         return await self._unary(context, "GetStsInfo", lambda p, r: self.svc.sts_info(p), pb.StsInfo)
 

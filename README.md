@@ -33,6 +33,7 @@ print(resp.text)
 | SDKs: Python, TypeScript, Go, Rust, .NET, Java — one set of conformance fixtures, `uar-mock` | `sdks/`, `contracts/fixtures/`, `mock/` |
 | Inference samples: one small project per language (Python, TypeScript, Go, Rust, C#, Java), API key or registered-application sign-in | `samples/` |
 | Governance: approvals, hash-chained audit, OIDC SSO, redaction, retention, router rules v2 | `runtime/uar_runtime/` |
+| Inference guardrails: prompt injection (incl. hidden-text tricks), PII, PCI, secrets, denied terms on prompts, tool results and answers (block / redact / flag) | `runtime/uar_runtime/guardrails.py`, [docs/guardrails.md](docs/guardrails.md) |
 | Token service (STS): application registration, OAuth 2.0 client credentials, access tokens | `runtime/uar_runtime/sts.py`, [docs/sts.md](docs/sts.md) |
 | Windows admin app (UAR Admin): runtime control, keys, applications, API reference, inference history, approvals, audit, logs | `admin-app/`, `admin.cmd` |
 | Plugins: gRPC plugin runtime; plugin SDKs for Python, Go, TypeScript, .NET, Java; reference plugins | `runtime/uar_runtime/plugins/`, `plugin-sdks/`, `plugins/` |

@@ -43,6 +43,7 @@ class ChatResult:
     input_tokens: int | None = None
     output_tokens: int | None = None
     model: str = ""
+    guardrails: list[dict] = field(default_factory=list)   # guardrail findings (set by the router)
 
 
 class ProviderUnavailable(UARError):

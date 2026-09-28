@@ -58,6 +58,7 @@ const (
 	Runtime_RevokeAppSecret_FullMethodName  = "/uar.v1.Runtime/RevokeAppSecret"
 	Runtime_DisableApp_FullMethodName       = "/uar.v1.Runtime/DisableApp"
 	Runtime_RotateSigningKey_FullMethodName = "/uar.v1.Runtime/RotateSigningKey"
+	Runtime_CheckContent_FullMethodName     = "/uar.v1.Runtime/CheckContent"
 	Runtime_RegisterPlugin_FullMethodName   = "/uar.v1.Runtime/RegisterPlugin"
 	Runtime_ListPlugins_FullMethodName      = "/uar.v1.Runtime/ListPlugins"
 	Runtime_ActivatePlugin_FullMethodName   = "/uar.v1.Runtime/ActivatePlugin"
@@ -114,6 +115,9 @@ type RuntimeClient interface {
 	RevokeAppSecret(ctx context.Context, in *RevokeAppSecretRequest, opts ...grpc.CallOption) (*AppRegistration, error)
 	DisableApp(ctx context.Context, in *DisableAppRequest, opts ...grpc.CallOption) (*AppRegistration, error)
 	RotateSigningKey(ctx context.Context, in *RotateSigningKeyRequest, opts ...grpc.CallOption) (*StsInfo, error)
+	// Guardrails: run the caller's tenant policy over a text without calling a model
+	// (pre-validate content, test a policy). Permission guardrails:check.
+	CheckContent(ctx context.Context, in *CheckContentRequest, opts ...grpc.CallOption) (*CheckContentResult, error)
 	// Plugins (administrators only). Versions are immutable; activation validates and health-checks
 	// the version and affects new runs only (running runs keep the versions they started with).
 	RegisterPlugin(ctx context.Context, in *RegisterPluginRequest, opts ...grpc.CallOption) (*PluginVersion, error)
@@ -458,6 +462,16 @@ func (c *runtimeClient) RotateSigningKey(ctx context.Context, in *RotateSigningK
 	return out, nil
 }
 
+func (c *runtimeClient) CheckContent(ctx context.Context, in *CheckContentRequest, opts ...grpc.CallOption) (*CheckContentResult, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckContentResult)
+	err := c.cc.Invoke(ctx, Runtime_CheckContent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *runtimeClient) RegisterPlugin(ctx context.Context, in *RegisterPluginRequest, opts ...grpc.CallOption) (*PluginVersion, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PluginVersion)
@@ -548,6 +562,9 @@ type RuntimeServer interface {
 	RevokeAppSecret(context.Context, *RevokeAppSecretRequest) (*AppRegistration, error)
 	DisableApp(context.Context, *DisableAppRequest) (*AppRegistration, error)
 	RotateSigningKey(context.Context, *RotateSigningKeyRequest) (*StsInfo, error)
+	// Guardrails: run the caller's tenant policy over a text without calling a model
+	// (pre-validate content, test a policy). Permission guardrails:check.
+	CheckContent(context.Context, *CheckContentRequest) (*CheckContentResult, error)
 	// Plugins (administrators only). Versions are immutable; activation validates and health-checks
 	// the version and affects new runs only (running runs keep the versions they started with).
 	RegisterPlugin(context.Context, *RegisterPluginRequest) (*PluginVersion, error)
@@ -656,6 +673,9 @@ func (UnimplementedRuntimeServer) DisableApp(context.Context, *DisableAppRequest
 }
 func (UnimplementedRuntimeServer) RotateSigningKey(context.Context, *RotateSigningKeyRequest) (*StsInfo, error) {
 	return nil, status.Error(codes.Unimplemented, "method RotateSigningKey not implemented")
+}
+func (UnimplementedRuntimeServer) CheckContent(context.Context, *CheckContentRequest) (*CheckContentResult, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckContent not implemented")
 }
 func (UnimplementedRuntimeServer) RegisterPlugin(context.Context, *RegisterPluginRequest) (*PluginVersion, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterPlugin not implemented")
@@ -1234,6 +1254,24 @@ func _Runtime_RotateSigningKey_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Runtime_CheckContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckContentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuntimeServer).CheckContent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Runtime_CheckContent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuntimeServer).CheckContent(ctx, req.(*CheckContentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Runtime_RegisterPlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterPluginRequest)
 	if err := dec(in); err != nil {
@@ -1428,6 +1466,10 @@ var Runtime_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RotateSigningKey",
 			Handler:    _Runtime_RotateSigningKey_Handler,
+		},
+		{
+			MethodName: "CheckContent",
+			Handler:    _Runtime_CheckContent_Handler,
 		},
 		{
 			MethodName: "RegisterPlugin",

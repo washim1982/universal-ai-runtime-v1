@@ -293,6 +293,11 @@ def create_app(svc: RuntimeService) -> FastAPI:
     async def access_policy(request: Request):
         return await call(request, lambda p, r: svc.access_policy(p), pb.AccessPolicy)
 
+    @app.post("/api/v1/guardrails/check")
+    async def check_content(request: Request):
+        req = await body(request, pb.CheckContentRequest)
+        return await call(request, lambda p, r: svc.check_content(p, req), pb.CheckContentResult)
+
     # ---------------------------------------------------------------- token service (STS)
 
     def base_url(request: Request) -> str:

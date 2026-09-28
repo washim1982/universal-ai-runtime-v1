@@ -219,6 +219,13 @@
         },
         "route": {
           "$ref": "#/$defs/RouteDecision"
+        },
+        "guardrails": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GuardrailFinding"
+          },
+          "description": "checks that fired (flagged or redacted content)"
         }
       },
       "additionalProperties": false
@@ -690,6 +697,12 @@
         },
         "finish_reason": {
           "type": "string"
+        },
+        "guardrails": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GuardrailFinding"
+          }
         }
       },
       "additionalProperties": false
@@ -2380,6 +2393,82 @@
         },
         "reason": {
           "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "GuardrailFinding": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "type": "string",
+          "description": "input | tool_results | output"
+        },
+        "check": {
+          "type": "string",
+          "description": "prompt_injection | pii | pci | secrets | denied_terms | max_chars"
+        },
+        "type": {
+          "type": "string",
+          "description": "detector, e.g. email, card_number, aws_access_key; signals for prompt_injection"
+        },
+        "action": {
+          "type": "string",
+          "description": "flag | redact | block"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "score": {
+          "type": "number",
+          "description": "prompt_injection only (0..1)"
+        }
+      },
+      "additionalProperties": false,
+      "description": "One guardrail check that fired. Never contains the matched text."
+    },
+    "CheckContentRequest": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string",
+          "description": "input (default) | tool_results | output"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CheckContentResult": {
+      "type": "object",
+      "properties": {
+        "allowed": {
+          "type": "boolean",
+          "description": "false when a blocking check fired"
+        },
+        "action": {
+          "type": "string",
+          "description": "allow | flag | redact | block"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GuardrailFinding"
+          }
+        },
+        "redacted_text": {
+          "type": "string",
+          "description": "the text as it would be sent (when allowed)"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "guardrails are enabled for the caller"
+        },
+        "policy": {
+          "type": "object",
+          "description": "the caller's effective policy (stage -> check -> settings)"
         }
       },
       "additionalProperties": false

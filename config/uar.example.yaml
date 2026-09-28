@@ -114,6 +114,29 @@ redaction: {builtin: [email, card_number, us_ssn], egress_classes: [cloud]}
 # Delete old data automatically (days). The audit hash chain stays verifiable after pruning.
 retention: {enabled: false, runs_days: 90, usage_days: 400, audit_days: 400}
 
+# Inference guardrails (docs/guardrails.md): checks on prompts, tool results and answers.
+# Actions: off | flag (record only) | redact | block. Findings go to the audit trail without the content.
+guardrails:
+  enabled: true
+  policy:
+    input:
+      prompt_injection: {action: block, threshold: 0.7}
+      #   model: local:default             # optional classifier for borderline prompts
+      pii: {action: flag}                  # email, phone, us_ssn, iban, ipv4
+      pci: {action: block}                 # card numbers (Luhn), CVV codes, track data
+      secrets: {action: block}             # API keys, private keys, JWTs, passwords, connection strings
+      # denied_terms: {action: block, terms: ["Project Falcon"], patterns: []}
+      max_chars: 100000
+    tool_results:                          # content tools return to the model (indirect injection)
+      prompt_injection: {action: block, threshold: 0.8}
+      secrets: {action: redact}
+    output:
+      pii: {action: flag}
+      pci: {action: redact}
+      secrets: {action: redact}
+    exempt_roles: []                       # e.g. [red_team]
+  # tenants: {acme: {...}}                 # a tenant's own policy replaces the default
+
 # Built-in token service: registered applications exchange client_id + client_secret for short-lived
 # access tokens at POST /api/v1/oauth/token (OAuth 2.0 client_credentials). require_tokens: true
 # refuses API keys, so every call needs a token. key_encryption_env encrypts the signing keys at rest.

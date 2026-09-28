@@ -135,7 +135,7 @@ public partial class ApiReferencePage : UserControl, IPage
         "RegisterAgent" => JsonNode.Parse("""
             {"definition": {"apiVersion": "uar/v1", "kind": "Agent", "metadata": {"id": "hello_agent", "version": "1.0.0"},
              "spec": {"start": "ask", "permissions": {"models": ["local:*"], "tools": [], "agents": []},
-                      "nodes": [{"id": "ask", "type": "llm", "model": "__MODEL__", "prompt": "Greet ${input.name} in one sentence."},
+                      "nodes": [{"id": "ask", "type": "llm", "model": "__MODEL__", "prompt": "Greet {{ input.name }} in one sentence."},
                                 {"id": "done", "type": "return", "value": {"text": "${nodes.ask.output.text}"}}],
                       "edges": [{"from": "ask", "to": "done"}]}}}
             """.Replace("__MODEL__", exampleModel)),

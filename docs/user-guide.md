@@ -168,6 +168,7 @@ admin key from `.local\credentials.env`.
 |---|---|
 | Overview | Start, stop or restart the runtime; see the health of the database, model providers, tool servers, plugins and worker |
 | Access & keys | Create API keys with chosen roles and expiry (shown once), revoke keys, review roles and SSO mappings |
+| Guardrails | See the security checks in force (prompt injection, PII, card data, secrets) and test any text against them ([docs/guardrails.md](guardrails.md)) |
 | Applications | Register a program, get its client ID and secret, and let it exchange them for short-lived access tokens ([docs/sts.md](sts.md)) |
 | API reference | Browse every endpoint, try requests with your key, copy `curl` commands |
 | Inference history | Model calls per user and model, with tokens and cost; CSV export |

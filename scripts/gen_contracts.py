@@ -53,6 +53,7 @@ HTTP = {
     "RevokeApiKey": ("post", "/api/v1/admin/keys/{key_id}/revoke", "RevokeApiKeyRequest", "ApiKeyInfo", False),
     "GetAccessPolicy": ("get", "/api/v1/admin/access", None, "AccessPolicy", False),
     "ListLogs": ("get", "/api/v1/admin/logs", None, "ListLogsResponse", False),
+    "CheckContent": ("post", "/api/v1/guardrails/check", "CheckContentRequest", "CheckContentResult", False),
     "GetStsInfo": ("get", "/api/v1/admin/sts", None, "StsInfo", False),
     "RotateSigningKey": ("post", "/api/v1/admin/sts/rotate-key", "RotateSigningKeyRequest", "StsInfo", False),
     "ListApps": ("get", "/api/v1/admin/apps", None, "ListAppsResponse", False),
